@@ -1,0 +1,1549 @@
+openapi: 3.0.0
+info:
+  title: DarkPearl Stock Management API
+  version: 1.0.0
+  description: Stock management backend with Saga pattern for order fulfillment
+tags:
+  - name: Products
+  - name: Warehouses
+  - name: Inventory
+  - name: Stock Movements
+  - name: Orders
+paths:
+  /inventory:
+    get:
+      operationId: Inventory_list
+      description: List inventory levels with optional filters
+      parameters:
+        - name: product_id
+          in: query
+          required: false
+          schema:
+            type: string
+          explode: false
+        - name: warehouse_id
+          in: query
+          required: false
+          schema:
+            type: string
+          explode: false
+        - name: low_stock
+          in: query
+          required: false
+          schema:
+            type: boolean
+          explode: false
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 100
+          explode: false
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+          explode: false
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.InventoryListResponse'
+      tags:
+        - Inventory
+    post:
+      operationId: Inventory_create
+      description: Create inventory record for product-warehouse combination
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.ErrorResponse'
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.InventoryLevel'
+      tags:
+        - Inventory
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.CreateInventoryRequest'
+  /inventory/{id}:
+    get:
+      operationId: Inventory_get
+      description: Get inventory record by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Models.InventoryWithDetails'
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Inventory
+    put:
+      operationId: Inventory_update
+      description: Update inventory record
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Models.InventoryLevel'
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Inventory
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.UpdateInventoryRequest'
+    delete:
+      operationId: Inventory_delete
+      description: Delete inventory record
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Inventory
+  /orders:
+    get:
+      operationId: Orders_list
+      description: List orders with optional filters
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+          explode: false
+        - name: customer_id
+          in: query
+          required: false
+          schema:
+            type: string
+          explode: false
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 100
+          explode: false
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+          explode: false
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.OrderListResponse'
+      tags:
+        - Orders
+    post:
+      operationId: Orders_create
+      description: Create a new order and start fulfillment saga
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.ErrorResponse'
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.CreateOrderResponse'
+      tags:
+        - Orders
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.CreateOrderRequest'
+  /orders/{id}:
+    get:
+      operationId: Orders_get
+      description: Get order by ID with items and saga status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Models.OrderWithDetails'
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Orders
+    delete:
+      operationId: Orders_cancel
+      description: Cancel an order (triggers saga compensation if in progress)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Orders
+  /products:
+    get:
+      operationId: Products_list
+      description: List all products with optional filters
+      parameters:
+        - name: is_active
+          in: query
+          required: false
+          schema:
+            type: boolean
+          explode: false
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+          explode: false
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 100
+          explode: false
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+          explode: false
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.ProductListResponse'
+      tags:
+        - Products
+    post:
+      operationId: Products_create
+      description: Create a new product
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.ErrorResponse'
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.Product'
+      tags:
+        - Products
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.CreateProductRequest'
+  /products/{id}:
+    get:
+      operationId: Products_get
+      description: Get a product by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Models.Product'
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Products
+    put:
+      operationId: Products_update
+      description: Update an existing product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Models.Product'
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Products
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.UpdateProductRequest'
+    delete:
+      operationId: Products_delete
+      description: Delete a product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Products
+  /stock-movements:
+    get:
+      operationId: StockMovements_list
+      description: List stock movements with optional filters
+      parameters:
+        - name: product_id
+          in: query
+          required: false
+          schema:
+            type: string
+          explode: false
+        - name: warehouse_id
+          in: query
+          required: false
+          schema:
+            type: string
+          explode: false
+        - name: movement_type
+          in: query
+          required: false
+          schema:
+            type: string
+          explode: false
+        - name: reference_id
+          in: query
+          required: false
+          schema:
+            type: string
+          explode: false
+        - name: correlation_id
+          in: query
+          required: false
+          schema:
+            type: string
+          explode: false
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 100
+          explode: false
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+          explode: false
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.StockMovementListResponse'
+      tags:
+        - Stock Movements
+    post:
+      operationId: StockMovements_create
+      description: Create a stock movement (receive, transfer, adjust, reserve, release, fulfill)
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.ErrorResponse'
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.StockMovement'
+      tags:
+        - Stock Movements
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.CreateStockMovementRequest'
+  /stock-movements/{id}:
+    get:
+      operationId: StockMovements_get
+      description: Get stock movement by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Models.StockMovementWithDetails'
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Stock Movements
+  /warehouses:
+    get:
+      operationId: Warehouses_list
+      description: List all warehouses with optional filters
+      parameters:
+        - name: is_active
+          in: query
+          required: false
+          schema:
+            type: boolean
+          explode: false
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 100
+          explode: false
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+          explode: false
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.WarehouseListResponse'
+      tags:
+        - Warehouses
+    post:
+      operationId: Warehouses_create
+      description: Create a new warehouse
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.ErrorResponse'
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.Warehouse'
+      tags:
+        - Warehouses
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.CreateWarehouseRequest'
+  /warehouses/{id}:
+    get:
+      operationId: Warehouses_get
+      description: Get a warehouse by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Models.Warehouse'
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Warehouses
+    put:
+      operationId: Warehouses_update
+      description: Update an existing warehouse
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Models.Warehouse'
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Warehouses
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.UpdateWarehouseRequest'
+    delete:
+      operationId: Warehouses_delete
+      description: Delete a warehouse (fails if inventory exists)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Warehouses
+components:
+  schemas:
+    Models.CreateInventoryRequest:
+      type: object
+      required:
+        - product_id
+        - warehouse_id
+      properties:
+        product_id:
+          type: string
+          description: Product ID
+        warehouse_id:
+          type: string
+          description: Warehouse ID
+        quantity_available:
+          type: integer
+          format: int32
+          description: Initial quantity available (defaults to 0)
+        reorder_point:
+          type: integer
+          format: int32
+          description: Reorder point (defaults to 10)
+        reorder_quantity:
+          type: integer
+          format: int32
+          description: Reorder quantity (defaults to 50)
+      description: Request to create inventory record
+    Models.CreateOrderItemRequest:
+      type: object
+      required:
+        - product_id
+        - quantity
+        - unit_price
+      properties:
+        product_id:
+          type: string
+          description: Product ID
+        quantity:
+          type: integer
+          format: int32
+          description: Quantity to order
+        unit_price:
+          type: number
+          format: double
+          description: Unit price (uses product price if not specified)
+      description: Request to create order item
+    Models.CreateOrderRequest:
+      type: object
+      required:
+        - warehouse_id
+        - items
+      properties:
+        customer_id:
+          type: string
+          description: Customer ID
+        warehouse_id:
+          type: string
+          description: Warehouse ID for fulfillment
+        notes:
+          type: string
+          description: Additional notes
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Models.CreateOrderItemRequest'
+          description: Order items
+      description: Request to create a new order
+    Models.CreateOrderResponse:
+      type: object
+      required:
+        - items
+        - message
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Models.OrderItem'
+          description: Order items
+        message:
+          type: string
+          description: Status message
+      allOf:
+        - $ref: '#/components/schemas/Models.Order'
+      description: Response after creating an order
+    Models.CreateProductRequest:
+      type: object
+      required:
+        - sku
+        - name
+        - unit_price
+      properties:
+        sku:
+          type: string
+          description: Stock Keeping Unit - must be unique
+        name:
+          type: string
+          description: Product name
+        description:
+          type: string
+          description: Product description
+        unit_price:
+          type: number
+          format: double
+          description: Unit price in base currency
+        is_active:
+          type: boolean
+          description: Whether product is active (defaults to true)
+      description: Request to create a new product
+    Models.CreateStockMovementRequest:
+      type: object
+      required:
+        - product_id
+        - warehouse_id
+        - movement_type
+        - quantity
+      properties:
+        correlation_id:
+          type: string
+          description: Correlation ID for idempotency (auto-generated if not provided)
+        product_id:
+          type: string
+          description: Product ID
+        warehouse_id:
+          type: string
+          description: Warehouse ID
+        movement_type:
+          allOf:
+            - $ref: '#/components/schemas/Models.MovementType'
+          description: Type of movement
+        quantity:
+          type: integer
+          format: int32
+          description: Quantity to move
+        reference_id:
+          type: string
+          description: Reference ID (e.g., order ID)
+        reference_type:
+          type: string
+          description: Reference type
+        notes:
+          type: string
+          description: Additional notes
+      description: Request to create a stock movement
+    Models.CreateWarehouseRequest:
+      type: object
+      required:
+        - code
+        - name
+      properties:
+        code:
+          type: string
+          description: Warehouse code - must be unique
+        name:
+          type: string
+          description: Warehouse name
+        address:
+          type: string
+          description: Physical address
+        is_active:
+          type: boolean
+          description: Whether warehouse is active (defaults to true)
+      description: Request to create a new warehouse
+    Models.ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Error message
+      description: Standard error response
+    Models.InventoryLevel:
+      type: object
+      required:
+        - id
+        - product_id
+        - warehouse_id
+        - quantity_available
+        - quantity_reserved
+        - reorder_point
+        - reorder_quantity
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          description: Unique inventory record identifier
+        product_id:
+          type: string
+          description: Product ID
+        warehouse_id:
+          type: string
+          description: Warehouse ID
+        quantity_available:
+          type: integer
+          format: int32
+          description: Quantity available in stock
+        quantity_reserved:
+          type: integer
+          format: int32
+          description: Quantity reserved for orders
+        reorder_point:
+          type: integer
+          format: int32
+          description: Stock level that triggers reorder
+        reorder_quantity:
+          type: integer
+          format: int32
+          description: Quantity to order when reorder point is reached
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+      description: Inventory level for a product in a warehouse
+    Models.InventoryListResponse:
+      type: object
+      required:
+        - data
+        - count
+        - limit
+        - offset
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Models.InventoryWithDetails'
+          description: List of inventory records with details
+        count:
+          type: integer
+          format: int32
+          description: Total count of items
+        limit:
+          type: integer
+          format: int32
+          description: Maximum items per page
+        offset:
+          type: integer
+          format: int32
+          description: Offset from start
+      description: Paginated list of inventory records
+    Models.InventoryWithDetails:
+      type: object
+      required:
+        - product
+        - warehouse
+      properties:
+        product:
+          type: object
+          properties:
+            id:
+              type: string
+            sku:
+              type: string
+            name:
+              type: string
+          required:
+            - id
+            - sku
+            - name
+          description: Product details
+        warehouse:
+          type: object
+          properties:
+            id:
+              type: string
+            code:
+              type: string
+            name:
+              type: string
+          required:
+            - id
+            - code
+            - name
+          description: Warehouse details
+      allOf:
+        - $ref: '#/components/schemas/Models.InventoryLevel'
+      description: Inventory with related product and warehouse info
+    Models.MovementType:
+      type: string
+      enum:
+        - receive
+        - transfer_out
+        - transfer_in
+        - adjust
+        - reserve
+        - release
+        - fulfill
+      description: Type of stock movement
+    Models.Order:
+      type: object
+      required:
+        - id
+        - order_number
+        - status
+        - warehouse_id
+        - total_amount
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          description: Unique order identifier
+        order_number:
+          type: string
+          description: Human-readable order number
+        status:
+          allOf:
+            - $ref: '#/components/schemas/Models.OrderStatus'
+          description: Current order status
+        customer_id:
+          type: string
+          description: Customer ID (from auth)
+        warehouse_id:
+          type: string
+          description: Warehouse ID for fulfillment
+        total_amount:
+          type: number
+          format: double
+          description: Total order amount
+        payment_reference:
+          type: string
+          description: Payment reference from payment processor
+        notes:
+          type: string
+          description: Additional notes
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+      description: Order with items
+    Models.OrderItem:
+      type: object
+      required:
+        - id
+        - order_id
+        - product_id
+        - quantity
+        - unit_price
+        - created_at
+      properties:
+        id:
+          type: string
+          description: Unique item identifier
+        order_id:
+          type: string
+          description: Order ID this item belongs to
+        product_id:
+          type: string
+          description: Product ID
+        quantity:
+          type: integer
+          format: int32
+          description: Quantity ordered
+        unit_price:
+          type: number
+          format: double
+          description: Unit price at time of order
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+      description: Order line item
+    Models.OrderListResponse:
+      type: object
+      required:
+        - data
+        - count
+        - limit
+        - offset
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Models.Order'
+          description: List of orders
+        count:
+          type: integer
+          format: int32
+          description: Total count of items
+        limit:
+          type: integer
+          format: int32
+          description: Maximum items per page
+        offset:
+          type: integer
+          format: int32
+          description: Offset from start
+      description: Paginated list of orders
+    Models.OrderStatus:
+      type: string
+      enum:
+        - pending
+        - reserved
+        - payment_processing
+        - payment_failed
+        - paid
+        - fulfilling
+        - fulfilled
+        - cancelled
+      description: Order status
+    Models.OrderWithDetails:
+      type: object
+      required:
+        - items
+        - warehouse
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Models.OrderItem'
+          description: Order line items
+        warehouse:
+          type: object
+          properties:
+            id:
+              type: string
+            code:
+              type: string
+            name:
+              type: string
+          required:
+            - id
+            - code
+            - name
+          description: Warehouse details
+        saga:
+          type: object
+          properties:
+            id:
+              type: string
+            status:
+              type: string
+            current_step:
+              type: string
+            error_message:
+              type: string
+            created_at:
+              type: string
+              format: date-time
+            completed_at:
+              type: string
+              format: date-time
+          required:
+            - id
+            - status
+            - created_at
+          description: Saga status if order is being processed
+      allOf:
+        - $ref: '#/components/schemas/Models.Order'
+      description: Order with full details including items and saga status
+    Models.PaginationMeta:
+      type: object
+      required:
+        - count
+        - limit
+        - offset
+      properties:
+        count:
+          type: integer
+          format: int32
+          description: Total count of items
+        limit:
+          type: integer
+          format: int32
+          description: Maximum items per page
+        offset:
+          type: integer
+          format: int32
+          description: Offset from start
+      description: Paginated list response metadata
+    Models.Product:
+      type: object
+      required:
+        - id
+        - sku
+        - name
+        - unit_price
+        - is_active
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          description: Unique product identifier
+        sku:
+          type: string
+          description: Stock Keeping Unit - unique product code
+        name:
+          type: string
+          description: Product name
+        description:
+          type: string
+          description: Product description
+        unit_price:
+          type: number
+          format: double
+          description: Unit price in base currency
+        is_active:
+          type: boolean
+          description: Whether product is active
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+      description: Product in the catalog
+    Models.ProductListResponse:
+      type: object
+      required:
+        - data
+        - count
+        - limit
+        - offset
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Models.Product'
+          description: List of products
+        count:
+          type: integer
+          format: int32
+          description: Total count of items
+        limit:
+          type: integer
+          format: int32
+          description: Maximum items per page
+        offset:
+          type: integer
+          format: int32
+          description: Offset from start
+      description: Paginated list of products
+    Models.Saga:
+      type: object
+      required:
+        - id
+        - saga_type
+        - correlation_id
+        - status
+        - payload
+        - retry_count
+        - max_retries
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          description: Unique saga identifier
+        saga_type:
+          type: string
+          description: Type of saga (e.g., 'order_fulfillment')
+        correlation_id:
+          type: string
+          description: Correlation ID linking to the entity (e.g., order ID)
+        status:
+          allOf:
+            - $ref: '#/components/schemas/Models.SagaStatus'
+          description: Current saga status
+        current_step:
+          allOf:
+            - $ref: '#/components/schemas/Models.SagaStepType'
+          description: Current step being executed
+        payload:
+          type: object
+          additionalProperties: {}
+          description: Saga context data
+        error_message:
+          type: string
+          description: Error message if saga failed
+        retry_count:
+          type: integer
+          format: int32
+          description: Number of retry attempts
+        max_retries:
+          type: integer
+          format: int32
+          description: Maximum retry attempts allowed
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+        completed_at:
+          type: string
+          format: date-time
+          description: Completion timestamp
+      description: Saga instance tracking distributed transaction
+    Models.SagaEvent:
+      type: object
+      required:
+        - id
+        - saga_id
+        - step_type
+        - event_type
+        - payload
+        - created_at
+      properties:
+        id:
+          type: string
+          description: Unique event identifier
+        saga_id:
+          type: string
+          description: Saga ID this event belongs to
+        step_type:
+          allOf:
+            - $ref: '#/components/schemas/Models.SagaStepType'
+          description: Step type for this event
+        event_type:
+          type: string
+          description: Event type (e.g., 'step_started', 'step_completed', 'step_failed')
+        payload:
+          type: object
+          additionalProperties: {}
+          description: Event payload
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+      description: Event in saga event store
+    Models.SagaStatus:
+      type: string
+      enum:
+        - started
+        - step_pending
+        - step_executing
+        - step_completed
+        - step_failed
+        - compensating
+        - compensation_completed
+        - completed
+        - failed
+      description: Saga status
+    Models.SagaStepType:
+      type: string
+      enum:
+        - reserve_stock
+        - process_payment
+        - fulfill_order
+        - release_stock
+        - void_payment
+      description: Saga step types for order fulfillment
+    Models.StockMovement:
+      type: object
+      required:
+        - id
+        - correlation_id
+        - product_id
+        - warehouse_id
+        - movement_type
+        - quantity
+        - created_at
+      properties:
+        id:
+          type: string
+          description: Unique movement identifier
+        correlation_id:
+          type: string
+          description: Correlation ID for idempotency and saga tracking
+        product_id:
+          type: string
+          description: Product ID
+        warehouse_id:
+          type: string
+          description: Warehouse ID
+        movement_type:
+          allOf:
+            - $ref: '#/components/schemas/Models.MovementType'
+          description: Type of movement
+        quantity:
+          type: integer
+          format: int32
+          description: Quantity moved (positive for increase, context-dependent)
+        reference_id:
+          type: string
+          description: Reference ID (e.g., order ID, transfer ID)
+        reference_type:
+          type: string
+          description: Reference type (e.g., 'order', 'transfer', 'adjustment')
+        notes:
+          type: string
+          description: Additional notes
+        created_by:
+          type: string
+          description: User who created this movement
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+      description: Record of stock movement for audit trail
+    Models.StockMovementListResponse:
+      type: object
+      required:
+        - data
+        - count
+        - limit
+        - offset
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Models.StockMovementWithDetails'
+          description: List of stock movements with details
+        count:
+          type: integer
+          format: int32
+          description: Total count of items
+        limit:
+          type: integer
+          format: int32
+          description: Maximum items per page
+        offset:
+          type: integer
+          format: int32
+          description: Offset from start
+      description: Paginated list of stock movements
+    Models.StockMovementWithDetails:
+      type: object
+      required:
+        - product
+        - warehouse
+      properties:
+        product:
+          type: object
+          properties:
+            id:
+              type: string
+            sku:
+              type: string
+            name:
+              type: string
+          required:
+            - id
+            - sku
+            - name
+          description: Product details
+        warehouse:
+          type: object
+          properties:
+            id:
+              type: string
+            code:
+              type: string
+            name:
+              type: string
+          required:
+            - id
+            - code
+            - name
+          description: Warehouse details
+      allOf:
+        - $ref: '#/components/schemas/Models.StockMovement'
+      description: Stock movement with related product and warehouse info
+    Models.Timestamps:
+      type: object
+      required:
+        - created_at
+        - updated_at
+      properties:
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+      description: Standard timestamps for entities
+    Models.UpdateInventoryRequest:
+      type: object
+      properties:
+        quantity_available:
+          type: integer
+          format: int32
+          description: Quantity available
+        quantity_reserved:
+          type: integer
+          format: int32
+          description: Quantity reserved
+        reorder_point:
+          type: integer
+          format: int32
+          description: Reorder point
+        reorder_quantity:
+          type: integer
+          format: int32
+          description: Reorder quantity
+      description: Request to update inventory record
+    Models.UpdateProductRequest:
+      type: object
+      properties:
+        sku:
+          type: string
+          description: Stock Keeping Unit
+        name:
+          type: string
+          description: Product name
+        description:
+          type: string
+          description: Product description
+        unit_price:
+          type: number
+          format: double
+          description: Unit price in base currency
+        is_active:
+          type: boolean
+          description: Whether product is active
+      description: Request to update an existing product
+    Models.UpdateWarehouseRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Warehouse code
+        name:
+          type: string
+          description: Warehouse name
+        address:
+          type: string
+          description: Physical address
+        is_active:
+          type: boolean
+          description: Whether warehouse is active
+      description: Request to update an existing warehouse
+    Models.Warehouse:
+      type: object
+      required:
+        - id
+        - code
+        - name
+        - is_active
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          description: Unique warehouse identifier
+        code:
+          type: string
+          description: Warehouse code - unique identifier
+        name:
+          type: string
+          description: Warehouse name
+        address:
+          type: string
+          description: Physical address
+        is_active:
+          type: boolean
+          description: Whether warehouse is active
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+      description: Warehouse or storage location
+    Models.WarehouseListResponse:
+      type: object
+      required:
+        - data
+        - count
+        - limit
+        - offset
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Models.Warehouse'
+          description: List of warehouses
+        count:
+          type: integer
+          format: int32
+          description: Total count of items
+        limit:
+          type: integer
+          format: int32
+          description: Maximum items per page
+        offset:
+          type: integer
+          format: int32
+          description: Offset from start
+      description: Paginated list of warehouses
+servers:
+  - url: https://your-project.supabase.co/functions/v1
+    description: Supabase Edge Functions
+    variables: {}

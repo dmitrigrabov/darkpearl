@@ -1,0 +1,22 @@
+{
+  "name": "darkpearl",
+  "version": "1.0.0",
+  "description": "Stock management backend with Saga pattern",
+  "private": true,
+  "scripts": {
+    "db:start": "supabase start",
+    "db:stop": "supabase stop",
+    "db:reset": "supabase db reset",
+    "db:diff": "supabase db diff --schema public",
+    "db:push": "supabase db push",
+    "functions:serve": "supabase functions serve",
+    "typespec:build": "tsp compile typespec/main.tsp",
+    "typespec:watch": "tsp compile typespec/main.tsp --watch"
+  },
+  "devDependencies": {
+    "@typespec/compiler": "^0.62.0",
+    "@typespec/http": "^0.62.0",
+    "@typespec/rest": "^0.62.0",
+    "@typespec/openapi3": "^0.62.0"
+  }
+}
