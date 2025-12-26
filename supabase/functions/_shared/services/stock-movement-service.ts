@@ -1,4 +1,4 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgrestSingleResponse, SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../database.types.ts';
 import type { StockMovement, MovementType, CreateStockMovementRequest } from '../types.ts';
 
@@ -66,8 +66,8 @@ export async function listMovements(client: Client, params: ListMovementsParams 
 export async function getMovement(
   client: Client,
   id: string
-): Promise<StockMovementWithRelations | null> {
-  const { data, error } = await client
+): Promise<PostgrestSingleResponse<StockMovementWithRelations>> {
+  return await client
     .from('stock_movements')
     .select(`
       *,
@@ -76,21 +76,15 @@ export async function getMovement(
     `)
     .eq('id', id)
     .single();
-
-  if (error) {
-    if (error.code === 'PGRST116') return null;
-    throw error;
-  }
-  return data as StockMovementWithRelations;
 }
 
 export async function createMovement(
   client: Client,
   data: CreateStockMovementRequest
-): Promise<StockMovement> {
+): Promise<PostgrestSingleResponse<StockMovement>> {
   const correlationId = data.correlation_id || crypto.randomUUID();
 
-  const { data: movement, error } = await client
+  return await client
     .from('stock_movements')
     .insert({
       correlation_id: correlationId,
@@ -104,9 +98,6 @@ export async function createMovement(
     })
     .select()
     .single();
-
-  if (error) throw error;
-  return movement;
 }
 
 export async function upsertMovement(

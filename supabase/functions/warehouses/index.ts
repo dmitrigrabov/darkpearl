@@ -3,6 +3,7 @@ import { cors } from 'hono/cors';
 import { createSupabaseClient } from '../_shared/supabase-client.ts';
 import type { CreateWarehouseRequest, UpdateWarehouseRequest } from '../_shared/types.ts';
 import * as warehouseService from '../_shared/services/warehouse-service.ts';
+import { match, P } from 'ts-pattern';
 
 type Variables = {
   supabase: ReturnType<typeof createSupabaseClient>;
@@ -41,11 +42,14 @@ app.get('/warehouses/:id', async (c) => {
   const client = c.get('supabase');
   const id = c.req.param('id');
 
-  const warehouse = await warehouseService.getWarehouse(client, id);
-  if (!warehouse) {
-    return c.json({ error: 'Warehouse not found' }, 404);
-  }
-  return c.json(warehouse);
+  const result = await warehouseService.getWarehouse(client, id);
+
+  return match(result)
+    .with({ data: P.nonNullable }, () => c.json(result.data))
+    .with({ error: { code: 'PGRST116' } }, () => c.json({ error: 'Warehouse not found' }, 404))
+    .otherwise(() => {
+      throw result.error;
+    });
 });
 
 app.post('/warehouses', async (c) => {
@@ -56,16 +60,16 @@ app.post('/warehouses', async (c) => {
     return c.json({ error: 'code and name are required' }, 400);
   }
 
-  try {
-    const warehouse = await warehouseService.createWarehouse(client, body);
-    return c.json(warehouse, 201);
-  } catch (err) {
-    const error = err as { code?: string };
-    if (error.code === '23505') {
-      return c.json({ error: 'Warehouse with this code already exists' }, 409);
-    }
-    throw err;
-  }
+  const result = await warehouseService.createWarehouse(client, body);
+
+  return match(result)
+    .with({ data: P.nonNullable }, () => c.json(result.data, 201))
+    .with({ error: { code: '23505' } }, () =>
+      c.json({ error: 'Warehouse with this code already exists' }, 409)
+    )
+    .otherwise(() => {
+      throw result.error;
+    });
 });
 
 app.put('/warehouses/:id', async (c) => {
@@ -73,19 +77,17 @@ app.put('/warehouses/:id', async (c) => {
   const id = c.req.param('id');
   const body: UpdateWarehouseRequest = await c.req.json();
 
-  try {
-    const warehouse = await warehouseService.updateWarehouse(client, id, body);
-    if (!warehouse) {
-      return c.json({ error: 'Warehouse not found' }, 404);
-    }
-    return c.json(warehouse);
-  } catch (err) {
-    const error = err as { code?: string };
-    if (error.code === '23505') {
-      return c.json({ error: 'Warehouse with this code already exists' }, 409);
-    }
-    throw err;
-  }
+  const result = await warehouseService.updateWarehouse(client, id, body);
+
+  return match(result)
+    .with({ data: P.nonNullable }, () => c.json(result.data))
+    .with({ error: { code: 'PGRST116' } }, () => c.json({ error: 'Warehouse not found' }, 404))
+    .with({ error: { code: '23505' } }, () =>
+      c.json({ error: 'Warehouse with this code already exists' }, 409)
+    )
+    .otherwise(() => {
+      throw result.error;
+    });
 });
 
 app.delete('/warehouses/:id', async (c) => {
@@ -97,8 +99,14 @@ app.delete('/warehouses/:id', async (c) => {
     return c.json({ error: 'Cannot delete warehouse with existing inventory' }, 409);
   }
 
-  await warehouseService.deleteWarehouse(client, id);
-  return c.json({ message: 'Warehouse deleted' });
+  const result = await warehouseService.deleteWarehouse(client, id);
+
+  return match(result)
+    .with({ data: P.nonNullable }, () => c.json({ message: 'Warehouse deleted' }))
+    .with({ error: { code: 'PGRST116' } }, () => c.json({ error: 'Warehouse not found' }, 404))
+    .otherwise(() => {
+      throw result.error;
+    });
 });
 
 Deno.serve(app.fetch);

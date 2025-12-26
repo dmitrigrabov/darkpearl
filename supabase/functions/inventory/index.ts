@@ -5,6 +5,7 @@ import type { CreateInventoryRequest, UpdateInventoryRequest } from '../_shared/
 import * as inventoryService from '../_shared/services/inventory-service.ts';
 import * as productService from '../_shared/services/product-service.ts';
 import * as warehouseService from '../_shared/services/warehouse-service.ts';
+import { match, P } from 'ts-pattern';
 
 type Variables = {
   supabase: ReturnType<typeof createSupabaseClient>;
@@ -47,11 +48,14 @@ app.get('/inventory/:id', async (c) => {
   const client = c.get('supabase');
   const id = c.req.param('id');
 
-  const inventory = await inventoryService.getInventory(client, id);
-  if (!inventory) {
-    return c.json({ error: 'Inventory not found' }, 404);
-  }
-  return c.json(inventory);
+  const result = await inventoryService.getInventory(client, id);
+
+  return match(result)
+    .with({ data: P.nonNullable }, () => c.json(result.data))
+    .with({ error: { code: 'PGRST116' } }, () => c.json({ error: 'Inventory not found' }, 404))
+    .otherwise(() => {
+      throw result.error;
+    });
 });
 
 app.post('/inventory', async (c) => {
@@ -72,16 +76,16 @@ app.post('/inventory', async (c) => {
     return c.json({ error: 'Warehouse not found' }, 404);
   }
 
-  try {
-    const inventory = await inventoryService.createInventory(client, body);
-    return c.json(inventory, 201);
-  } catch (err) {
-    const error = err as { code?: string };
-    if (error.code === '23505') {
-      return c.json({ error: 'Inventory already exists for this product-warehouse combination' }, 409);
-    }
-    throw err;
-  }
+  const result = await inventoryService.createInventory(client, body);
+
+  return match(result)
+    .with({ data: P.nonNullable }, () => c.json(result.data, 201))
+    .with({ error: { code: '23505' } }, () =>
+      c.json({ error: 'Inventory already exists for this product-warehouse combination' }, 409)
+    )
+    .otherwise(() => {
+      throw result.error;
+    });
 });
 
 app.put('/inventory/:id', async (c) => {
@@ -96,19 +100,28 @@ app.put('/inventory/:id', async (c) => {
     return c.json({ error: 'quantity_reserved cannot be negative' }, 400);
   }
 
-  const inventory = await inventoryService.updateInventory(client, id, body);
-  if (!inventory) {
-    return c.json({ error: 'Inventory not found' }, 404);
-  }
-  return c.json(inventory);
+  const result = await inventoryService.updateInventory(client, id, body);
+
+  return match(result)
+    .with({ data: P.nonNullable }, () => c.json(result.data))
+    .with({ error: { code: 'PGRST116' } }, () => c.json({ error: 'Inventory not found' }, 404))
+    .otherwise(() => {
+      throw result.error;
+    });
 });
 
 app.delete('/inventory/:id', async (c) => {
   const client = c.get('supabase');
   const id = c.req.param('id');
 
-  await inventoryService.deleteInventory(client, id);
-  return c.json({ message: 'Inventory deleted' });
+  const result = await inventoryService.deleteInventory(client, id);
+
+  return match(result)
+    .with({ data: P.nonNullable }, () => c.json({ message: 'Inventory deleted' }))
+    .with({ error: { code: 'PGRST116' } }, () => c.json({ error: 'Inventory not found' }, 404))
+    .otherwise(() => {
+      throw result.error;
+    });
 });
 
 Deno.serve(app.fetch);

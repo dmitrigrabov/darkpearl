@@ -1,31 +1,31 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '../database.types.ts';
-import type { Order, OrderItem, OrderStatus, CreateOrderItemRequest } from '../types.ts';
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '../database.types.ts'
+import type { Order, OrderItem, OrderStatus, CreateOrderItemRequest } from '../types.ts'
 
-type Client = SupabaseClient<Database>;
+type Client = SupabaseClient<Database>
 
 export interface ListOrdersParams {
-  status?: OrderStatus;
-  customerId?: string;
-  limit?: number;
-  offset?: number;
+  status?: OrderStatus
+  customerId?: string
+  limit?: number
+  offset?: number
 }
 
 export interface OrderWithRelations extends Order {
-  warehouse: { id: string; code: string; name: string } | null;
+  warehouse: { id: string; code: string; name: string } | null
 }
 
 export interface OrderItemWithProduct extends OrderItem {
-  product: { id: string; sku: string; name: string } | null;
+  product: { id: string; sku: string; name: string } | null
 }
 
 export interface OrderDetailWithItems extends Order {
-  items: OrderItemWithProduct[];
-  warehouse: { id: string; code: string; name: string } | null;
+  items: OrderItemWithProduct[]
+  warehouse: { id: string; code: string; name: string } | null
 }
 
 export async function listOrders(client: Client, params: ListOrdersParams = {}) {
-  const { status, customerId, limit = 100, offset = 0 } = params;
+  const { status, customerId, limit = 100, offset = 0 } = params
 
   let query = client.from('orders').select(
     `
@@ -33,68 +33,63 @@ export async function listOrders(client: Client, params: ListOrdersParams = {}) 
       warehouse:warehouses(id, code, name)
     `,
     { count: 'exact' }
-  );
+  )
 
   if (status) {
-    query = query.eq('status', status);
+    query = query.eq('status', status)
   }
   if (customerId) {
-    query = query.eq('customer_id', customerId);
+    query = query.eq('customer_id', customerId)
   }
 
   const { data, error, count } = await query
     .order('created_at', { ascending: false })
-    .range(offset, offset + limit - 1);
+    .range(offset, offset + limit - 1)
 
-  if (error) throw error;
-  return { data: data as OrderWithRelations[], count, limit, offset };
+  if (error) throw error
+  return { data, count, limit, offset }
 }
 
-export async function getOrder(
-  client: Client,
-  id: string
-): Promise<OrderDetailWithItems | null> {
+export async function getOrder(client: Client, id: string): Promise<OrderDetailWithItems | null> {
   const { data, error } = await client
     .from('orders')
-    .select(`
+    .select(
+      `
       *,
       items:order_items(
         id, product_id, quantity, unit_price,
         product:products(id, sku, name)
       ),
       warehouse:warehouses(id, code, name)
-    `)
+    `
+    )
     .eq('id', id)
-    .single();
+    .single()
 
   if (error) {
-    if (error.code === 'PGRST116') return null;
-    throw error;
+    if (error.code === 'PGRST116') return null
+    throw error
   }
-  return data as OrderDetailWithItems;
+  return data as OrderDetailWithItems
 }
 
 export async function getOrderStatus(client: Client, id: string): Promise<OrderStatus | null> {
-  const { data, error } = await client
-    .from('orders')
-    .select('status')
-    .eq('id', id)
-    .single();
+  const { data, error } = await client.from('orders').select('status').eq('id', id).single()
 
   if (error) {
-    if (error.code === 'PGRST116') return null;
-    throw error;
+    if (error.code === 'PGRST116') return null
+    throw error
   }
-  return data.status;
+  return data.status
 }
 
 export async function createOrder(
   client: Client,
   data: {
-    customer_id?: string;
-    warehouse_id: string;
-    total_amount: number;
-    notes?: string;
+    customer_id?: string
+    warehouse_id: string
+    total_amount: number
+    notes?: string
   }
 ): Promise<Order> {
   const { data: order, error } = await client
@@ -105,13 +100,13 @@ export async function createOrder(
       warehouse_id: data.warehouse_id,
       total_amount: data.total_amount,
       notes: data.notes,
-      status: 'pending',
+      status: 'pending'
     })
     .select()
-    .single();
+    .single()
 
-  if (error) throw error;
-  return order;
+  if (error) throw error
+  return order
 }
 
 export async function createOrderItems(
@@ -119,17 +114,17 @@ export async function createOrderItems(
   orderId: string,
   items: CreateOrderItemRequest[]
 ): Promise<OrderItem[]> {
-  const orderItems = items.map((item) => ({
+  const orderItems = items.map(item => ({
     order_id: orderId,
     product_id: item.product_id,
     quantity: item.quantity,
-    unit_price: item.unit_price,
-  }));
+    unit_price: item.unit_price
+  }))
 
-  const { data, error } = await client.from('order_items').insert(orderItems).select();
+  const { data, error } = await client.from('order_items').insert(orderItems).select()
 
-  if (error) throw error;
-  return data;
+  if (error) throw error
+  return data
 }
 
 export async function updateOrderStatus(
@@ -137,8 +132,8 @@ export async function updateOrderStatus(
   id: string,
   status: OrderStatus
 ): Promise<void> {
-  const { error } = await client.from('orders').update({ status }).eq('id', id);
-  if (error) throw error;
+  const { error } = await client.from('orders').update({ status }).eq('id', id)
+  if (error) throw error
 }
 
 export async function updateOrder(
@@ -146,23 +141,20 @@ export async function updateOrder(
   id: string,
   data: { status?: OrderStatus; payment_reference?: string; notes?: string }
 ): Promise<void> {
-  const { error } = await client.from('orders').update(data).eq('id', id);
-  if (error) throw error;
+  const { error } = await client.from('orders').update(data).eq('id', id)
+  if (error) throw error
 }
 
-export async function getProductPrice(
-  client: Client,
-  productId: string
-): Promise<number | null> {
+export async function getProductPrice(client: Client, productId: string): Promise<number | null> {
   const { data, error } = await client
     .from('products')
     .select('id, unit_price')
     .eq('id', productId)
-    .single();
+    .single()
 
   if (error) {
-    if (error.code === 'PGRST116') return null;
-    throw error;
+    if (error.code === 'PGRST116') return null
+    throw error
   }
-  return data.unit_price;
+  return data.unit_price
 }

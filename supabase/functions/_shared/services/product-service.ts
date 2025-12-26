@@ -31,18 +31,18 @@ export async function listProducts(client: Client, params: ListProductsParams = 
   return { data, count, limit, offset }
 }
 
-export async function getProduct(client: Client, id: string): Promise<Product | null> {
-  const { data, error } = await client.from('products').select('*').eq('id', id).single()
-
-  if (error) {
-    if (error.code === 'PGRST116') return null
-    throw error
-  }
-  return data
+export async function getProduct(
+  client: Client,
+  id: string
+): Promise<PostgrestSingleResponse<Product>> {
+  return await client.from('products').select('*').eq('id', id).single()
 }
 
-export async function createProduct(client: Client, data: CreateProductRequest): Promise<Product> {
-  const { data: product, error } = await client
+export async function createProduct(
+  client: Client,
+  data: CreateProductRequest
+): Promise<PostgrestSingleResponse<Product>> {
+  return await client
     .from('products')
     .insert({
       sku: data.sku,
@@ -53,9 +53,6 @@ export async function createProduct(client: Client, data: CreateProductRequest):
     })
     .select()
     .single()
-
-  if (error) throw error
-  return product
 }
 
 export async function updateProduct(
@@ -66,9 +63,11 @@ export async function updateProduct(
   return await client.from('products').update(data).eq('id', id).select().single()
 }
 
-export async function deleteProduct(client: Client, id: string): Promise<void> {
-  const { error } = await client.from('products').delete().eq('id', id)
-  if (error) throw error
+export async function deleteProduct(
+  client: Client,
+  id: string
+): Promise<PostgrestSingleResponse<null>> {
+  return await client.from('products').delete().eq('id', id).select().single()
 }
 
 export async function productExists(client: Client, productId: string): Promise<boolean> {

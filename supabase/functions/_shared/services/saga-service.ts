@@ -1,17 +1,17 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '../database.types.ts';
-import type { Saga, SagaStatus, SagaStepType, OrderFulfillmentPayload } from '../types.ts';
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '../database.types.ts'
+import type { Saga, SagaStatus, SagaStepType, OrderFulfillmentPayload } from '../types.ts'
 
-type Client = SupabaseClient<Database>;
+type Client = SupabaseClient<Database>
 
 export async function getSaga(client: Client, id: string): Promise<Saga | null> {
-  const { data, error } = await client.from('sagas').select('*').eq('id', id).single();
+  const { data, error } = await client.from('sagas').select('*').eq('id', id).single()
 
   if (error) {
-    if (error.code === 'PGRST116') return null;
-    throw error;
+    if (error.code === 'PGRST116') return null
+    throw error
   }
-  return data;
+  return data
 }
 
 export async function getSagaByCorrelationId(
@@ -22,60 +22,37 @@ export async function getSagaByCorrelationId(
     .from('sagas')
     .select('*')
     .eq('correlation_id', correlationId)
-    .single();
+    .single()
 
   if (error) {
-    if (error.code === 'PGRST116') return null;
-    throw error;
+    if (error.code === 'PGRST116') return null
+    throw error
   }
-  return data;
+  return data
 }
 
 export async function getSagaStatus(
   client: Client,
   correlationId: string
 ): Promise<{
-  id: string;
-  status: SagaStatus;
-  current_step: SagaStepType | null;
-  error_message: string | null;
-  created_at: string;
-  completed_at: string | null;
+  id: string
+  status: SagaStatus
+  current_step: SagaStepType | null
+  error_message: string | null
+  created_at: string
+  completed_at: string | null
 } | null> {
   const { data, error } = await client
     .from('sagas')
     .select('id, status, current_step, error_message, created_at, completed_at')
     .eq('correlation_id', correlationId)
-    .single();
+    .single()
 
   if (error) {
-    if (error.code === 'PGRST116') return null;
-    throw error;
+    if (error.code === 'PGRST116') return null
+    throw error
   }
-  return data;
-}
-
-export async function createSaga(
-  client: Client,
-  data: {
-    saga_type: string;
-    correlation_id: string;
-    payload: OrderFulfillmentPayload;
-  }
-): Promise<Saga> {
-  const { data: saga, error } = await client
-    .from('sagas')
-    .insert({
-      saga_type: data.saga_type,
-      correlation_id: data.correlation_id,
-      status: 'started',
-      payload: data.payload,
-    })
-    .select()
-    .single();
-
-  if (error) throw error;
-  return saga;
+  return data
 }
 
 export async function updateSagaStatus(
@@ -84,16 +61,16 @@ export async function updateSagaStatus(
   status: SagaStatus,
   errorMessage?: string | null
 ): Promise<void> {
-  const update: Record<string, unknown> = { status };
+  const update: Record<string, unknown> = { status }
   if (status === 'completed' || status === 'failed') {
-    update.completed_at = new Date().toISOString();
+    update.completed_at = new Date().toISOString()
   }
   if (errorMessage !== undefined) {
-    update.error_message = errorMessage;
+    update.error_message = errorMessage
   }
 
-  const { error } = await client.from('sagas').update(update).eq('id', id);
-  if (error) throw error;
+  const { error } = await client.from('sagas').update(update).eq('id', id)
+  if (error) throw error
 }
 
 export async function updateSagaStep(
@@ -105,14 +82,14 @@ export async function updateSagaStep(
 ): Promise<void> {
   const update: Record<string, unknown> = {
     current_step: currentStep,
-    status,
-  };
+    status
+  }
   if (payload) {
-    update.payload = payload;
+    update.payload = payload
   }
 
-  const { error } = await client.from('sagas').update(update).eq('id', id);
-  if (error) throw error;
+  const { error } = await client.from('sagas').update(update).eq('id', id)
+  if (error) throw error
 }
 
 export async function recordSagaEvent(
@@ -126,50 +103,51 @@ export async function recordSagaEvent(
     saga_id: sagaId,
     step_type: stepType,
     event_type: eventType,
-    payload,
-  });
-  if (error) throw error;
+    payload
+  })
+
+  if (error) throw error
 }
 
 export async function getSagaWithEvents(
   client: Client,
   correlationId: string
 ): Promise<{
-  id: string;
-  status: SagaStatus;
-  current_step: SagaStepType | null;
-  error_message: string | null;
-  created_at: string;
-  completed_at: string | null;
+  id: string
+  status: SagaStatus
+  current_step: SagaStepType | null
+  error_message: string | null
+  created_at: string
+  completed_at: string | null
   events: Array<{
-    id: string;
-    step_type: SagaStepType;
-    event_type: string;
-    payload: Record<string, unknown>;
-    created_at: string;
-  }>;
+    id: string
+    step_type: SagaStepType
+    event_type: string
+    payload: Record<string, unknown>
+    created_at: string
+  }>
 } | null> {
   const { data: saga, error: sagaError } = await client
     .from('sagas')
     .select('id, status, current_step, error_message, created_at, completed_at')
     .eq('correlation_id', correlationId)
-    .single();
+    .single()
 
   if (sagaError) {
-    if (sagaError.code === 'PGRST116') return null;
-    throw sagaError;
+    if (sagaError.code === 'PGRST116') return null
+    throw sagaError
   }
 
   const { data: events, error: eventsError } = await client
     .from('saga_events')
     .select('id, step_type, event_type, payload, created_at')
     .eq('saga_id', saga.id)
-    .order('created_at', { ascending: true });
+    .order('created_at', { ascending: true })
 
-  if (eventsError) throw eventsError;
+  if (eventsError) throw eventsError
 
   return {
     ...saga,
-    events: events ?? [],
-  };
+    events: events ?? []
+  }
 }

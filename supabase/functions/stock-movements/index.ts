@@ -4,6 +4,7 @@ import { createSupabaseClient } from '../_shared/supabase-client.ts';
 import type { CreateStockMovementRequest, MovementType } from '../_shared/types.ts';
 import * as stockMovementService from '../_shared/services/stock-movement-service.ts';
 import * as inventoryService from '../_shared/services/inventory-service.ts';
+import { match, P } from 'ts-pattern';
 
 const VALID_MOVEMENT_TYPES: MovementType[] = [
   'receive',
@@ -60,11 +61,14 @@ app.get('/stock-movements/:id', async (c) => {
   const client = c.get('supabase');
   const id = c.req.param('id');
 
-  const movement = await stockMovementService.getMovement(client, id);
-  if (!movement) {
-    return c.json({ error: 'Stock movement not found' }, 404);
-  }
-  return c.json(movement);
+  const result = await stockMovementService.getMovement(client, id);
+
+  return match(result)
+    .with({ data: P.nonNullable }, () => c.json(result.data))
+    .with({ error: { code: 'PGRST116' } }, () => c.json({ error: 'Stock movement not found' }, 404))
+    .otherwise(() => {
+      throw result.error;
+    });
 });
 
 app.post('/stock-movements', async (c) => {
@@ -138,15 +142,14 @@ app.post('/stock-movements', async (c) => {
   }
 
   // Record the movement
-  try {
-    const movement = await stockMovementService.createMovement(client, {
-      ...body,
-      correlation_id: correlationId,
-    });
-    return c.json(movement, 201);
-  } catch (err) {
-    const error = err as { code?: string };
-    if (error.code === '23505') {
+  const result = await stockMovementService.createMovement(client, {
+    ...body,
+    correlation_id: correlationId,
+  });
+
+  return match(result)
+    .with({ data: P.nonNullable }, () => c.json(result.data, 201))
+    .with({ error: { code: '23505' } }, async () => {
       const existing = await stockMovementService.findExistingMovement(
         client,
         correlationId,
@@ -157,9 +160,11 @@ app.post('/stock-movements', async (c) => {
       if (existing) {
         return c.json({ ...existing, idempotent: true });
       }
-    }
-    throw err;
-  }
+      throw result.error;
+    })
+    .otherwise(() => {
+      throw result.error;
+    });
 });
 
 Deno.serve(app.fetch);

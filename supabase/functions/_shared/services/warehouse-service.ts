@@ -1,4 +1,4 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgrestSingleResponse, SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../database.types.ts';
 import type { Warehouse, CreateWarehouseRequest, UpdateWarehouseRequest } from '../types.ts';
 
@@ -34,8 +34,8 @@ export async function listWarehouses(client: Client, params: ListWarehousesParam
 export async function getWarehouse(
   client: Client,
   id: string
-): Promise<WarehouseWithInventoryCount | null> {
-  const { data, error } = await client
+): Promise<PostgrestSingleResponse<WarehouseWithInventoryCount>> {
+  return await client
     .from('warehouses')
     .select(`
       *,
@@ -43,19 +43,13 @@ export async function getWarehouse(
     `)
     .eq('id', id)
     .single();
-
-  if (error) {
-    if (error.code === 'PGRST116') return null;
-    throw error;
-  }
-  return data as WarehouseWithInventoryCount;
 }
 
 export async function createWarehouse(
   client: Client,
   data: CreateWarehouseRequest
-): Promise<Warehouse> {
-  const { data: warehouse, error } = await client
+): Promise<PostgrestSingleResponse<Warehouse>> {
+  return await client
     .from('warehouses')
     .insert({
       code: data.code,
@@ -65,28 +59,19 @@ export async function createWarehouse(
     })
     .select()
     .single();
-
-  if (error) throw error;
-  return warehouse;
 }
 
 export async function updateWarehouse(
   client: Client,
   id: string,
   data: UpdateWarehouseRequest
-): Promise<Warehouse | null> {
-  const { data: warehouse, error } = await client
+): Promise<PostgrestSingleResponse<Warehouse>> {
+  return await client
     .from('warehouses')
     .update(data)
     .eq('id', id)
     .select()
     .single();
-
-  if (error) {
-    if (error.code === 'PGRST116') return null;
-    throw error;
-  }
-  return warehouse;
 }
 
 export async function hasInventory(client: Client, warehouseId: string): Promise<boolean> {
@@ -98,9 +83,11 @@ export async function hasInventory(client: Client, warehouseId: string): Promise
   return (count ?? 0) > 0;
 }
 
-export async function deleteWarehouse(client: Client, id: string): Promise<void> {
-  const { error } = await client.from('warehouses').delete().eq('id', id);
-  if (error) throw error;
+export async function deleteWarehouse(
+  client: Client,
+  id: string
+): Promise<PostgrestSingleResponse<null>> {
+  return await client.from('warehouses').delete().eq('id', id).select().single();
 }
 
 export async function warehouseExists(client: Client, warehouseId: string): Promise<boolean> {
