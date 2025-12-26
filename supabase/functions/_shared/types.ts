@@ -1,143 +1,43 @@
-// Movement types enum matching database
-export type MovementType =
-  | 'receive'
-  | 'transfer_out'
-  | 'transfer_in'
-  | 'adjust'
-  | 'reserve'
-  | 'release'
-  | 'fulfill';
+import type { Database } from './database.types.ts';
 
-// Order status enum matching database
-export type OrderStatus =
-  | 'pending'
-  | 'reserved'
-  | 'payment_processing'
-  | 'payment_failed'
-  | 'paid'
-  | 'fulfilling'
-  | 'fulfilled'
-  | 'cancelled';
+// Re-export Database type for convenience
+export type { Database };
 
-// Saga types
-export type SagaStatus =
-  | 'started'
-  | 'step_pending'
-  | 'step_executing'
-  | 'step_completed'
-  | 'step_failed'
-  | 'compensating'
-  | 'compensation_completed'
-  | 'completed'
-  | 'failed';
+// Enum types derived from generated types
+export type MovementType = Database['public']['Enums']['movement_type'];
+export type OrderStatus = Database['public']['Enums']['order_status'];
+export type SagaStatus = Database['public']['Enums']['saga_status'];
+export type SagaStepType = Database['public']['Enums']['saga_step_type'];
 
-export type SagaStepType =
-  | 'reserve_stock'
-  | 'process_payment'
-  | 'fulfill_order'
-  | 'release_stock'
-  | 'void_payment';
+// Database row types derived from generated types
+export type Product = Database['public']['Tables']['products']['Row'];
+export type Warehouse = Database['public']['Tables']['warehouses']['Row'];
+export type Inventory = Database['public']['Tables']['inventory']['Row'];
+export type StockMovement = Database['public']['Tables']['stock_movements']['Row'];
+export type Order = Database['public']['Tables']['orders']['Row'];
+export type OrderItem = Database['public']['Tables']['order_items']['Row'];
+export type Saga = Database['public']['Tables']['sagas']['Row'];
+export type SagaEvent = Database['public']['Tables']['saga_events']['Row'];
 
-// Database entity types
-export interface Product {
-  id: string;
-  sku: string;
-  name: string;
-  description?: string;
-  unit_price: number;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-}
+// Insert types for creating records
+export type ProductInsert = Database['public']['Tables']['products']['Insert'];
+export type WarehouseInsert = Database['public']['Tables']['warehouses']['Insert'];
+export type InventoryInsert = Database['public']['Tables']['inventory']['Insert'];
+export type StockMovementInsert = Database['public']['Tables']['stock_movements']['Insert'];
+export type OrderInsert = Database['public']['Tables']['orders']['Insert'];
+export type OrderItemInsert = Database['public']['Tables']['order_items']['Insert'];
 
-export interface Warehouse {
-  id: string;
-  code: string;
-  name: string;
-  address?: string;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-}
+// Update types for modifying records
+export type ProductUpdate = Database['public']['Tables']['products']['Update'];
+export type WarehouseUpdate = Database['public']['Tables']['warehouses']['Update'];
+export type InventoryUpdate = Database['public']['Tables']['inventory']['Update'];
 
-export interface InventoryLevel {
-  id: string;
-  product_id: string;
-  warehouse_id: string;
-  quantity_available: number;
-  quantity_reserved: number;
-  reorder_point: number;
-  reorder_quantity: number;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface StockMovement {
-  id: string;
-  correlation_id: string;
-  product_id: string;
-  warehouse_id: string;
-  movement_type: MovementType;
-  quantity: number;
-  reference_id?: string;
-  reference_type?: string;
-  notes?: string;
-  created_by?: string;
-  created_at: string;
-}
-
-export interface Order {
-  id: string;
-  order_number: string;
-  status: OrderStatus;
-  customer_id?: string;
-  warehouse_id: string;
-  total_amount: number;
-  payment_reference?: string;
-  notes?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface OrderItem {
-  id: string;
-  order_id: string;
-  product_id: string;
-  quantity: number;
-  unit_price: number;
-  created_at: string;
-}
-
-export interface Saga {
-  id: string;
-  saga_type: string;
-  correlation_id: string;
-  status: SagaStatus;
-  current_step?: SagaStepType;
-  payload: Record<string, unknown>;
-  error_message?: string;
-  retry_count: number;
-  max_retries: number;
-  created_at: string;
-  updated_at: string;
-  completed_at?: string;
-}
-
-export interface SagaEvent {
-  id: string;
-  saga_id: string;
-  step_type: SagaStepType;
-  event_type: string;
-  payload: Record<string, unknown>;
-  created_at: string;
-}
-
-// Request/Response types
+// Request/Response types for API endpoints
 export interface CreateProductRequest {
   sku: string;
   name: string;
   description?: string;
-  unit_price: number;
+  unit_price?: number;
   is_active?: boolean;
 }
 

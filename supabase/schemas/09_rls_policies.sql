@@ -9,83 +9,79 @@ ALTER TABLE sagas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE saga_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE outbox ENABLE ROW LEVEL SECURITY;
 
--- Products: Anyone can read, service role can write
+-- Products: Anyone can read, authenticated users can manage
 CREATE POLICY "Products are viewable by anyone"
   ON products FOR SELECT
   TO anon, authenticated
   USING (true);
 
-CREATE POLICY "Products are manageable by service role"
+CREATE POLICY "Products are manageable by authenticated users"
   ON products FOR ALL
-  TO service_role
-  USING (true);
+  TO authenticated
+  USING (true)
+  WITH CHECK (true);
 
--- Warehouses: Anyone can read, service role can write
+-- Warehouses: Anyone can read, authenticated users can manage
 CREATE POLICY "Warehouses are viewable by anyone"
   ON warehouses FOR SELECT
   TO anon, authenticated
   USING (true);
 
-CREATE POLICY "Warehouses are manageable by service role"
+CREATE POLICY "Warehouses are manageable by authenticated users"
   ON warehouses FOR ALL
-  TO service_role
-  USING (true);
+  TO authenticated
+  USING (true)
+  WITH CHECK (true);
 
--- Inventory: Anyone can read, service role manages
+-- Inventory: Anyone can read, authenticated users can manage
 CREATE POLICY "Inventory is viewable by anyone"
   ON inventory FOR SELECT
   TO anon, authenticated
   USING (true);
 
-CREATE POLICY "Inventory is manageable by service role"
+CREATE POLICY "Inventory is manageable by authenticated users"
   ON inventory FOR ALL
-  TO service_role
-  USING (true);
+  TO authenticated
+  USING (true)
+  WITH CHECK (true);
 
--- Stock movements: Anyone can read, service role writes
+-- Stock movements: Anyone can read, authenticated users can manage
 CREATE POLICY "Movements are viewable by anyone"
   ON stock_movements FOR SELECT
   TO anon, authenticated
   USING (true);
 
-CREATE POLICY "Movements are manageable by service role"
+CREATE POLICY "Movements are manageable by authenticated users"
   ON stock_movements FOR ALL
-  TO service_role
-  USING (true);
+  TO authenticated
+  USING (true)
+  WITH CHECK (true);
 
--- Orders: Anyone can read for PoC, service role manages
+-- Orders: Anyone can read, authenticated users can manage
 CREATE POLICY "Orders are viewable by anyone"
   ON orders FOR SELECT
   TO anon, authenticated
   USING (true);
 
-CREATE POLICY "Orders are insertable by anyone"
-  ON orders FOR INSERT
-  TO anon, authenticated
+CREATE POLICY "Orders are manageable by authenticated users"
+  ON orders FOR ALL
+  TO authenticated
+  USING (true)
   WITH CHECK (true);
 
-CREATE POLICY "Orders are manageable by service role"
-  ON orders FOR ALL
-  TO service_role
-  USING (true);
-
--- Order items: Anyone can read for PoC
+-- Order items: Anyone can read, authenticated users can manage
 CREATE POLICY "Order items are viewable by anyone"
   ON order_items FOR SELECT
   TO anon, authenticated
   USING (true);
 
-CREATE POLICY "Order items are insertable by anyone"
-  ON order_items FOR INSERT
-  TO anon, authenticated
+CREATE POLICY "Order items are manageable by authenticated users"
+  ON order_items FOR ALL
+  TO authenticated
+  USING (true)
   WITH CHECK (true);
 
-CREATE POLICY "Order items are manageable by service role"
-  ON order_items FOR ALL
-  TO service_role
-  USING (true);
-
--- Sagas and events: Service role only
+-- Sagas and events: Service role only (internal system operations)
 CREATE POLICY "Sagas are manageable by service role"
   ON sagas FOR ALL
   TO service_role
@@ -96,7 +92,7 @@ CREATE POLICY "Saga events are manageable by service role"
   TO service_role
   USING (true);
 
--- Outbox: Service role only
+-- Outbox: Service role only (internal system operations)
 CREATE POLICY "Outbox is manageable by service role"
   ON outbox FOR ALL
   TO service_role

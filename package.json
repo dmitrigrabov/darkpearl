@@ -9,14 +9,15 @@
     "db:reset": "supabase db reset",
     "db:diff": "supabase db diff --schema public",
     "db:push": "supabase db push",
+    "db:types": "supabase gen types typescript --local > supabase/functions/_shared/database.types.ts",
     "functions:serve": "supabase functions serve",
     "typespec:build": "tsp compile typespec/main.tsp",
     "typespec:watch": "tsp compile typespec/main.tsp --watch"
   },
   "devDependencies": {
-    "@typespec/compiler": "^0.62.0",
-    "@typespec/http": "^0.62.0",
-    "@typespec/rest": "^0.62.0",
-    "@typespec/openapi3": "^0.62.0"
+    "@typespec/compiler": "^1.7.1",
+    "@typespec/http": "^1.7.0",
+    "@typespec/rest": "^0.77.0",
+    "@typespec/openapi3": "^1.7.0"
   }
 }

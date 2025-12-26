@@ -1,92 +1,107 @@
+import { Hono } from 'hono';
+import { cors } from 'hono/cors';
 import { createServiceClient } from '../_shared/supabase-client.ts';
-import { handleCors } from '../_shared/cors.ts';
-import { jsonResponse, errorResponse } from '../_shared/response.ts';
 
 const MAX_RETRIES = 3;
 const BATCH_SIZE = 10;
 
-Deno.serve(async (req) => {
-  const corsResponse = handleCors(req);
-  if (corsResponse) return corsResponse;
+type Variables = {
+  serviceClient: ReturnType<typeof createServiceClient>;
+};
 
-  const supabase = createServiceClient();
+const app = new Hono<{ Variables: Variables }>();
 
-  try {
-    console.log('Saga worker: Starting outbox processing');
+app.use('/*', cors());
 
-    // Fetch unprocessed outbox events
-    const { data: events, error: fetchError } = await supabase
-      .from('outbox')
-      .select('*')
-      .is('processed_at', null)
-      .lt('retry_count', MAX_RETRIES)
-      .order('id', { ascending: true })
-      .limit(BATCH_SIZE);
-
-    if (fetchError) throw fetchError;
-
-    if (!events || events.length === 0) {
-      console.log('Saga worker: No events to process');
-      return jsonResponse({ message: 'No events to process', processed: 0 });
-    }
-
-    console.log(`Saga worker: Found ${events.length} events to process`);
-
-    const results: Array<{ id: number; status: string; error?: string }> = [];
-
-    for (const event of events) {
-      try {
-        console.log(`Processing outbox event ${event.id}: ${event.event_type}`);
-
-        if (event.event_type === 'saga_start') {
-          await processSagaStart(supabase, event);
-        } else if (event.event_type === 'saga_step') {
-          await processSagaStep(supabase, event);
-        } else {
-          console.log(`Unknown event type: ${event.event_type}`);
-        }
-
-        // Mark as processed
-        await supabase
-          .from('outbox')
-          .update({ processed_at: new Date().toISOString() })
-          .eq('id', event.id);
-
-        results.push({ id: event.id, status: 'processed' });
-        console.log(`Outbox event ${event.id} processed successfully`);
-      } catch (eventError) {
-        console.error(`Failed to process outbox event ${event.id}:`, eventError);
-
-        // Increment retry count
-        await supabase
-          .from('outbox')
-          .update({ retry_count: event.retry_count + 1 })
-          .eq('id', event.id);
-
-        results.push({
-          id: event.id,
-          status: 'failed',
-          error: eventError.message,
-        });
-      }
-    }
-
-    const processed = results.filter((r) => r.status === 'processed').length;
-    const failed = results.filter((r) => r.status === 'failed').length;
-
-    console.log(`Saga worker: Completed. Processed: ${processed}, Failed: ${failed}`);
-
-    return jsonResponse({
-      message: 'Outbox processing completed',
-      processed,
-      failed,
-      results,
-    });
-  } catch (error) {
-    console.error('Saga worker error:', error);
-    return errorResponse(error.message || 'Internal server error', 500);
-  }
+// Supabase service client middleware
+app.use('/*', async (c, next) => {
+  c.set('serviceClient', createServiceClient());
+  await next();
 });
+
+app.onError((err, c) => {
+  console.error('Saga worker error:', err);
+  return c.json({ error: err.message || 'Internal server error' }, 500);
+});
+
+// Process outbox events
+app.post('/', async (c) => {
+  const supabase = c.get('serviceClient');
+
+  console.log('Saga worker: Starting outbox processing');
+
+  // Fetch unprocessed outbox events
+  const { data: events, error: fetchError } = await supabase
+    .from('outbox')
+    .select('*')
+    .is('processed_at', null)
+    .lt('retry_count', MAX_RETRIES)
+    .order('id', { ascending: true })
+    .limit(BATCH_SIZE);
+
+  if (fetchError) throw fetchError;
+
+  if (!events || events.length === 0) {
+    console.log('Saga worker: No events to process');
+    return c.json({ message: 'No events to process', processed: 0 });
+  }
+
+  console.log(`Saga worker: Found ${events.length} events to process`);
+
+  const results: Array<{ id: number; status: string; error?: string }> = [];
+
+  for (const event of events) {
+    try {
+      console.log(`Processing outbox event ${event.id}: ${event.event_type}`);
+
+      if (event.event_type === 'saga_start') {
+        await processSagaStart(supabase, event);
+      } else if (event.event_type === 'saga_step') {
+        await processSagaStep(event);
+      } else {
+        console.log(`Unknown event type: ${event.event_type}`);
+      }
+
+      // Mark as processed
+      await supabase
+        .from('outbox')
+        .update({ processed_at: new Date().toISOString() })
+        .eq('id', event.id);
+
+      results.push({ id: event.id, status: 'processed' });
+      console.log(`Outbox event ${event.id} processed successfully`);
+    } catch (err) {
+      const eventError = err as Error;
+      console.error(`Failed to process outbox event ${event.id}:`, eventError);
+
+      // Increment retry count
+      await supabase
+        .from('outbox')
+        .update({ retry_count: event.retry_count + 1 })
+        .eq('id', event.id);
+
+      results.push({
+        id: event.id,
+        status: 'failed',
+        error: eventError.message,
+      });
+    }
+  }
+
+  const processed = results.filter((r) => r.status === 'processed').length;
+  const failed = results.filter((r) => r.status === 'failed').length;
+
+  console.log(`Saga worker: Completed. Processed: ${processed}, Failed: ${failed}`);
+
+  return c.json({
+    message: 'Outbox processing completed',
+    processed,
+    failed,
+    results,
+  });
+});
+
+Deno.serve(app.fetch);
 
 /**
  * Process a saga_start event - creates a new saga and triggers execution
@@ -162,7 +177,6 @@ async function processSagaStart(
  * Process a saga_step event - continues an existing saga
  */
 async function processSagaStep(
-  supabase: ReturnType<typeof createServiceClient>,
   event: { aggregate_id: string; payload: Record<string, unknown> }
 ) {
   const { saga_id, action, step_result, error } = event.payload as {

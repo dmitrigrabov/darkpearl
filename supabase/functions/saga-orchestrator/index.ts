@@ -1,6 +1,6 @@
+import { Hono } from 'hono';
+import { cors } from 'hono/cors';
 import { createServiceClient } from '../_shared/supabase-client.ts';
-import { handleCors } from '../_shared/cors.ts';
-import { jsonResponse, errorResponse } from '../_shared/response.ts';
 import type {
   SagaStepType,
   SagaStatus,
@@ -17,62 +17,76 @@ const COMPENSATION_MAP: Record<string, SagaStepType> = {
   process_payment: 'void_payment',
 };
 
-Deno.serve(async (req) => {
-  const corsResponse = handleCors(req);
-  if (corsResponse) return corsResponse;
+type Variables = {
+  serviceClient: ReturnType<typeof createServiceClient>;
+};
 
-  const supabase = createServiceClient();
+const app = new Hono<{ Variables: Variables }>();
 
-  try {
-    const body = await req.json();
-    const { saga_id, action } = body;
+app.use('/*', cors());
 
-    if (!saga_id || !action) {
-      return errorResponse('saga_id and action are required');
-    }
+// Supabase service client middleware
+app.use('/*', async (c, next) => {
+  c.set('serviceClient', createServiceClient());
+  await next();
+});
 
-    // Fetch saga state
-    const { data: saga, error: sagaError } = await supabase
-      .from('sagas')
-      .select('*')
-      .eq('id', saga_id)
-      .single();
+app.onError((err, c) => {
+  console.error('Saga orchestrator error:', err);
+  return c.json({ error: err.message || 'Internal server error' }, 500);
+});
 
-    if (sagaError || !saga) {
-      return errorResponse('Saga not found', 404);
-    }
+// Main orchestrator endpoint
+app.post('/', async (c) => {
+  const supabase = c.get('serviceClient');
+  const body = await c.req.json();
+  const { saga_id, action } = body;
 
-    const payload = saga.payload as OrderFulfillmentPayload;
+  if (!saga_id || !action) {
+    return c.json({ error: 'saga_id and action are required' }, 400);
+  }
 
-    console.log(`Saga ${saga_id}: Processing action "${action}", current status: ${saga.status}`);
+  // Fetch saga state
+  const { data: saga, error: sagaError } = await supabase
+    .from('sagas')
+    .select('*')
+    .eq('id', saga_id)
+    .single();
 
-    // Process based on action
-    switch (action) {
-      case 'execute_next':
-        return await executeNextStep(supabase, saga, payload);
+  if (sagaError || !saga) {
+    return c.json({ error: 'Saga not found' }, 404);
+  }
 
-      case 'step_completed':
-        return await handleStepCompletion(supabase, saga, payload, body.step_result);
+  const payload = saga.payload as OrderFulfillmentPayload;
 
-      case 'step_failed':
-        return await handleStepFailure(supabase, saga, payload, body.error);
+  console.log(`Saga ${saga_id}: Processing action "${action}", current status: ${saga.status}`);
 
-      case 'compensate':
-        return await startCompensation(supabase, saga, payload);
+  // Process based on action
+  switch (action) {
+    case 'execute_next':
+      return await executeNextStep(c, supabase, saga, payload);
 
-      default:
-        return errorResponse(`Unknown action: ${action}`, 400);
-    }
-  } catch (error) {
-    console.error('Saga orchestrator error:', error);
-    return errorResponse(error.message || 'Internal server error', 500);
+    case 'step_completed':
+      return await handleStepCompletion(c, supabase, saga, payload, body.step_result);
+
+    case 'step_failed':
+      return await handleStepFailure(c, supabase, saga, payload, body.error);
+
+    case 'compensate':
+      return await startCompensation(c, supabase, saga, payload);
+
+    default:
+      return c.json({ error: `Unknown action: ${action}` }, 400);
   }
 });
+
+Deno.serve(app.fetch);
 
 /**
  * Execute the next step in the saga
  */
 async function executeNextStep(
+  c: { json: (data: unknown, status?: number) => Response },
   supabase: ReturnType<typeof createServiceClient>,
   saga: Saga,
   payload: OrderFulfillmentPayload
@@ -86,7 +100,7 @@ async function executeNextStep(
     await updateOrderStatus(supabase, payload.order_id, 'fulfilled');
 
     console.log(`Saga ${saga.id}: All steps completed successfully`);
-    return jsonResponse({ status: 'saga_completed', saga_id: saga.id });
+    return c.json({ status: 'saga_completed', saga_id: saga.id });
   }
 
   // Update saga to show we're executing next step
@@ -122,11 +136,12 @@ async function executeNextStep(
     console.log(`Saga ${saga.id}: Step "${nextStep}" completed successfully`);
 
     // Continue to next step
-    return await executeNextStep(supabase, { ...saga, current_step: nextStep }, {
+    return await executeNextStep(c, supabase, { ...saga, current_step: nextStep }, {
       ...payload,
       ...result.updatedPayload,
     });
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error(`Saga ${saga.id}: Step "${nextStep}" failed:`, error);
 
     // Record failure
@@ -135,7 +150,7 @@ async function executeNextStep(
     });
 
     // Start compensation
-    return await startCompensation(supabase, { ...saga, current_step: nextStep }, payload);
+    return await startCompensation(c, supabase, { ...saga, current_step: nextStep }, payload);
   }
 }
 
@@ -153,7 +168,7 @@ async function executeStep(
       return await reserveStock(supabase, saga, payload);
 
     case 'process_payment':
-      return await processPayment(supabase, saga, payload);
+      return await processPayment(supabase, payload);
 
     case 'fulfill_order':
       return await fulfillOrder(supabase, saga, payload);
@@ -236,7 +251,6 @@ async function reserveStock(
  */
 async function processPayment(
   supabase: ReturnType<typeof createServiceClient>,
-  saga: Saga,
   payload: OrderFulfillmentPayload
 ) {
   await updateOrderStatus(supabase, payload.order_id, 'payment_processing');
@@ -250,7 +264,7 @@ async function processPayment(
     throw new Error('Payment declined by payment processor');
   }
 
-  const paymentReference = `PAY-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  const paymentReference = `PAY-${Date.now()}-${crypto.randomUUID().slice(0, 9)}`;
 
   // Update order with payment reference
   await supabase
@@ -327,6 +341,7 @@ async function fulfillOrder(
  * Start compensation process
  */
 async function startCompensation(
+  c: { json: (data: unknown, status?: number) => Response },
   supabase: ReturnType<typeof createServiceClient>,
   saga: Saga,
   payload: OrderFulfillmentPayload
@@ -354,7 +369,8 @@ async function startCompensation(
       try {
         await executeCompensationStep(supabase, saga, compensationStep, payload);
         await recordSagaEvent(supabase, saga.id, compensationStep, 'compensation_completed', {});
-      } catch (error) {
+      } catch (err) {
+        const error = err as Error;
         console.error(`Saga ${saga.id}: Compensation "${compensationStep}" failed:`, error);
         await recordSagaEvent(supabase, saga.id, compensationStep, 'compensation_failed', {
           error: error.message,
@@ -369,7 +385,7 @@ async function startCompensation(
   await updateOrderStatus(supabase, payload.order_id, 'cancelled');
 
   console.log(`Saga ${saga.id}: Compensation completed, saga marked as failed`);
-  return jsonResponse({ status: 'compensation_completed', saga_id: saga.id });
+  return c.json({ status: 'compensation_completed', saga_id: saga.id });
 }
 
 /**
@@ -386,7 +402,7 @@ async function executeCompensationStep(
       return await releaseStock(supabase, saga, payload);
 
     case 'void_payment':
-      return await voidPayment(supabase, saga, payload);
+      return await voidPayment(supabase, payload);
 
     default:
       console.log(`No compensation action for step: ${step}`);
@@ -446,7 +462,6 @@ async function releaseStock(
  */
 async function voidPayment(
   supabase: ReturnType<typeof createServiceClient>,
-  saga: Saga,
   payload: OrderFulfillmentPayload
 ) {
   // In production, this would call the payment gateway to void/refund
@@ -503,6 +518,7 @@ async function recordSagaEvent(
 }
 
 async function handleStepCompletion(
+  c: { json: (data: unknown, status?: number) => Response },
   supabase: ReturnType<typeof createServiceClient>,
   saga: Saga,
   payload: OrderFulfillmentPayload,
@@ -512,10 +528,11 @@ async function handleStepCompletion(
   if (saga.current_step) {
     await recordSagaEvent(supabase, saga.id, saga.current_step, 'step_completed', stepResult || {});
   }
-  return await executeNextStep(supabase, saga, payload);
+  return await executeNextStep(c, supabase, saga, payload);
 }
 
 async function handleStepFailure(
+  c: { json: (data: unknown, status?: number) => Response },
   supabase: ReturnType<typeof createServiceClient>,
   saga: Saga,
   payload: OrderFulfillmentPayload,
@@ -524,5 +541,5 @@ async function handleStepFailure(
   if (saga.current_step) {
     await recordSagaEvent(supabase, saga.id, saga.current_step, 'step_failed', { error });
   }
-  return await startCompensation(supabase, saga, payload);
+  return await startCompensation(c, supabase, saga, payload);
 }
