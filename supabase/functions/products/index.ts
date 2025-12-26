@@ -1,23 +1,23 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
-import { createSupabaseClient } from '../_shared/supabase-client.ts'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '../_shared/database.types.ts'
 import type { CreateProductRequest } from '../_shared/types.ts'
 import { updateProductSchema } from '../_shared/schemas.ts'
+import { supabaseMiddleware } from '../_shared/middleware.ts'
 import * as productService from '../_shared/services/product-service.ts'
 import { match, P } from 'ts-pattern'
 
-type Variables = {
-  supabase: ReturnType<typeof createSupabaseClient>
+type Env = {
+  Variables: {
+    supabase: SupabaseClient<Database>
+  }
 }
 
-const app = new Hono<{ Variables: Variables }>()
+const app = new Hono<Env>()
 
 app.use('/*', cors())
-
-app.use('/*', async (c, next) => {
-  c.set('supabase', createSupabaseClient(c.req.raw))
-  await next()
-})
+app.use('/*', supabaseMiddleware)
 
 app.onError((err, c) => {
   console.error('Products error:', err)

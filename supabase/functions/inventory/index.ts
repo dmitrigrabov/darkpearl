@@ -1,82 +1,82 @@
-import { Hono } from 'hono';
-import { cors } from 'hono/cors';
-import { createSupabaseClient } from '../_shared/supabase-client.ts';
-import type { CreateInventoryRequest, UpdateInventoryRequest } from '../_shared/types.ts';
-import * as inventoryService from '../_shared/services/inventory-service.ts';
-import * as productService from '../_shared/services/product-service.ts';
-import * as warehouseService from '../_shared/services/warehouse-service.ts';
-import { match, P } from 'ts-pattern';
+import { Hono } from 'hono'
+import { cors } from 'hono/cors'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '../_shared/database.types.ts'
+import type { CreateInventoryRequest, UpdateInventoryRequest } from '../_shared/types.ts'
+import { supabaseMiddleware } from '../_shared/middleware.ts'
+import * as inventoryService from '../_shared/services/inventory-service.ts'
+import * as productService from '../_shared/services/product-service.ts'
+import * as warehouseService from '../_shared/services/warehouse-service.ts'
+import { match, P } from 'ts-pattern'
 
-type Variables = {
-  supabase: ReturnType<typeof createSupabaseClient>;
-};
+type Env = {
+  Variables: {
+    supabase: SupabaseClient<Database>
+  }
+}
 
-const app = new Hono<{ Variables: Variables }>();
+const app = new Hono<Env>()
 
-app.use('/inventory/*', cors());
-
-app.use('/inventory/*', async (c, next) => {
-  c.set('supabase', createSupabaseClient(c.req.raw));
-  await next();
-});
+app.use('/inventory/*', cors())
+app.use('/inventory/*', supabaseMiddleware)
 
 app.onError((err, c) => {
-  console.error('Inventory error:', err);
-  return c.json({ error: err.message || 'Internal server error' }, 500);
-});
+  console.error('Inventory error:', err)
+  return c.json({ error: err.message || 'Internal server error' }, 500)
+})
 
-app.get('/inventory', async (c) => {
-  const client = c.get('supabase');
-  const productId = c.req.query('product_id');
-  const warehouseId = c.req.query('warehouse_id');
-  const lowStock = c.req.query('low_stock');
-  const limit = parseInt(c.req.query('limit') || '100');
-  const offset = parseInt(c.req.query('offset') || '0');
+app.get('/inventory', async c => {
+  const client = c.get('supabase')
+  const productId = c.req.query('product_id')
+  const warehouseId = c.req.query('warehouse_id')
+  const lowStock = c.req.query('low_stock')
+  const limit = parseInt(c.req.query('limit') || '100')
+  const offset = parseInt(c.req.query('offset') || '0')
 
   const result = await inventoryService.listInventory(client, {
     productId,
     warehouseId,
     lowStock: lowStock === 'true',
     limit,
-    offset,
-  });
+    offset
+  })
 
-  return c.json(result);
-});
+  return c.json(result)
+})
 
-app.get('/inventory/:id', async (c) => {
-  const client = c.get('supabase');
-  const id = c.req.param('id');
+app.get('/inventory/:id', async c => {
+  const client = c.get('supabase')
+  const id = c.req.param('id')
 
-  const result = await inventoryService.getInventory(client, id);
+  const result = await inventoryService.getInventory(client, id)
 
   return match(result)
     .with({ data: P.nonNullable }, () => c.json(result.data))
     .with({ error: { code: 'PGRST116' } }, () => c.json({ error: 'Inventory not found' }, 404))
     .otherwise(() => {
-      throw result.error;
-    });
-});
+      throw result.error
+    })
+})
 
-app.post('/inventory', async (c) => {
-  const client = c.get('supabase');
-  const body: CreateInventoryRequest = await c.req.json();
+app.post('/inventory', async c => {
+  const client = c.get('supabase')
+  const body: CreateInventoryRequest = await c.req.json()
 
   if (!body.product_id || !body.warehouse_id) {
-    return c.json({ error: 'product_id and warehouse_id are required' }, 400);
+    return c.json({ error: 'product_id and warehouse_id are required' }, 400)
   }
 
-  const productExists = await productService.productExists(client, body.product_id);
+  const productExists = await productService.productExists(client, body.product_id)
   if (!productExists) {
-    return c.json({ error: 'Product not found' }, 404);
+    return c.json({ error: 'Product not found' }, 404)
   }
 
-  const warehouseExists = await warehouseService.warehouseExists(client, body.warehouse_id);
+  const warehouseExists = await warehouseService.warehouseExists(client, body.warehouse_id)
   if (!warehouseExists) {
-    return c.json({ error: 'Warehouse not found' }, 404);
+    return c.json({ error: 'Warehouse not found' }, 404)
   }
 
-  const result = await inventoryService.createInventory(client, body);
+  const result = await inventoryService.createInventory(client, body)
 
   return match(result)
     .with({ data: P.nonNullable }, () => c.json(result.data, 201))
@@ -84,44 +84,44 @@ app.post('/inventory', async (c) => {
       c.json({ error: 'Inventory already exists for this product-warehouse combination' }, 409)
     )
     .otherwise(() => {
-      throw result.error;
-    });
-});
+      throw result.error
+    })
+})
 
-app.put('/inventory/:id', async (c) => {
-  const client = c.get('supabase');
-  const id = c.req.param('id');
-  const body: UpdateInventoryRequest = await c.req.json();
+app.put('/inventory/:id', async c => {
+  const client = c.get('supabase')
+  const id = c.req.param('id')
+  const body: UpdateInventoryRequest = await c.req.json()
 
   if (body.quantity_available !== undefined && body.quantity_available < 0) {
-    return c.json({ error: 'quantity_available cannot be negative' }, 400);
+    return c.json({ error: 'quantity_available cannot be negative' }, 400)
   }
   if (body.quantity_reserved !== undefined && body.quantity_reserved < 0) {
-    return c.json({ error: 'quantity_reserved cannot be negative' }, 400);
+    return c.json({ error: 'quantity_reserved cannot be negative' }, 400)
   }
 
-  const result = await inventoryService.updateInventory(client, id, body);
+  const result = await inventoryService.updateInventory(client, id, body)
 
   return match(result)
     .with({ data: P.nonNullable }, () => c.json(result.data))
     .with({ error: { code: 'PGRST116' } }, () => c.json({ error: 'Inventory not found' }, 404))
     .otherwise(() => {
-      throw result.error;
-    });
-});
+      throw result.error
+    })
+})
 
-app.delete('/inventory/:id', async (c) => {
-  const client = c.get('supabase');
-  const id = c.req.param('id');
+app.delete('/inventory/:id', async c => {
+  const client = c.get('supabase')
+  const id = c.req.param('id')
 
-  const result = await inventoryService.deleteInventory(client, id);
+  const result = await inventoryService.deleteInventory(client, id)
 
   return match(result)
     .with({ data: P.nonNullable }, () => c.json({ message: 'Inventory deleted' }))
     .with({ error: { code: 'PGRST116' } }, () => c.json({ error: 'Inventory not found' }, 404))
     .otherwise(() => {
-      throw result.error;
-    });
-});
+      throw result.error
+    })
+})
 
-Deno.serve(app.fetch);
+Deno.serve(app.fetch)

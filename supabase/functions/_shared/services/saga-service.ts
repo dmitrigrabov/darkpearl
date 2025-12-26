@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '../database.types.ts'
-import type { Saga, SagaStatus, SagaStepType, OrderFulfillmentPayload } from '../types.ts'
+import type { Saga, SagaStatus, SagaStepType } from '../types.ts'
 
 type Client = SupabaseClient<Database>
 

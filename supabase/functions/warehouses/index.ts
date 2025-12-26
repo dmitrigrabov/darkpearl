@@ -1,22 +1,22 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import { createSupabaseClient } from '../_shared/supabase-client.ts';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '../_shared/database.types.ts';
 import type { CreateWarehouseRequest, UpdateWarehouseRequest } from '../_shared/types.ts';
+import { supabaseMiddleware } from '../_shared/middleware.ts';
 import * as warehouseService from '../_shared/services/warehouse-service.ts';
 import { match, P } from 'ts-pattern';
 
-type Variables = {
-  supabase: ReturnType<typeof createSupabaseClient>;
+type Env = {
+  Variables: {
+    supabase: SupabaseClient<Database>;
+  };
 };
 
-const app = new Hono<{ Variables: Variables }>();
+const app = new Hono<Env>();
 
 app.use('/warehouses/*', cors());
-
-app.use('/warehouses/*', async (c, next) => {
-  c.set('supabase', createSupabaseClient(c.req.raw));
-  await next();
-});
+app.use('/warehouses/*', supabaseMiddleware);
 
 app.onError((err, c) => {
   console.error('Warehouses error:', err);
