@@ -24,6 +24,7 @@ export function useCreateOrder() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       queryClient.invalidateQueries({ queryKey: ['inventory'] });
+      queryClient.invalidateQueries({ queryKey: ['stock-movements'] });
     },
   });
 }
@@ -35,6 +36,7 @@ export function useCancelOrder() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       queryClient.invalidateQueries({ queryKey: ['inventory'] });
+      queryClient.invalidateQueries({ queryKey: ['stock-movements'] });
     },
   });
 }
