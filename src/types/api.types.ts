@@ -26,6 +26,14 @@ export interface OrderWithRelations extends Order {
   warehouse: Pick<Warehouse, 'id' | 'code' | 'name'>;
 }
 
+export interface SagaEvent {
+  id: string;
+  step_type: string;
+  event_type: string;
+  payload: Record<string, unknown>;
+  created_at: string;
+}
+
 export interface OrderDetailWithSaga extends Order {
   items: (OrderItem & { product: Pick<Product, 'id' | 'sku' | 'name'> })[];
   warehouse: Pick<Warehouse, 'id' | 'code' | 'name'>;
@@ -34,6 +42,9 @@ export interface OrderDetailWithSaga extends Order {
     status: string;
     current_step: string | null;
     error_message: string | null;
+    created_at: string;
+    completed_at: string | null;
+    events: SagaEvent[];
   } | null;
 }
 

@@ -5,7 +5,7 @@ import { createSupabaseClient, createServiceClient } from '../_shared/supabase-c
 import type { CreateOrderRequest, OrderStatus } from '../_shared/types.ts';
 import * as orderService from '../_shared/services/order-service.ts';
 import * as sagaService from '../_shared/services/saga-service.ts';
-import * as inventoryService from '../_shared/services/inventory-service.ts';
+import * as warehouseService from '../_shared/services/warehouse-service.ts';
 import { SagaPayloadSchema } from '../_shared/schemas.ts';
 
 type Variables = {
@@ -55,8 +55,8 @@ app.get('/orders/:id', async (c) => {
     return c.json({ error: 'Order not found' }, 404);
   }
 
-  // Get saga status (needs service role)
-  const saga = await sagaService.getSagaStatus(serviceClient, id);
+  // Get saga with events (needs service role)
+  const saga = await sagaService.getSagaWithEvents(serviceClient, id);
 
   return c.json({ ...order, saga: saga || null });
 });
@@ -70,7 +70,7 @@ app.post('/orders', async (c) => {
   }
 
   // Validate warehouse exists
-  const warehouseExists = await inventoryService.warehouseExists(client, body.warehouse_id);
+  const warehouseExists = await warehouseService.warehouseExists(client, body.warehouse_id);
   if (!warehouseExists) {
     return c.json({ error: 'Warehouse not found' }, 404);
   }

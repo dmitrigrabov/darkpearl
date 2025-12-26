@@ -3,6 +3,8 @@ import { cors } from 'hono/cors';
 import { createSupabaseClient } from '../_shared/supabase-client.ts';
 import type { CreateInventoryRequest, UpdateInventoryRequest } from '../_shared/types.ts';
 import * as inventoryService from '../_shared/services/inventory-service.ts';
+import * as productService from '../_shared/services/product-service.ts';
+import * as warehouseService from '../_shared/services/warehouse-service.ts';
 
 type Variables = {
   supabase: ReturnType<typeof createSupabaseClient>;
@@ -60,12 +62,12 @@ app.post('/inventory', async (c) => {
     return c.json({ error: 'product_id and warehouse_id are required' }, 400);
   }
 
-  const productExists = await inventoryService.productExists(client, body.product_id);
+  const productExists = await productService.productExists(client, body.product_id);
   if (!productExists) {
     return c.json({ error: 'Product not found' }, 404);
   }
 
-  const warehouseExists = await inventoryService.warehouseExists(client, body.warehouse_id);
+  const warehouseExists = await warehouseService.warehouseExists(client, body.warehouse_id);
   if (!warehouseExists) {
     return c.json({ error: 'Warehouse not found' }, 404);
   }

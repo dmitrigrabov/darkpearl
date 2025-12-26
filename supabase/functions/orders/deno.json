@@ -3,6 +3,7 @@
     "@supabase/supabase-js": "npm:@supabase/supabase-js@2",
     "@trigger.dev/sdk": "npm:@trigger.dev/sdk@3",
     "hono": "npm:hono@4",
-    "hono/cors": "npm:hono@4/cors"
+    "hono/cors": "npm:hono@4/cors",
+    "zod": "npm:zod@4"
   }
 }

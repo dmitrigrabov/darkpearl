@@ -85,3 +85,13 @@ export async function deleteProduct(client: Client, id: string): Promise<void> {
   const { error } = await client.from('products').delete().eq('id', id);
   if (error) throw error;
 }
+
+export async function productExists(client: Client, productId: string): Promise<boolean> {
+  const { data } = await client
+    .from('products')
+    .select('id')
+    .eq('id', productId)
+    .single();
+
+  return !!data;
+}

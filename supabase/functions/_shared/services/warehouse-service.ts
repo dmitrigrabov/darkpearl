@@ -102,3 +102,13 @@ export async function deleteWarehouse(client: Client, id: string): Promise<void>
   const { error } = await client.from('warehouses').delete().eq('id', id);
   if (error) throw error;
 }
+
+export async function warehouseExists(client: Client, warehouseId: string): Promise<boolean> {
+  const { data } = await client
+    .from('warehouses')
+    .select('id')
+    .eq('id', warehouseId)
+    .single();
+
+  return !!data;
+}

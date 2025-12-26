@@ -130,3 +130,46 @@ export async function recordSagaEvent(
   });
   if (error) throw error;
 }
+
+export async function getSagaWithEvents(
+  client: Client,
+  correlationId: string
+): Promise<{
+  id: string;
+  status: SagaStatus;
+  current_step: SagaStepType | null;
+  error_message: string | null;
+  created_at: string;
+  completed_at: string | null;
+  events: Array<{
+    id: string;
+    step_type: SagaStepType;
+    event_type: string;
+    payload: Record<string, unknown>;
+    created_at: string;
+  }>;
+} | null> {
+  const { data: saga, error: sagaError } = await client
+    .from('sagas')
+    .select('id, status, current_step, error_message, created_at, completed_at')
+    .eq('correlation_id', correlationId)
+    .single();
+
+  if (sagaError) {
+    if (sagaError.code === 'PGRST116') return null;
+    throw sagaError;
+  }
+
+  const { data: events, error: eventsError } = await client
+    .from('saga_events')
+    .select('id, step_type, event_type, payload, created_at')
+    .eq('saga_id', saga.id)
+    .order('created_at', { ascending: true });
+
+  if (eventsError) throw eventsError;
+
+  return {
+    ...saga,
+    events: events ?? [],
+  };
+}

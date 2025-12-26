@@ -110,26 +110,6 @@ export async function getInventoryByProductWarehouse(
   return data;
 }
 
-export async function productExists(client: Client, productId: string): Promise<boolean> {
-  const { data } = await client
-    .from('products')
-    .select('id')
-    .eq('id', productId)
-    .single();
-
-  return !!data;
-}
-
-export async function warehouseExists(client: Client, warehouseId: string): Promise<boolean> {
-  const { data } = await client
-    .from('warehouses')
-    .select('id')
-    .eq('id', warehouseId)
-    .single();
-
-  return !!data;
-}
-
 export async function createInventory(
   client: Client,
   data: CreateInventoryRequest

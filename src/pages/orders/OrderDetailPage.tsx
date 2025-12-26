@@ -4,9 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toaster';
+import { Stepper, type Step, type StepStatus } from '@/components/ui/stepper';
 import { ArrowLeft } from 'lucide-react';
 import { format } from 'date-fns';
-import type { OrderStatus } from '@/types/api.types';
+import type { OrderStatus, SagaEvent } from '@/types/api.types';
 
 const STATUS_COLORS: Record<OrderStatus, 'default' | 'secondary' | 'destructive'> = {
   pending: 'secondary',
@@ -18,6 +19,55 @@ const STATUS_COLORS: Record<OrderStatus, 'default' | 'secondary' | 'destructive'
   fulfilled: 'default',
   cancelled: 'destructive',
 };
+
+const SAGA_STEPS = [
+  { id: 'reserve_stock', label: 'Reserve Stock' },
+  { id: 'process_payment', label: 'Process Payment' },
+  { id: 'fulfill_order', label: 'Fulfill Order' },
+] as const;
+
+function buildStepsFromSaga(
+  events: SagaEvent[],
+  currentStep: string | null,
+  sagaStatus: string,
+  errorMessage: string | null
+): Step[] {
+  return SAGA_STEPS.map((stepDef) => {
+    const startedEvent = events.find(
+      (e) => e.step_type === stepDef.id && e.event_type === 'step_started'
+    );
+    const completedEvent = events.find(
+      (e) => e.step_type === stepDef.id && e.event_type === 'step_completed'
+    );
+    const failedEvent = events.find(
+      (e) => e.step_type === stepDef.id && e.event_type === 'step_failed'
+    );
+
+    let status: StepStatus = 'pending';
+    let timestamp: string | undefined;
+    let error: string | undefined;
+
+    if (failedEvent) {
+      status = 'failed';
+      timestamp = failedEvent.created_at;
+      error = errorMessage ?? (failedEvent.payload?.error as string);
+    } else if (completedEvent) {
+      status = 'completed';
+      timestamp = completedEvent.created_at;
+    } else if (startedEvent || currentStep === stepDef.id) {
+      status = 'in_progress';
+      timestamp = startedEvent?.created_at;
+    }
+
+    return {
+      id: stepDef.id,
+      label: stepDef.label,
+      status,
+      timestamp,
+      error,
+    };
+  });
+}
 
 export function OrderDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -95,23 +145,15 @@ export function OrderDetailPage() {
             <CardHeader>
               <CardTitle>Fulfillment Status</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Saga Status</span>
-                <Badge variant="secondary">{order.saga.status}</Badge>
-              </div>
-              {order.saga.current_step && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Current Step</span>
-                  <span>{order.saga.current_step.replace('_', ' ')}</span>
-                </div>
-              )}
-              {order.saga.error_message && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Error</span>
-                  <span className="text-destructive">{order.saga.error_message}</span>
-                </div>
-              )}
+            <CardContent>
+              <Stepper
+                steps={buildStepsFromSaga(
+                  order.saga.events,
+                  order.saga.current_step,
+                  order.saga.status,
+                  order.saga.error_message
+                )}
+              />
             </CardContent>
           </Card>
         )}
