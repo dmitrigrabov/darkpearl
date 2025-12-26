@@ -3,6 +3,7 @@
     "@supabase/supabase-js": "npm:@supabase/supabase-js@2",
     "hono": "npm:hono@4",
     "hono/cors": "npm:hono@4/cors",
-    "zod": "npm:zod@3"
+    "zod": "npm:zod@4",
+    "ts-pattern": "npm:ts-pattern@5"
   }
 }

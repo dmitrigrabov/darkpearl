@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import * as z from 'zod';
 
 // Enum schemas matching database enums
 export const MovementTypeSchema = z.enum([
@@ -76,8 +76,8 @@ export const UpdateWarehouseSchema = z.object({
 
 // Inventory schemas
 export const CreateInventorySchema = z.object({
-  product_id: z.string().uuid('Product ID must be a valid UUID'),
-  warehouse_id: z.string().uuid('Warehouse ID must be a valid UUID'),
+  product_id: z.uuid({ error: 'Product ID must be a valid UUID' }),
+  warehouse_id: z.uuid({ error: 'Warehouse ID must be a valid UUID' }),
   quantity_available: z.number().int().nonnegative('Quantity must be non-negative').optional(),
   reorder_point: z.number().int().nonnegative('Reorder point must be non-negative').optional(),
   reorder_quantity: z.number().int().nonnegative('Reorder quantity must be non-negative').optional(),
@@ -92,9 +92,9 @@ export const UpdateInventorySchema = z.object({
 
 // Stock movement schemas
 export const CreateStockMovementSchema = z.object({
-  correlation_id: z.string().uuid('Correlation ID must be a valid UUID').optional(),
-  product_id: z.string().uuid('Product ID must be a valid UUID'),
-  warehouse_id: z.string().uuid('Warehouse ID must be a valid UUID'),
+  correlation_id: z.uuid({ error: 'Correlation ID must be a valid UUID' }).optional(),
+  product_id: z.uuid({ error: 'Product ID must be a valid UUID' }),
+  warehouse_id: z.uuid({ error: 'Warehouse ID must be a valid UUID' }),
   movement_type: MovementTypeSchema,
   quantity: z.number().int().positive('Quantity must be a positive integer'),
   reference_id: z.string().optional(),
@@ -104,50 +104,50 @@ export const CreateStockMovementSchema = z.object({
 
 // Order schemas
 export const CreateOrderItemSchema = z.object({
-  product_id: z.uuid('Product ID must be a valid UUID'),
+  product_id: z.uuid({ error: 'Product ID must be a valid UUID' }),
   quantity: z.number().int().positive('Quantity must be a positive integer'),
   unit_price: z.number().nonnegative('Unit price must be non-negative').optional(),
 });
 
 export const CreateOrderSchema = z.object({
   customer_id: z.string().optional(),
-  warehouse_id: z.string().uuid('Warehouse ID must be a valid UUID'),
+  warehouse_id: z.uuid({ error: 'Warehouse ID must be a valid UUID' }),
   notes: z.string().optional(),
   items: z.array(CreateOrderItemSchema).min(1, 'At least one item is required'),
 });
 
 // Saga orchestrator schemas
 export const SagaOrchestratorRequestSchema = z.object({
-  saga_id: z.string().uuid('Saga ID must be a valid UUID'),
+  saga_id: z.uuid({ error: 'Saga ID must be a valid UUID' }),
   action: z.enum(['execute_next', 'step_completed', 'step_failed', 'compensate']),
-  step_result: z.record(z.unknown()).optional(),
+  step_result: z.record(z.string(), z.unknown()).optional(),
   error: z.string().optional(),
 });
 
 // Saga payload item schema (reusable)
 export const SagaPayloadItemSchema = z.object({
-  product_id: z.string().uuid({ message: 'Product ID must be a valid UUID' }),
+  product_id: z.uuid({ error: 'Product ID must be a valid UUID' }),
   quantity: z.number().int().positive('Quantity must be a positive integer'),
   unit_price: z.number().nonnegative('Unit price must be non-negative'),
 });
 
 // Saga payload stored in database
 export const SagaPayloadSchema = z.object({
-  order_id: z.string().uuid({ message: 'Order ID must be a valid UUID' }),
-  warehouse_id: z.string().uuid({ message: 'Warehouse ID must be a valid UUID' }),
+  order_id: z.uuid({ error: 'Order ID must be a valid UUID' }),
+  warehouse_id: z.uuid({ error: 'Warehouse ID must be a valid UUID' }),
   items: z.array(SagaPayloadItemSchema),
 });
 
-// Outbox event payload schemas
+// Event payload schemas
 export const SagaStartPayloadSchema = z.object({
   saga_type: z.string().min(1, 'Saga type is required'),
-  order_id: z.string().uuid({ message: 'Order ID must be a valid UUID' }),
-  warehouse_id: z.string().uuid({ message: 'Warehouse ID must be a valid UUID' }),
+  order_id: z.uuid({ error: 'Order ID must be a valid UUID' }),
+  warehouse_id: z.uuid({ error: 'Warehouse ID must be a valid UUID' }),
   items: z.array(SagaPayloadItemSchema).min(1, 'At least one item is required'),
 });
 
 export const SagaStepPayloadSchema = z.object({
-  saga_id: z.string().uuid({ message: 'Saga ID must be a valid UUID' }),
+  saga_id: z.uuid({ error: 'Saga ID must be a valid UUID' }),
   action: z.string().min(1, 'Action is required'),
   step_result: z.record(z.string(), z.unknown()).optional(),
   error: z.string().optional(),
@@ -171,7 +171,7 @@ export type SagaStepPayload = z.infer<typeof SagaStepPayloadSchema>;
 
 // Validation helper that returns formatted error response
 export function validateBody<T>(
-  schema: z.ZodSchema<T>,
+  schema: z.ZodType<T>,
   data: unknown
 ): { success: true; data: T } | { success: false; error: string } {
   const result = schema.safeParse(data);

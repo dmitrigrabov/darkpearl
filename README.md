@@ -9,18 +9,21 @@ A proof-of-concept stock management backend demonstrating the **Saga pattern** f
 │                      Supabase Edge Functions                     │
 ├─────────────┬─────────────┬─────────────┬─────────────┬─────────┤
 │  products   │ warehouses  │  inventory  │   orders    │  saga-  │
-│   CRUD      │    CRUD     │   CRUD      │  (triggers  │ orches- │
-│             │             │             │   saga)     │ trator  │
+│   CRUD      │    CRUD     │   CRUD      │  (triggers  │ webhook │
+│             │             │             │   saga)     │         │
 └─────────────┴─────────────┴─────────────┴─────────────┴─────────┘
                                    │
-                    ┌──────────────┴──────────────┐
-                    │     Supabase PostgreSQL      │
-                    ├──────────────────────────────┤
-                    │ products | warehouses        │
-                    │ inventory | stock_movements  │
-                    │ orders | order_items         │
-                    │ sagas | saga_events | outbox │
-                    └──────────────────────────────┘
+              ┌────────────────────┴────────────────────┐
+              │                                         │
+              ▼                                         ▼
+┌──────────────────────────┐              ┌─────────────────────────┐
+│   Supabase PostgreSQL    │              │      Trigger.dev        │
+├──────────────────────────┤    pg_net    ├─────────────────────────┤
+│ products | warehouses    │ ──────────►  │   order-saga task       │
+│ inventory | stock_movs   │              │   (durable execution)   │
+│ orders | order_items     │              └─────────────────────────┘
+│ sagas | saga_events      │
+└──────────────────────────┘
 ```
 
 ## Order Fulfillment Saga
@@ -131,13 +134,10 @@ CREATE ORDER → Reserve Stock → Process Payment → Fulfill Order → COMPLET
 ## Key Design Patterns
 
 ### Saga Orchestration
-Central `saga-orchestrator` function coordinates all steps. Saga state is persisted in the `sagas` table, with each step recorded in `saga_events` for a complete audit trail.
+Trigger.dev tasks coordinate all saga steps with durable execution. A PostgreSQL trigger fires on order creation, using `pg_net` to call the `saga-webhook` Edge Function, which triggers the saga task. Saga state is persisted in the `sagas` table, with each step recorded in `saga_events` for a complete audit trail.
 
 ### Idempotency
 All stock movements use a `correlation_id` with a unique constraint. This ensures operations are safe to retry without causing duplicate effects.
-
-### Outbox Pattern
-Events are written to the `outbox` table in the same transaction as business data. The `saga-worker` function polls the outbox and processes events, ensuring reliable message delivery.
 
 ### Event Sourcing (Light)
 The `saga_events` table provides a complete history of all saga steps. This can be used for debugging, auditing, and potentially replaying state.
@@ -157,8 +157,8 @@ darkpearl/
 │   │   ├── 05_stock_movements.sql
 │   │   ├── 06_orders.sql
 │   │   ├── 07_saga_events.sql
-│   │   ├── 08_outbox.sql
-│   │   └── 09_rls_policies.sql
+│   │   ├── 09_rls_policies.sql
+│   │   └── 10_saga_trigger.sql
 │   ├── functions/            # Edge Functions
 │   │   ├── _shared/          # Shared utilities
 │   │   ├── products/
@@ -166,8 +166,9 @@ darkpearl/
 │   │   ├── inventory/
 │   │   ├── stock-movements/
 │   │   ├── orders/
-│   │   ├── saga-orchestrator/
-│   │   └── saga-worker/
+│   │   └── saga-webhook/
+│   ├── trigger/              # Trigger.dev tasks
+│   │   └── order-saga.ts
 │   └── seed.sql              # Development seed data
 ├── typespec/                 # API documentation
 │   ├── main.tsp
@@ -213,7 +214,7 @@ For production deployment, set these in your Supabase project:
 ## Further Reading
 
 - [Saga Pattern](https://microservices.io/patterns/data/saga.html)
-- [Transactional Outbox](https://microservices.io/patterns/data/transactional-outbox.html)
+- [Trigger.dev Documentation](https://trigger.dev/docs)
 - [Supabase Edge Functions](https://supabase.com/docs/guides/functions)
 - [Supabase Declarative Schemas](https://supabase.com/docs/guides/local-development/declarative-database-schemas)
 - [TypeSpec Documentation](https://typespec.io/)

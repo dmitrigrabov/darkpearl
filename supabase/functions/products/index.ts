@@ -3,6 +3,7 @@ import { cors } from 'hono/cors';
 import { createSupabaseClient } from '../_shared/supabase-client.ts';
 import type { CreateProductRequest, UpdateProductRequest } from '../_shared/types.ts';
 import * as productService from '../_shared/services/product-service.ts';
+import { match } from 'ts-pattern';
 
 type Variables = {
   supabase: ReturnType<typeof createSupabaseClient>;
@@ -75,19 +76,18 @@ app.put('/products/:id', async (c) => {
   const id = c.req.param('id');
   const body: UpdateProductRequest = await c.req.json();
 
-  try {
-    const product = await productService.updateProduct(client, id, body);
-    if (!product) {
-      return c.json({ error: 'Product not found' }, 404);
-    }
-    return c.json(product);
-  } catch (err) {
-    const error = err as { code?: string };
-    if (error.code === '23505') {
-      return c.json({ error: 'Product with this SKU already exists' }, 409);
-    }
-    throw err;
-  }
+
+    const {data, error} = await productService.updateProduct(client, id, body);
+if (error) {
+  return match(error)
+    .with({ code: 'PGRST116' }, () => c.json({ error: 'Product not found' }, 404))
+    .with({ code: '23505' }, () => c.json({ error: 'Product with this SKU already exists' }, 409))
+    .otherwise(() => {
+      throw error;
+    });   
+}
+return c.json(data);
+
 });
 
 app.delete('/products/:id', async (c) => {

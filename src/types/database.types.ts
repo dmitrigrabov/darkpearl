@@ -174,39 +174,6 @@ export type Database = {
           },
         ]
       }
-      outbox: {
-        Row: {
-          aggregate_id: string
-          aggregate_type: string
-          created_at: string
-          event_type: string
-          id: number
-          payload: Json
-          processed_at: string | null
-          retry_count: number
-        }
-        Insert: {
-          aggregate_id: string
-          aggregate_type: string
-          created_at?: string
-          event_type: string
-          id?: never
-          payload: Json
-          processed_at?: string | null
-          retry_count?: number
-        }
-        Update: {
-          aggregate_id?: string
-          aggregate_type?: string
-          created_at?: string
-          event_type?: string
-          id?: never
-          payload?: Json
-          processed_at?: string | null
-          retry_count?: number
-        }
-        Relationships: []
-      }
       products: {
         Row: {
           created_at: string
@@ -412,15 +379,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      add_outbox_event: {
-        Args: {
-          p_aggregate_id: string
-          p_aggregate_type: string
-          p_event_type: string
-          p_payload: Json
-        }
-        Returns: number
-      }
       check_stock_availability: {
         Args: {
           p_product_id: string
