@@ -331,13 +331,6 @@ deno_version = 2
 [functions.saga-webhook]
 verify_jwt = false
 
-# DEPRECATED: Old saga functions - kept temporarily for migration
-# These can be removed once trigger.dev is fully operational
-# [functions.saga-orchestrator]
-# verify_jwt = false
-# [functions.saga-worker]
-# verify_jwt = false
-
 [analytics]
 enabled = true
 port = 54327
