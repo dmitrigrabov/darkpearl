@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { Database } from '../database.types.ts'
+import type { Database, Json } from '../database.types.ts'
 import type { Saga, SagaStatus, SagaStepType } from '../types.ts'
 
 type Client = SupabaseClient<Database>
@@ -61,7 +61,7 @@ export async function updateSagaStatus(
   status: SagaStatus,
   errorMessage?: string | null
 ): Promise<void> {
-  const update: Record<string, unknown> = { status }
+  const update: Database['public']['Tables']['sagas']['Update'] = { status }
   if (status === 'completed' || status === 'failed') {
     update.completed_at = new Date().toISOString()
   }
@@ -78,9 +78,9 @@ export async function updateSagaStep(
   id: string,
   currentStep: SagaStepType,
   status: SagaStatus,
-  payload?: Record<string, unknown>
+  payload?: Json
 ): Promise<void> {
-  const update: Record<string, unknown> = {
+  const update: Database['public']['Tables']['sagas']['Update'] = {
     current_step: currentStep,
     status
   }
@@ -97,7 +97,7 @@ export async function recordSagaEvent(
   sagaId: string,
   stepType: SagaStepType,
   eventType: string,
-  payload: Record<string, unknown>
+  payload: Json
 ): Promise<void> {
   const { error } = await client.from('saga_events').insert({
     saga_id: sagaId,
@@ -123,7 +123,7 @@ export async function getSagaWithEvents(
     id: string
     step_type: SagaStepType
     event_type: string
-    payload: Record<string, unknown>
+    payload: Json
     created_at: string
   }>
 } | null> {
