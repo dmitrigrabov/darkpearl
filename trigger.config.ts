@@ -14,5 +14,5 @@ export default defineConfig({
       maxTimeoutInMs: 30000,
     },
   },
-  dirs: ["./trigger"],
+  dirs: ["./supabase/trigger"],
 });

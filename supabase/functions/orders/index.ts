@@ -6,6 +6,7 @@ import type { CreateOrderRequest, OrderStatus } from '../_shared/types.ts';
 import * as orderService from '../_shared/services/order-service.ts';
 import * as sagaService from '../_shared/services/saga-service.ts';
 import * as inventoryService from '../_shared/services/inventory-service.ts';
+import { SagaPayloadSchema } from '../_shared/schemas.ts';
 
 type Variables = {
   supabase: ReturnType<typeof createSupabaseClient>;
@@ -62,7 +63,6 @@ app.get('/orders/:id', async (c) => {
 
 app.post('/orders', async (c) => {
   const client = c.get('supabase');
-  const serviceClient = c.get('serviceClient');
   const body: CreateOrderRequest = await c.req.json();
 
   if (!body.warehouse_id || !body.items || body.items.length === 0) {
@@ -148,15 +148,20 @@ app.delete('/orders/:id', async (c) => {
 
   if (saga && saga.status !== 'completed' && saga.status !== 'failed') {
     try {
-      // Trigger compensation via trigger.dev
-      const payload = saga.payload as Record<string, unknown> | null;
-      await tasks.trigger('compensate-order-saga', {
-        correlationId: id,
-        orderId: id,
-        warehouseId: payload?.warehouse_id as string,
-        items: (payload?.items as Array<{ product_id: string; quantity: number; unit_price: number }>) || [],
-        triggerRunId: 'manual-cancellation',
-      });
+      // Validate and parse saga payload
+      const payloadResult = SagaPayloadSchema.safeParse(saga.payload);
+      if (!payloadResult.success) {
+        console.error('Invalid saga payload:', payloadResult.error);
+      } else {
+        // Trigger compensation via trigger.dev
+        await tasks.trigger('compensate-order-saga', {
+          correlationId: id,
+          orderId: id,
+          warehouseId: payloadResult.data.warehouse_id,
+          items: payloadResult.data.items,
+          triggerRunId: 'manual-cancellation',
+        });
+      }
     } catch (e) {
       console.error('Failed to trigger compensation:', e);
     }

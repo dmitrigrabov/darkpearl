@@ -124,18 +124,26 @@ export const SagaOrchestratorRequestSchema = z.object({
   error: z.string().optional(),
 });
 
+// Saga payload item schema (reusable)
+export const SagaPayloadItemSchema = z.object({
+  product_id: z.string().uuid({ message: 'Product ID must be a valid UUID' }),
+  quantity: z.number().int().positive('Quantity must be a positive integer'),
+  unit_price: z.number().nonnegative('Unit price must be non-negative'),
+});
+
+// Saga payload stored in database
+export const SagaPayloadSchema = z.object({
+  order_id: z.string().uuid({ message: 'Order ID must be a valid UUID' }),
+  warehouse_id: z.string().uuid({ message: 'Warehouse ID must be a valid UUID' }),
+  items: z.array(SagaPayloadItemSchema),
+});
+
 // Outbox event payload schemas
 export const SagaStartPayloadSchema = z.object({
   saga_type: z.string().min(1, 'Saga type is required'),
   order_id: z.string().uuid({ message: 'Order ID must be a valid UUID' }),
   warehouse_id: z.string().uuid({ message: 'Warehouse ID must be a valid UUID' }),
-  items: z.array(
-    z.object({
-      product_id: z.string().uuid({ message: 'Product ID must be a valid UUID' }),
-      quantity: z.number().int().positive('Quantity must be a positive integer'),
-      unit_price: z.number().nonnegative('Unit price must be non-negative'),
-    })
-  ).min(1, 'At least one item is required'),
+  items: z.array(SagaPayloadItemSchema).min(1, 'At least one item is required'),
 });
 
 export const SagaStepPayloadSchema = z.object({
@@ -156,6 +164,8 @@ export type CreateStockMovementInput = z.infer<typeof CreateStockMovementSchema>
 export type CreateOrderItemInput = z.infer<typeof CreateOrderItemSchema>;
 export type CreateOrderInput = z.infer<typeof CreateOrderSchema>;
 export type SagaOrchestratorRequestInput = z.infer<typeof SagaOrchestratorRequestSchema>;
+export type SagaPayload = z.infer<typeof SagaPayloadSchema>;
+export type SagaPayloadItem = z.infer<typeof SagaPayloadItemSchema>;
 export type SagaStartPayload = z.infer<typeof SagaStartPayloadSchema>;
 export type SagaStepPayload = z.infer<typeof SagaStepPayloadSchema>;
 
