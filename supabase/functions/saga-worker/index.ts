@@ -3,6 +3,7 @@ import { cors } from 'hono/cors';
 import { createServiceClient } from '../_shared/supabase-client.ts';
 import * as outboxService from '../_shared/services/outbox-service.ts';
 import * as sagaService from '../_shared/services/saga-service.ts';
+import { SagaStartPayloadSchema, SagaStepPayloadSchema } from '../_shared/schemas.ts';
 
 const MAX_RETRIES = 3;
 const BATCH_SIZE = 10;
@@ -66,7 +67,7 @@ app.post('/saga-worker', async (c) => {
       console.error(`Failed to process outbox event ${event.id}:`, eventError);
 
       // Increment retry count
-      await outboxService.incrementRetryCount(supabase, event.id);
+      await outboxService.incrementRetryCount(supabase, event.id, event.retry_count ?? 0);
 
       results.push({
         id: event.id,
@@ -98,12 +99,12 @@ async function processSagaStart(
   supabase: ReturnType<typeof createServiceClient>,
   event: { aggregate_id: string; payload: Record<string, unknown> }
 ) {
-  const payload = event.payload as {
-    saga_type: string;
-    order_id: string;
-    warehouse_id: string;
-    items: Array<{ product_id: string; quantity: number; unit_price: number }>;
-  };
+  const parseResult = SagaStartPayloadSchema.safeParse(event.payload);
+  if (!parseResult.success) {
+    const errors = parseResult.error.issues.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ');
+    throw new Error(`Invalid saga_start payload: ${errors}`);
+  }
+  const payload = parseResult.data;
 
   // Check if saga already exists (idempotency)
   const existingSaga = await sagaService.getSagaByCorrelationId(supabase, event.aggregate_id);
@@ -117,7 +118,6 @@ async function processSagaStart(
   const saga = await sagaService.createSaga(supabase, {
     saga_type: payload.saga_type,
     correlation_id: event.aggregate_id,
-    status: 'started',
     payload: {
       order_id: payload.order_id,
       warehouse_id: payload.warehouse_id,
@@ -157,12 +157,12 @@ async function processSagaStart(
 async function processSagaStep(
   event: { aggregate_id: string; payload: Record<string, unknown> }
 ) {
-  const { saga_id, action, step_result, error } = event.payload as {
-    saga_id: string;
-    action: string;
-    step_result?: Record<string, unknown>;
-    error?: string;
-  };
+  const parseResult = SagaStepPayloadSchema.safeParse(event.payload);
+  if (!parseResult.success) {
+    const errors = parseResult.error.issues.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ');
+    throw new Error(`Invalid saga_step payload: ${errors}`);
+  }
+  const { saga_id, action, step_result, error } = parseResult.data;
 
   // Trigger saga orchestrator
   const orchestratorUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/saga-orchestrator`;

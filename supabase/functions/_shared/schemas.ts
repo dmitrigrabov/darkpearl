@@ -124,6 +124,27 @@ export const SagaOrchestratorRequestSchema = z.object({
   error: z.string().optional(),
 });
 
+// Outbox event payload schemas
+export const SagaStartPayloadSchema = z.object({
+  saga_type: z.string().min(1, 'Saga type is required'),
+  order_id: z.string().uuid({ message: 'Order ID must be a valid UUID' }),
+  warehouse_id: z.string().uuid({ message: 'Warehouse ID must be a valid UUID' }),
+  items: z.array(
+    z.object({
+      product_id: z.string().uuid({ message: 'Product ID must be a valid UUID' }),
+      quantity: z.number().int().positive('Quantity must be a positive integer'),
+      unit_price: z.number().nonnegative('Unit price must be non-negative'),
+    })
+  ).min(1, 'At least one item is required'),
+});
+
+export const SagaStepPayloadSchema = z.object({
+  saga_id: z.string().uuid({ message: 'Saga ID must be a valid UUID' }),
+  action: z.string().min(1, 'Action is required'),
+  step_result: z.record(z.string(), z.unknown()).optional(),
+  error: z.string().optional(),
+});
+
 // Inferred types from schemas
 export type CreateProductInput = z.infer<typeof CreateProductSchema>;
 export type UpdateProductInput = z.infer<typeof UpdateProductSchema>;
@@ -135,6 +156,8 @@ export type CreateStockMovementInput = z.infer<typeof CreateStockMovementSchema>
 export type CreateOrderItemInput = z.infer<typeof CreateOrderItemSchema>;
 export type CreateOrderInput = z.infer<typeof CreateOrderSchema>;
 export type SagaOrchestratorRequestInput = z.infer<typeof SagaOrchestratorRequestSchema>;
+export type SagaStartPayload = z.infer<typeof SagaStartPayloadSchema>;
+export type SagaStepPayload = z.infer<typeof SagaStepPayloadSchema>;
 
 // Validation helper that returns formatted error response
 export function validateBody<T>(
@@ -143,7 +166,7 @@ export function validateBody<T>(
 ): { success: true; data: T } | { success: false; error: string } {
   const result = schema.safeParse(data);
   if (!result.success) {
-    const errors = result.error.errors.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ');
+    const errors = result.error.issues.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ');
     return { success: false, error: errors };
   }
   return { success: true, data: result.data };
