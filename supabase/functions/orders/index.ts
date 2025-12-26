@@ -1,10 +1,10 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
+import { tasks } from '@trigger.dev/sdk/v3';
 import { createSupabaseClient, createServiceClient } from '../_shared/supabase-client.ts';
 import type { CreateOrderRequest, OrderStatus } from '../_shared/types.ts';
 import * as orderService from '../_shared/services/order-service.ts';
 import * as sagaService from '../_shared/services/saga-service.ts';
-import * as outboxService from '../_shared/services/outbox-service.ts';
 import * as inventoryService from '../_shared/services/inventory-service.ts';
 
 type Variables = {
@@ -99,54 +99,26 @@ app.post('/orders', async (c) => {
     notes: body.notes,
   });
 
-  // Create order items
-  const items = await orderService.createOrderItems(client, order.id, body.items);
+  // Create order items (with unit_price ensured for each item)
+  const itemsWithPrices = await Promise.all(
+    body.items.map(async (item) => {
+      const productPrice = await orderService.getProductPrice(client, item.product_id);
+      return {
+        ...item,
+        unit_price: item.unit_price ?? productPrice ?? 0,
+      };
+    })
+  );
+  const items = await orderService.createOrderItems(client, order.id, itemsWithPrices);
 
-  // Add event to outbox to start the saga (needs service role)
-  const sagaPayload = {
-    saga_type: 'order_fulfillment',
-    order_id: order.id,
-    warehouse_id: body.warehouse_id,
-    items: body.items.map((item) => ({
-      product_id: item.product_id,
-      quantity: item.quantity,
-      unit_price: item.unit_price,
-    })),
-  };
-
-  try {
-    await outboxService.addOutboxEvent(
-      serviceClient,
-      'saga_start',
-      'order',
-      order.id,
-      sagaPayload
-    );
-  } catch (e) {
-    console.error('Failed to add outbox event:', e);
-    // Order is still created, saga will need manual trigger
-  }
-
-  // Trigger saga worker immediately
-  try {
-    const functionUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/saga-worker`;
-    await fetch(functionUrl, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ trigger: 'immediate' }),
-    });
-  } catch (e) {
-    console.error('Failed to trigger saga worker:', e);
-  }
+  // Note: Saga is automatically triggered via PostgreSQL trigger (pg_net -> saga-webhook)
+  // The trigger fires on INSERT to orders table and calls the saga-webhook Edge Function
 
   return c.json(
     {
       ...order,
       items,
-      message: 'Order created, fulfillment saga started',
+      message: 'Order created, fulfillment saga will be triggered automatically',
     },
     201
   );
@@ -176,14 +148,14 @@ app.delete('/orders/:id', async (c) => {
 
   if (saga && saga.status !== 'completed' && saga.status !== 'failed') {
     try {
-      const functionUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/saga-orchestrator`;
-      await fetch(functionUrl, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ saga_id: saga.id, action: 'compensate' }),
+      // Trigger compensation via trigger.dev
+      const payload = saga.payload as Record<string, unknown> | null;
+      await tasks.trigger('compensate-order-saga', {
+        correlationId: id,
+        orderId: id,
+        warehouseId: payload?.warehouse_id as string,
+        items: (payload?.items as Array<{ product_id: string; quantity: number; unit_price: number }>) || [],
+        triggerRunId: 'manual-cancellation',
       });
     } catch (e) {
       console.error('Failed to trigger compensation:', e);

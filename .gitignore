@@ -38,3 +38,5 @@ build/
 
 # Claude
 .claude/
+
+.trigger/

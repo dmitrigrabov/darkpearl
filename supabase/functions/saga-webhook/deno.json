@@ -1,7 +1,7 @@
 {
   "imports": {
-    "@supabase/supabase-js": "npm:@supabase/supabase-js@2",
     "@trigger.dev/sdk": "npm:@trigger.dev/sdk@3",
+    "@supabase/supabase-js": "npm:@supabase/supabase-js@2",
     "hono": "npm:hono@4",
     "hono/cors": "npm:hono@4/cors"
   }

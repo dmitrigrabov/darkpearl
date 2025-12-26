@@ -17,7 +17,12 @@ export interface InventoryWithRelations extends Inventory {
   warehouse: { id: string; code: string; name: string } | null;
 }
 
-export async function listInventory(client: Client, params: ListInventoryParams = {}) {
+export async function listInventory(client: Client, params: ListInventoryParams = {}): Promise<{
+  data: InventoryWithRelations[];
+  count: number | null;
+  limit: number;
+  offset: number;
+}> {
   const { productId, warehouseId, lowStock, limit = 100, offset = 0 } = params;
 
   let query = client.from('inventory').select(
@@ -35,16 +40,27 @@ export async function listInventory(client: Client, params: ListInventoryParams 
   if (warehouseId) {
     query = query.eq('warehouse_id', warehouseId);
   }
-  if (lowStock) {
-    query = query.lte('quantity_available', 'reorder_point');
-  }
-
   const { data, error, count } = await query
     .order('updated_at', { ascending: false })
     .range(offset, offset + limit - 1);
 
   if (error) throw error;
-  return { data: data as InventoryWithRelations[], count, limit, offset };
+
+  const inventoryData: InventoryWithRelations[] = (data ?? []).map((item) => ({
+    ...item,
+    product: item.product,
+    warehouse: item.warehouse,
+  }));
+
+  // Filter low stock items in memory (column comparison not supported in Supabase JS client)
+  if (lowStock) {
+    const filteredData = inventoryData.filter(
+      (item) => item.quantity_available <= item.reorder_point
+    );
+    return { data: filteredData, count: filteredData.length, limit, offset };
+  }
+
+  return { data: inventoryData, count, limit, offset };
 }
 
 export async function getInventory(
@@ -65,7 +81,14 @@ export async function getInventory(
     if (error.code === 'PGRST116') return null;
     throw error;
   }
-  return data as InventoryWithRelations;
+
+  if (!data) return null;
+
+  return {
+    ...data,
+    product: data.product,
+    warehouse: data.warehouse,
+  };
 }
 
 export async function getInventoryByProductWarehouse(
