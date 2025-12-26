@@ -7,7 +7,7 @@ type Variables = {
   supabase: ReturnType<typeof createSupabaseClient>;
 };
 
-const app = new Hono<{ Variables: Variables }>();
+const app = new Hono<{ Variables: Variables }>().basePath('/products');
 
 app.use('/*', cors());
 

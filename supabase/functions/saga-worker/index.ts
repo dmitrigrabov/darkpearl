@@ -9,7 +9,7 @@ type Variables = {
   serviceClient: ReturnType<typeof createServiceClient>;
 };
 
-const app = new Hono<{ Variables: Variables }>();
+const app = new Hono<{ Variables: Variables }>().basePath('/saga-worker');
 
 app.use('/*', cors());
 

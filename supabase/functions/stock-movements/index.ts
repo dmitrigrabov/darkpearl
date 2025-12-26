@@ -17,7 +17,7 @@ type Variables = {
   supabase: ReturnType<typeof createSupabaseClient>;
 };
 
-const app = new Hono<{ Variables: Variables }>();
+const app = new Hono<{ Variables: Variables }>().basePath('/stock-movements');
 
 app.use('/*', cors());
 
