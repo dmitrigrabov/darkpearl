@@ -5,9 +5,6 @@ CREATE EXTENSION IF NOT EXISTS pg_net WITH SCHEMA extensions;
 ALTER TABLE sagas ADD COLUMN IF NOT EXISTS trigger_run_id TEXT;
 CREATE INDEX IF NOT EXISTS idx_sagas_trigger_run ON sagas(trigger_run_id);
 
--- Deprecate outbox table
-COMMENT ON TABLE outbox IS 'DEPRECATED: Replaced by trigger.dev + pg_net pattern. Kept for historical reference.';
-
 -- Function to trigger saga via Edge Function when order is created
 -- Uses x-trigger-source header for origin validation (JWT verification is disabled on webhook)
 CREATE OR REPLACE FUNCTION trigger_order_saga()

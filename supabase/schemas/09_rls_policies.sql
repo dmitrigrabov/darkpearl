@@ -7,7 +7,6 @@ ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sagas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE saga_events ENABLE ROW LEVEL SECURITY;
-ALTER TABLE outbox ENABLE ROW LEVEL SECURITY;
 
 -- Products: Anyone can read, authenticated users can manage
 CREATE POLICY "Products are viewable by anyone"
@@ -89,11 +88,5 @@ CREATE POLICY "Sagas are manageable by service role"
 
 CREATE POLICY "Saga events are manageable by service role"
   ON saga_events FOR ALL
-  TO service_role
-  USING (true);
-
--- Outbox: Service role only (internal system operations)
-CREATE POLICY "Outbox is manageable by service role"
-  ON outbox FOR ALL
   TO service_role
   USING (true);

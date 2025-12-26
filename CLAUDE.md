@@ -31,7 +31,7 @@ pnpm typespec:watch    # Watch mode for TypeSpec
 All edge functions use Hono as the web framework and are located in `supabase/functions/`:
 
 - **CRUD endpoints**: `products/`, `warehouses/`, `inventory/`, `stock-movements/`, `orders/`
-- **Saga system**: `saga-orchestrator/`, `saga-worker/`
+- **Saga system**: `saga-webhook/` (triggers trigger.dev tasks)
 
 Each function has its own `deno.json` with imports for `@supabase/supabase-js`, `hono`, and `hono/cors`.
 
@@ -43,17 +43,18 @@ Two client types in `_shared/supabase-client.ts`:
 
 ### Saga Pattern for Order Fulfillment
 
-The system uses the Saga pattern with an outbox for reliable event-driven orchestration:
+The system uses the Saga pattern with trigger.dev for durable task execution:
 
-1. **Order creation** (`orders/index.ts`) inserts an order and adds a `saga_start` event to the outbox
-2. **Saga worker** (`saga-worker/`) polls the outbox and triggers the orchestrator
-3. **Saga orchestrator** (`saga-orchestrator/`) executes steps in sequence:
+1. **Order creation** (`orders/index.ts`) inserts an order
+2. **PostgreSQL trigger** (`trigger_order_saga`) fires and uses `pg_net` to call `saga-webhook`
+3. **Saga webhook** (`saga-webhook/`) triggers the `order-saga` task on trigger.dev
+4. **Trigger.dev task** (`supabase/trigger/order-saga.ts`) executes steps in sequence:
    - `reserve_stock` → `process_payment` → `fulfill_order`
-4. On failure, compensation runs in reverse order:
+5. On failure, compensation runs in reverse order:
    - `release_stock` (compensates `reserve_stock`)
    - `void_payment` (compensates `process_payment`)
 
-Key tables: `sagas`, `saga_events`, `outbox`
+Key tables: `sagas`, `saga_events`
 
 ### Database Schema
 
@@ -62,8 +63,8 @@ Schema files in `supabase/schemas/` (ordered by filename prefix):
 - `01_enums.sql` - `movement_type`, `order_status`, `saga_status`, `saga_step_type`
 - `02-06_*.sql` - Core domain tables (products, warehouses, inventory, stock_movements, orders)
 - `07_saga_events.sql` - Saga state and event store
-- `08_outbox.sql` - Outbox pattern for reliable messaging
 - `09_rls_policies.sql` - Row-level security policies
+- `10_saga_trigger.sql` - PostgreSQL trigger for saga via pg_net
 
 ### TypeSpec API Definition
 
@@ -80,7 +81,7 @@ Compiles to OpenAPI at `tsp-output/@typespec/openapi3/openapi.yaml`.
 
 ## Internal Functions Configuration
 
-`saga-orchestrator` and `saga-worker` have `verify_jwt = false` in `supabase/config.toml` as they are called internally with service role key.
+`saga-webhook` has `verify_jwt = false` in `supabase/config.toml` as it is called from PostgreSQL triggers via pg_net.
 
 
 <!-- TRIGGER.DEV basic START -->

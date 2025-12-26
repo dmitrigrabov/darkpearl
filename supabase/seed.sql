@@ -4,7 +4,6 @@
 -- Clear existing data (in correct order due to foreign keys)
 TRUNCATE TABLE saga_events CASCADE;
 TRUNCATE TABLE sagas CASCADE;
-TRUNCATE TABLE outbox CASCADE;
 TRUNCATE TABLE order_items CASCADE;
 TRUNCATE TABLE orders CASCADE;
 TRUNCATE TABLE stock_movements CASCADE;
