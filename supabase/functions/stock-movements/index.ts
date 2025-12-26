@@ -2,6 +2,8 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { createSupabaseClient } from '../_shared/supabase-client.ts';
 import type { CreateStockMovementRequest, MovementType } from '../_shared/types.ts';
+import * as stockMovementService from '../_shared/services/stock-movement-service.ts';
+import * as inventoryService from '../_shared/services/inventory-service.ts';
 
 const VALID_MOVEMENT_TYPES: MovementType[] = [
   'receive',
@@ -17,12 +19,11 @@ type Variables = {
   supabase: ReturnType<typeof createSupabaseClient>;
 };
 
-const app = new Hono<{ Variables: Variables }>().basePath('/stock-movements');
+const app = new Hono<{ Variables: Variables }>();
 
-app.use('/*', cors());
+app.use('/stock-movements/*', cors());
 
-// Supabase client middleware
-app.use('/*', async (c, next) => {
+app.use('/stock-movements/*', async (c, next) => {
   c.set('supabase', createSupabaseClient(c.req.raw));
   await next();
 });
@@ -32,74 +33,41 @@ app.onError((err, c) => {
   return c.json({ error: err.message || 'Internal server error' }, 500);
 });
 
-// List movements
-app.get('/', async (c) => {
+app.get('/stock-movements', async (c) => {
   const client = c.get('supabase');
-
   const productId = c.req.query('product_id');
   const warehouseId = c.req.query('warehouse_id');
-  const movementType = c.req.query('movement_type');
+  const movementType = c.req.query('movement_type') as MovementType | undefined;
   const referenceId = c.req.query('reference_id');
   const correlationId = c.req.query('correlation_id');
   const limit = parseInt(c.req.query('limit') || '100');
   const offset = parseInt(c.req.query('offset') || '0');
 
-  let query = client.from('stock_movements').select(
-    `
-      *,
-      product:products(id, sku, name),
-      warehouse:warehouses(id, code, name)
-    `,
-    { count: 'exact' }
-  );
+  const result = await stockMovementService.listMovements(client, {
+    productId,
+    warehouseId,
+    movementType,
+    referenceId,
+    correlationId,
+    limit,
+    offset,
+  });
 
-  if (productId) {
-    query = query.eq('product_id', productId);
-  }
-  if (warehouseId) {
-    query = query.eq('warehouse_id', warehouseId);
-  }
-  if (movementType) {
-    query = query.eq('movement_type', movementType);
-  }
-  if (referenceId) {
-    query = query.eq('reference_id', referenceId);
-  }
-  if (correlationId) {
-    query = query.eq('correlation_id', correlationId);
-  }
-
-  const { data, error, count } = await query
-    .order('created_at', { ascending: false })
-    .range(offset, offset + limit - 1);
-
-  if (error) throw error;
-  return c.json({ data, count, limit, offset });
+  return c.json(result);
 });
 
-// Get single movement
-app.get('/:id', async (c) => {
+app.get('/stock-movements/:id', async (c) => {
   const client = c.get('supabase');
   const id = c.req.param('id');
 
-  const { data, error } = await client
-    .from('stock_movements')
-    .select(`
-      *,
-      product:products(id, sku, name),
-      warehouse:warehouses(id, code, name)
-    `)
-    .eq('id', id)
-    .single();
-
-  if (error || !data) {
+  const movement = await stockMovementService.getMovement(client, id);
+  if (!movement) {
     return c.json({ error: 'Stock movement not found' }, 404);
   }
-  return c.json(data);
+  return c.json(movement);
 });
 
-// Create movement
-app.post('/', async (c) => {
+app.post('/stock-movements', async (c) => {
   const client = c.get('supabase');
   const body: CreateStockMovementRequest = await c.req.json();
 
@@ -112,12 +80,11 @@ app.post('/', async (c) => {
   }
 
   // Get current inventory
-  const { data: inventory } = await client
-    .from('inventory')
-    .select('*')
-    .eq('product_id', body.product_id)
-    .eq('warehouse_id', body.warehouse_id)
-    .single();
+  const inventory = await inventoryService.getInventoryByProductWarehouse(
+    client,
+    body.product_id,
+    body.warehouse_id
+  );
 
   const correlationId = body.correlation_id || crypto.randomUUID();
 
@@ -158,63 +125,41 @@ app.post('/', async (c) => {
 
   // Update or create inventory
   if (inventory) {
-    const { error: updateError } = await client
-      .from('inventory')
-      .update({
-        quantity_available: newAvailable,
-        quantity_reserved: newReserved,
-      })
-      .eq('id', inventory.id);
-
-    if (updateError) throw updateError;
+    await inventoryService.updateInventoryQuantities(client, inventory.id, {
+      quantity_available: newAvailable,
+      quantity_reserved: newReserved,
+    });
   } else {
-    const { error: insertError } = await client
-      .from('inventory')
-      .insert({
-        product_id: body.product_id,
-        warehouse_id: body.warehouse_id,
-        quantity_available: newAvailable,
-        quantity_reserved: newReserved,
-      });
-
-    if (insertError) throw insertError;
+    await inventoryService.createInventory(client, {
+      product_id: body.product_id,
+      warehouse_id: body.warehouse_id,
+      quantity_available: newAvailable,
+    });
   }
 
   // Record the movement
-  const { data: movement, error: movementError } = await client
-    .from('stock_movements')
-    .insert({
+  try {
+    const movement = await stockMovementService.createMovement(client, {
+      ...body,
       correlation_id: correlationId,
-      product_id: body.product_id,
-      warehouse_id: body.warehouse_id,
-      movement_type: body.movement_type,
-      quantity: body.quantity,
-      reference_id: body.reference_id,
-      reference_type: body.reference_type,
-      notes: body.notes,
-    })
-    .select()
-    .single();
-
-  if (movementError) {
-    if (movementError.code === '23505') {
-      const { data: existing } = await client
-        .from('stock_movements')
-        .select('*')
-        .eq('correlation_id', correlationId)
-        .eq('movement_type', body.movement_type)
-        .eq('product_id', body.product_id)
-        .eq('warehouse_id', body.warehouse_id)
-        .single();
-
+    });
+    return c.json(movement, 201);
+  } catch (err) {
+    const error = err as { code?: string };
+    if (error.code === '23505') {
+      const existing = await stockMovementService.findExistingMovement(
+        client,
+        correlationId,
+        body.movement_type,
+        body.product_id,
+        body.warehouse_id
+      );
       if (existing) {
         return c.json({ ...existing, idempotent: true });
       }
     }
-    throw movementError;
+    throw err;
   }
-
-  return c.json(movement, 201);
 });
 
 Deno.serve(app.fetch);

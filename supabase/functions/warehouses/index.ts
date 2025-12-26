@@ -2,17 +2,17 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { createSupabaseClient } from '../_shared/supabase-client.ts';
 import type { CreateWarehouseRequest, UpdateWarehouseRequest } from '../_shared/types.ts';
+import * as warehouseService from '../_shared/services/warehouse-service.ts';
 
 type Variables = {
   supabase: ReturnType<typeof createSupabaseClient>;
 };
 
-const app = new Hono<{ Variables: Variables }>().basePath('/warehouses');
+const app = new Hono<{ Variables: Variables }>();
 
-app.use('/*', cors());
+app.use('/warehouses/*', cors());
 
-// Supabase client middleware
-app.use('/*', async (c, next) => {
+app.use('/warehouses/*', async (c, next) => {
   c.set('supabase', createSupabaseClient(c.req.raw));
   await next();
 });
@@ -22,50 +22,33 @@ app.onError((err, c) => {
   return c.json({ error: err.message || 'Internal server error' }, 500);
 });
 
-// List warehouses
-app.get('/', async (c) => {
+app.get('/warehouses', async (c) => {
   const client = c.get('supabase');
-
   const isActive = c.req.query('is_active');
   const limit = parseInt(c.req.query('limit') || '100');
   const offset = parseInt(c.req.query('offset') || '0');
 
-  let query = client.from('warehouses').select('*', { count: 'exact' });
+  const result = await warehouseService.listWarehouses(client, {
+    isActive: isActive !== undefined ? isActive === 'true' : undefined,
+    limit,
+    offset,
+  });
 
-  if (isActive !== undefined) {
-    query = query.eq('is_active', isActive === 'true');
-  }
-
-  const { data, error, count } = await query
-    .order('code', { ascending: true })
-    .range(offset, offset + limit - 1);
-
-  if (error) throw error;
-  return c.json({ data, count, limit, offset });
+  return c.json(result);
 });
 
-// Get single warehouse
-app.get('/:id', async (c) => {
+app.get('/warehouses/:id', async (c) => {
   const client = c.get('supabase');
   const id = c.req.param('id');
 
-  const { data, error } = await client
-    .from('warehouses')
-    .select(`
-      *,
-      inventory:inventory(count)
-    `)
-    .eq('id', id)
-    .single();
-
-  if (error || !data) {
+  const warehouse = await warehouseService.getWarehouse(client, id);
+  if (!warehouse) {
     return c.json({ error: 'Warehouse not found' }, 404);
   }
-  return c.json(data);
+  return c.json(warehouse);
 });
 
-// Create warehouse
-app.post('/', async (c) => {
+app.post('/warehouses', async (c) => {
   const client = c.get('supabase');
   const body: CreateWarehouseRequest = await c.req.json();
 
@@ -73,72 +56,48 @@ app.post('/', async (c) => {
     return c.json({ error: 'code and name are required' }, 400);
   }
 
-  const { data, error } = await client
-    .from('warehouses')
-    .insert({
-      code: body.code,
-      name: body.name,
-      address: body.address,
-      is_active: body.is_active ?? true,
-    })
-    .select()
-    .single();
-
-  if (error) {
+  try {
+    const warehouse = await warehouseService.createWarehouse(client, body);
+    return c.json(warehouse, 201);
+  } catch (err) {
+    const error = err as { code?: string };
     if (error.code === '23505') {
       return c.json({ error: 'Warehouse with this code already exists' }, 409);
     }
-    throw error;
+    throw err;
   }
-  return c.json(data, 201);
 });
 
-// Update warehouse
-app.put('/:id', async (c) => {
+app.put('/warehouses/:id', async (c) => {
   const client = c.get('supabase');
   const id = c.req.param('id');
   const body: UpdateWarehouseRequest = await c.req.json();
 
-  const { data, error } = await client
-    .from('warehouses')
-    .update(body)
-    .eq('id', id)
-    .select()
-    .single();
-
-  if (error) {
-    if (error.code === 'PGRST116') {
+  try {
+    const warehouse = await warehouseService.updateWarehouse(client, id, body);
+    if (!warehouse) {
       return c.json({ error: 'Warehouse not found' }, 404);
     }
+    return c.json(warehouse);
+  } catch (err) {
+    const error = err as { code?: string };
     if (error.code === '23505') {
       return c.json({ error: 'Warehouse with this code already exists' }, 409);
     }
-    throw error;
+    throw err;
   }
-  return c.json(data);
 });
 
-// Delete warehouse
-app.delete('/:id', async (c) => {
+app.delete('/warehouses/:id', async (c) => {
   const client = c.get('supabase');
   const id = c.req.param('id');
 
-  // Check if warehouse has inventory
-  const { count } = await client
-    .from('inventory')
-    .select('*', { count: 'exact', head: true })
-    .eq('warehouse_id', id);
-
-  if (count && count > 0) {
+  const hasInventory = await warehouseService.hasInventory(client, id);
+  if (hasInventory) {
     return c.json({ error: 'Cannot delete warehouse with existing inventory' }, 409);
   }
 
-  const { error } = await client
-    .from('warehouses')
-    .delete()
-    .eq('id', id);
-
-  if (error) throw error;
+  await warehouseService.deleteWarehouse(client, id);
   return c.json({ message: 'Warehouse deleted' });
 });
 

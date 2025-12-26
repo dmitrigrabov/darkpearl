@@ -1,21 +1,24 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { createSupabaseClient, createServiceClient } from '../_shared/supabase-client.ts';
-import type { CreateOrderRequest } from '../_shared/types.ts';
+import type { CreateOrderRequest, OrderStatus } from '../_shared/types.ts';
+import * as orderService from '../_shared/services/order-service.ts';
+import * as sagaService from '../_shared/services/saga-service.ts';
+import * as outboxService from '../_shared/services/outbox-service.ts';
+import * as inventoryService from '../_shared/services/inventory-service.ts';
 
 type Variables = {
   supabase: ReturnType<typeof createSupabaseClient>;
   serviceClient: ReturnType<typeof createServiceClient>;
 };
 
-const app = new Hono<{ Variables: Variables }>().basePath('/orders');
+const app = new Hono<{ Variables: Variables }>();
 
-app.use('/*', cors());
+app.use('/orders/*', cors());
 
-// Supabase client middleware
-app.use('/*', async (c, next) => {
+app.use('/orders/*', async (c, next) => {
   c.set('supabase', createSupabaseClient(c.req.raw));
-  c.set('serviceClient', createServiceClient()); // For saga operations only
+  c.set('serviceClient', createServiceClient());
   await next();
 });
 
@@ -24,90 +27,51 @@ app.onError((err, c) => {
   return c.json({ error: err.message || 'Internal server error' }, 500);
 });
 
-// List orders
-app.get('/', async (c) => {
+app.get('/orders', async (c) => {
   const client = c.get('supabase');
-
-  const status = c.req.query('status');
+  const status = c.req.query('status') as OrderStatus | undefined;
   const customerId = c.req.query('customer_id');
   const limit = parseInt(c.req.query('limit') || '100');
   const offset = parseInt(c.req.query('offset') || '0');
 
-  let query = client.from('orders').select(
-    `
-      *,
-      warehouse:warehouses(id, code, name)
-    `,
-    { count: 'exact' }
-  );
+  const result = await orderService.listOrders(client, {
+    status,
+    customerId,
+    limit,
+    offset,
+  });
 
-  if (status) {
-    query = query.eq('status', status);
-  }
-  if (customerId) {
-    query = query.eq('customer_id', customerId);
-  }
-
-  const { data, error, count } = await query
-    .order('created_at', { ascending: false })
-    .range(offset, offset + limit - 1);
-
-  if (error) throw error;
-  return c.json({ data, count, limit, offset });
+  return c.json(result);
 });
 
-// Get single order with items and saga status
-app.get('/:id', async (c) => {
+app.get('/orders/:id', async (c) => {
   const client = c.get('supabase');
-  const serviceClient = c.get('serviceClient'); // For saga status lookup
+  const serviceClient = c.get('serviceClient');
   const id = c.req.param('id');
 
-  const { data: order, error } = await client
-    .from('orders')
-    .select(`
-      *,
-      items:order_items(
-        id, product_id, quantity, unit_price,
-        product:products(id, sku, name)
-      ),
-      warehouse:warehouses(id, code, name)
-    `)
-    .eq('id', id)
-    .single();
-
-  if (error || !order) {
+  const order = await orderService.getOrder(client, id);
+  if (!order) {
     return c.json({ error: 'Order not found' }, 404);
   }
 
-  // Get saga status if exists (needs service role - saga tables are internal)
-  const { data: saga } = await serviceClient
-    .from('sagas')
-    .select('id, status, current_step, error_message, created_at, completed_at')
-    .eq('correlation_id', id)
-    .single();
+  // Get saga status (needs service role)
+  const saga = await sagaService.getSagaStatus(serviceClient, id);
 
   return c.json({ ...order, saga: saga || null });
 });
 
-// Create order
-app.post('/', async (c) => {
+app.post('/orders', async (c) => {
   const client = c.get('supabase');
-  const serviceClient = c.get('serviceClient'); // For saga operations
+  const serviceClient = c.get('serviceClient');
   const body: CreateOrderRequest = await c.req.json();
 
-  // Validate required fields
   if (!body.warehouse_id || !body.items || body.items.length === 0) {
     return c.json({ error: 'warehouse_id and at least one item are required' }, 400);
   }
 
   // Validate warehouse exists
-  const { data: warehouse } = await client
-    .from('warehouses')
-    .select('id')
-    .eq('id', body.warehouse_id)
-    .single();
-
-  if (!warehouse) {
+  const warehouseExists = await inventoryService.warehouseExists(client, body.warehouse_id);
+  if (!warehouseExists) {
     return c.json({ error: 'Warehouse not found' }, 404);
   }
 
@@ -118,53 +82,27 @@ app.post('/', async (c) => {
       return c.json({ error: 'Each item must have product_id and positive quantity' }, 400);
     }
 
-    const { data: product } = await client
-      .from('products')
-      .select('id, unit_price')
-      .eq('id', item.product_id)
-      .single();
-
-    if (!product) {
+    const productPrice = await orderService.getProductPrice(client, item.product_id);
+    if (productPrice === null) {
       return c.json({ error: `Product ${item.product_id} not found` }, 404);
     }
 
-    // Use provided unit_price or product's default price
-    const unitPrice = item.unit_price ?? product.unit_price;
+    const unitPrice = item.unit_price ?? productPrice;
     totalAmount += unitPrice * item.quantity;
   }
 
   // Create order
-  const { data: order, error: orderError } = await client
-    .from('orders')
-    .insert({
-      order_number: '', // Will be generated by trigger
-      customer_id: body.customer_id,
-      warehouse_id: body.warehouse_id,
-      total_amount: totalAmount,
-      notes: body.notes,
-      status: 'pending',
-    })
-    .select()
-    .single();
-
-  if (orderError) throw orderError;
+  const order = await orderService.createOrder(client, {
+    customer_id: body.customer_id,
+    warehouse_id: body.warehouse_id,
+    total_amount: totalAmount,
+    notes: body.notes,
+  });
 
   // Create order items
-  const orderItems = body.items.map((item) => ({
-    order_id: order.id,
-    product_id: item.product_id,
-    quantity: item.quantity,
-    unit_price: item.unit_price,
-  }));
+  const items = await orderService.createOrderItems(client, order.id, body.items);
 
-  const { data: items, error: itemsError } = await client
-    .from('order_items')
-    .insert(orderItems)
-    .select();
-
-  if (itemsError) throw itemsError;
-
-  // Add event to outbox to start the saga (needs service role - outbox is internal)
+  // Add event to outbox to start the saga (needs service role)
   const sagaPayload = {
     saga_type: 'order_fulfillment',
     order_id: order.id,
@@ -176,15 +114,16 @@ app.post('/', async (c) => {
     })),
   };
 
-  const { error: outboxError } = await serviceClient.rpc('add_outbox_event', {
-    p_event_type: 'saga_start',
-    p_aggregate_type: 'order',
-    p_aggregate_id: order.id,
-    p_payload: sagaPayload,
-  });
-
-  if (outboxError) {
-    console.error('Failed to add outbox event:', outboxError);
+  try {
+    await outboxService.addOutboxEvent(
+      serviceClient,
+      'saga_start',
+      'order',
+      order.id,
+      sagaPayload
+    );
+  } catch (e) {
+    console.error('Failed to add outbox event:', e);
     // Order is still created, saga will need manual trigger
   }
 
@@ -201,7 +140,6 @@ app.post('/', async (c) => {
     });
   } catch (e) {
     console.error('Failed to trigger saga worker:', e);
-    // Non-critical, worker will pick up from outbox
   }
 
   return c.json(
@@ -214,45 +152,29 @@ app.post('/', async (c) => {
   );
 });
 
-// Cancel order
-app.delete('/:id', async (c) => {
+app.delete('/orders/:id', async (c) => {
   const client = c.get('supabase');
-  const serviceClient = c.get('serviceClient'); // For saga operations
+  const serviceClient = c.get('serviceClient');
   const id = c.req.param('id');
 
   // Get current order status
-  const { data: order } = await client
-    .from('orders')
-    .select('status')
-    .eq('id', id)
-    .single();
-
-  if (!order) {
+  const status = await orderService.getOrderStatus(client, id);
+  if (!status) {
     return c.json({ error: 'Order not found' }, 404);
   }
 
   // Can only cancel pending orders
-  if (!['pending', 'reserved', 'payment_failed'].includes(order.status)) {
-    return c.json({ error: `Cannot cancel order in ${order.status} status` }, 409);
+  if (!['pending', 'reserved', 'payment_failed'].includes(status)) {
+    return c.json({ error: `Cannot cancel order in ${status} status` }, 409);
   }
 
   // Update order status
-  const { error: updateError } = await client
-    .from('orders')
-    .update({ status: 'cancelled' })
-    .eq('id', id);
+  await orderService.updateOrderStatus(client, id, 'cancelled');
 
-  if (updateError) throw updateError;
-
-  // Get the saga and trigger compensation if needed (needs service role - saga tables are internal)
-  const { data: saga } = await serviceClient
-    .from('sagas')
-    .select('*')
-    .eq('correlation_id', id)
-    .single();
+  // Get the saga and trigger compensation if needed (needs service role)
+  const saga = await sagaService.getSagaByCorrelationId(serviceClient, id);
 
   if (saga && saga.status !== 'completed' && saga.status !== 'failed') {
-    // Trigger compensation
     try {
       const functionUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/saga-orchestrator`;
       await fetch(functionUrl, {

@@ -1,12 +1,11 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { createServiceClient } from '../_shared/supabase-client.ts';
-import type {
-  SagaStepType,
-  SagaStatus,
-  Saga,
-  OrderFulfillmentPayload,
-} from '../_shared/types.ts';
+import type { SagaStepType, Saga, OrderFulfillmentPayload } from '../_shared/types.ts';
+import * as sagaService from '../_shared/services/saga-service.ts';
+import * as orderService from '../_shared/services/order-service.ts';
+import * as inventoryService from '../_shared/services/inventory-service.ts';
+import * as stockMovementService from '../_shared/services/stock-movement-service.ts';
 
 // Define saga steps in order
 const SAGA_STEPS: SagaStepType[] = ['reserve_stock', 'process_payment', 'fulfill_order'];
@@ -21,12 +20,11 @@ type Variables = {
   serviceClient: ReturnType<typeof createServiceClient>;
 };
 
-const app = new Hono<{ Variables: Variables }>().basePath('/saga-orchestrator');
+const app = new Hono<{ Variables: Variables }>();
 
-app.use('/*', cors());
+app.use('/saga-orchestrator/*', cors());
 
-// Supabase service client middleware
-app.use('/*', async (c, next) => {
+app.use('/saga-orchestrator/*', async (c, next) => {
   c.set('serviceClient', createServiceClient());
   await next();
 });
@@ -36,8 +34,7 @@ app.onError((err, c) => {
   return c.json({ error: err.message || 'Internal server error' }, 500);
 });
 
-// Main orchestrator endpoint
-app.post('/', async (c) => {
+app.post('/saga-orchestrator', async (c) => {
   const supabase = c.get('serviceClient');
   const body = await c.req.json();
   const { saga_id, action } = body;
@@ -46,35 +43,23 @@ app.post('/', async (c) => {
     return c.json({ error: 'saga_id and action are required' }, 400);
   }
 
-  // Fetch saga state
-  const { data: saga, error: sagaError } = await supabase
-    .from('sagas')
-    .select('*')
-    .eq('id', saga_id)
-    .single();
-
-  if (sagaError || !saga) {
+  const saga = await sagaService.getSaga(supabase, saga_id);
+  if (!saga) {
     return c.json({ error: 'Saga not found' }, 404);
   }
 
   const payload = saga.payload as OrderFulfillmentPayload;
-
   console.log(`Saga ${saga_id}: Processing action "${action}", current status: ${saga.status}`);
 
-  // Process based on action
   switch (action) {
     case 'execute_next':
       return await executeNextStep(c, supabase, saga, payload);
-
     case 'step_completed':
       return await handleStepCompletion(c, supabase, saga, payload, body.step_result);
-
     case 'step_failed':
       return await handleStepFailure(c, supabase, saga, payload, body.error);
-
     case 'compensate':
       return await startCompensation(c, supabase, saga, payload);
-
     default:
       return c.json({ error: `Unknown action: ${action}` }, 400);
   }
@@ -82,9 +67,6 @@ app.post('/', async (c) => {
 
 Deno.serve(app.fetch);
 
-/**
- * Execute the next step in the saga
- */
 async function executeNextStep(
   c: { json: (data: unknown, status?: number) => Response },
   supabase: ReturnType<typeof createServiceClient>,
@@ -95,68 +77,50 @@ async function executeNextStep(
   const nextStep = SAGA_STEPS[currentIndex + 1];
 
   if (!nextStep) {
-    // All steps completed successfully
-    await updateSagaStatus(supabase, saga.id, 'completed', null);
-    await updateOrderStatus(supabase, payload.order_id, 'fulfilled');
-
+    await sagaService.updateSagaStatus(supabase, saga.id, 'completed', null);
+    await orderService.updateOrderStatus(supabase, payload.order_id, 'fulfilled');
+    
     console.log(`Saga ${saga.id}: All steps completed successfully`);
+
     return c.json({ status: 'saga_completed', saga_id: saga.id });
   }
 
-  // Update saga to show we're executing next step
-  await supabase
-    .from('sagas')
-    .update({
-      current_step: nextStep,
-      status: 'step_executing',
-    })
-    .eq('id', saga.id);
-
-  // Record step start event
-  await recordSagaEvent(supabase, saga.id, nextStep, 'step_started', {});
+  await sagaService.updateSagaStep(supabase, saga.id, nextStep, 'step_executing');
+  await sagaService.recordSagaEvent(supabase, saga.id, nextStep, 'step_started', {});
 
   console.log(`Saga ${saga.id}: Executing step "${nextStep}"`);
 
   try {
-    // Execute the step
     const result = await executeStep(supabase, saga, nextStep, payload);
 
-    // Record success
-    await recordSagaEvent(supabase, saga.id, nextStep, 'step_completed', result);
-
-    // Update saga
-    await supabase
-      .from('sagas')
-      .update({
-        status: 'step_completed',
-        payload: { ...payload, ...result.updatedPayload },
-      })
-      .eq('id', saga.id);
+    await sagaService.recordSagaEvent(supabase, saga.id, nextStep, 'step_completed', result);
+    await sagaService.updateSagaStep(
+      supabase,
+      saga.id,
+      nextStep,
+      'step_completed',
+      { ...payload, ...result.updatedPayload }
+    );
 
     console.log(`Saga ${saga.id}: Step "${nextStep}" completed successfully`);
 
-    // Continue to next step
     return await executeNextStep(c, supabase, { ...saga, current_step: nextStep }, {
       ...payload,
       ...result.updatedPayload,
     });
+
   } catch (err) {
     const error = err as Error;
     console.error(`Saga ${saga.id}: Step "${nextStep}" failed:`, error);
 
-    // Record failure
-    await recordSagaEvent(supabase, saga.id, nextStep, 'step_failed', {
+    await sagaService.recordSagaEvent(supabase, saga.id, nextStep, 'step_failed', {
       error: error.message,
     });
 
-    // Start compensation
     return await startCompensation(c, supabase, { ...saga, current_step: nextStep }, payload);
   }
 }
 
-/**
- * Execute a specific saga step
- */
 async function executeStep(
   supabase: ReturnType<typeof createServiceClient>,
   saga: Saga,
@@ -166,38 +130,30 @@ async function executeStep(
   switch (step) {
     case 'reserve_stock':
       return await reserveStock(supabase, saga, payload);
-
     case 'process_payment':
       return await processPayment(supabase, payload);
-
     case 'fulfill_order':
       return await fulfillOrder(supabase, saga, payload);
-
     default:
       throw new Error(`Unknown step: ${step}`);
   }
 }
 
-/**
- * Reserve stock for all order items
- */
 async function reserveStock(
   supabase: ReturnType<typeof createServiceClient>,
   saga: Saga,
   payload: OrderFulfillmentPayload
 ) {
-  await updateOrderStatus(supabase, payload.order_id, 'reserved');
+  await orderService.updateOrderStatus(supabase, payload.order_id, 'reserved');
 
   for (const item of payload.items) {
-    // Get current inventory
-    const { data: inventory, error: invError } = await supabase
-      .from('inventory')
-      .select('*')
-      .eq('product_id', item.product_id)
-      .eq('warehouse_id', payload.warehouse_id)
-      .single();
+    const inventory = await inventoryService.getInventoryByProductWarehouse(
+      supabase,
+      item.product_id,
+      payload.warehouse_id
+    );
 
-    if (invError || !inventory) {
+    if (!inventory) {
       throw new Error(`No inventory found for product ${item.product_id} in warehouse ${payload.warehouse_id}`);
     }
 
@@ -208,138 +164,85 @@ async function reserveStock(
       );
     }
 
-    // Reserve stock (idempotent via unique constraint)
-    const { error: movementError } = await supabase
-      .from('stock_movements')
-      .upsert(
-        {
-          correlation_id: saga.correlation_id,
-          product_id: item.product_id,
-          warehouse_id: payload.warehouse_id,
-          movement_type: 'reserve',
-          quantity: item.quantity,
-          reference_id: payload.order_id,
-          reference_type: 'order',
-        },
-        {
-          onConflict: 'correlation_id,movement_type,product_id,warehouse_id',
-          ignoreDuplicates: true,
-        }
-      );
+    await stockMovementService.upsertMovement(supabase, {
+      correlation_id: saga.correlation_id,
+      product_id: item.product_id,
+      warehouse_id: payload.warehouse_id,
+      movement_type: 'reserve',
+      quantity: item.quantity,
+      reference_id: payload.order_id,
+      reference_type: 'order',
+    });
 
-    if (movementError) {
-      console.log('Movement upsert result:', movementError);
-      // Ignore duplicate errors (idempotent)
-    }
-
-    // Update inventory
-    const { error: updateError } = await supabase
-      .from('inventory')
-      .update({
-        quantity_reserved: inventory.quantity_reserved + item.quantity,
-      })
-      .eq('id', inventory.id);
-
-    if (updateError) throw updateError;
+    await inventoryService.updateInventoryQuantities(supabase, inventory.id, {
+      quantity_reserved: inventory.quantity_reserved + item.quantity,
+    });
   }
 
   return { updatedPayload: {} };
 }
 
-/**
- * Process payment (mock implementation)
- */
 async function processPayment(
   supabase: ReturnType<typeof createServiceClient>,
   payload: OrderFulfillmentPayload
 ) {
-  await updateOrderStatus(supabase, payload.order_id, 'payment_processing');
+  await orderService.updateOrderStatus(supabase, payload.order_id, 'payment_processing');
 
   // Simulate payment processing
-  // In production, this would call a payment gateway
-  const paymentSuccess = Math.random() > 0.1; // 90% success rate for demo
+  const paymentSuccess = Math.random() > 0.1;
 
   if (!paymentSuccess) {
-    await updateOrderStatus(supabase, payload.order_id, 'payment_failed');
+    await orderService.updateOrderStatus(supabase, payload.order_id, 'payment_failed');
     throw new Error('Payment declined by payment processor');
   }
 
   const paymentReference = `PAY-${Date.now()}-${crypto.randomUUID().slice(0, 9)}`;
 
-  // Update order with payment reference
-  await supabase
-    .from('orders')
-    .update({
-      payment_reference: paymentReference,
-      status: 'paid',
-    })
-    .eq('id', payload.order_id);
+  await orderService.updateOrder(supabase, payload.order_id, {
+    payment_reference: paymentReference,
+    status: 'paid',
+  });
 
-  return {
-    updatedPayload: { payment_reference: paymentReference },
-  };
+  return { updatedPayload: { payment_reference: paymentReference } };
 }
 
-/**
- * Fulfill order - deduct stock from inventory
- */
 async function fulfillOrder(
   supabase: ReturnType<typeof createServiceClient>,
   saga: Saga,
   payload: OrderFulfillmentPayload
 ) {
-  await updateOrderStatus(supabase, payload.order_id, 'fulfilling');
+  await orderService.updateOrderStatus(supabase, payload.order_id, 'fulfilling');
 
   for (const item of payload.items) {
-    // Get current inventory
-    const { data: inventory, error: invError } = await supabase
-      .from('inventory')
-      .select('*')
-      .eq('product_id', item.product_id)
-      .eq('warehouse_id', payload.warehouse_id)
-      .single();
+    const inventory = await inventoryService.getInventoryByProductWarehouse(
+      supabase,
+      item.product_id,
+      payload.warehouse_id
+    );
 
-    if (invError || !inventory) {
+    if (!inventory) {
       throw new Error(`Inventory not found for product ${item.product_id}`);
     }
 
-    // Record fulfillment movement (idempotent)
-    await supabase
-      .from('stock_movements')
-      .upsert(
-        {
-          correlation_id: saga.correlation_id,
-          product_id: item.product_id,
-          warehouse_id: payload.warehouse_id,
-          movement_type: 'fulfill',
-          quantity: item.quantity,
-          reference_id: payload.order_id,
-          reference_type: 'order',
-        },
-        {
-          onConflict: 'correlation_id,movement_type,product_id,warehouse_id',
-          ignoreDuplicates: true,
-        }
-      );
+    await stockMovementService.upsertMovement(supabase, {
+      correlation_id: saga.correlation_id,
+      product_id: item.product_id,
+      warehouse_id: payload.warehouse_id,
+      movement_type: 'fulfill',
+      quantity: item.quantity,
+      reference_id: payload.order_id,
+      reference_type: 'order',
+    });
 
-    // Update inventory: reduce both available and reserved
-    const { error: updateError } = await supabase
-      .from('inventory')
-      .update({
-        quantity_available: inventory.quantity_available - item.quantity,
-        quantity_reserved: Math.max(0, inventory.quantity_reserved - item.quantity),
-      })
-      .eq('id', inventory.id);
-
-    if (updateError) throw updateError;
+    await inventoryService.updateInventoryQuantities(supabase, inventory.id, {
+      quantity_available: inventory.quantity_available - item.quantity,
+      quantity_reserved: Math.max(0, inventory.quantity_reserved - item.quantity),
+    });
   }
 
   return { updatedPayload: {} };
 }
 
-/**
- * Start compensation process
- */
 async function startCompensation(
   c: { json: (data: unknown, status?: number) => Response },
   supabase: ReturnType<typeof createServiceClient>,
@@ -348,49 +251,38 @@ async function startCompensation(
 ) {
   console.log(`Saga ${saga.id}: Starting compensation from step "${saga.current_step}"`);
 
-  await supabase
-    .from('sagas')
-    .update({ status: 'compensating' })
-    .eq('id', saga.id);
+  await sagaService.updateSagaStatus(supabase, saga.id, 'compensating');
 
-  // Find the index of the failed step
   const failedIndex = saga.current_step ? SAGA_STEPS.indexOf(saga.current_step) : -1;
 
-  // Compensate all completed steps in reverse order
   for (let i = failedIndex - 1; i >= 0; i--) {
     const stepToCompensate = SAGA_STEPS[i];
     const compensationStep = COMPENSATION_MAP[stepToCompensate];
 
     if (compensationStep) {
       console.log(`Saga ${saga.id}: Executing compensation "${compensationStep}" for "${stepToCompensate}"`);
-
-      await recordSagaEvent(supabase, saga.id, compensationStep, 'compensation_started', {});
+      await sagaService.recordSagaEvent(supabase, saga.id, compensationStep, 'compensation_started', {});
 
       try {
         await executeCompensationStep(supabase, saga, compensationStep, payload);
-        await recordSagaEvent(supabase, saga.id, compensationStep, 'compensation_completed', {});
+        await sagaService.recordSagaEvent(supabase, saga.id, compensationStep, 'compensation_completed', {});
       } catch (err) {
         const error = err as Error;
         console.error(`Saga ${saga.id}: Compensation "${compensationStep}" failed:`, error);
-        await recordSagaEvent(supabase, saga.id, compensationStep, 'compensation_failed', {
+        await sagaService.recordSagaEvent(supabase, saga.id, compensationStep, 'compensation_failed', {
           error: error.message,
         });
-        // Continue with other compensations even if one fails
       }
     }
   }
 
-  // Mark saga as failed
-  await updateSagaStatus(supabase, saga.id, 'failed', 'Saga failed and compensated');
-  await updateOrderStatus(supabase, payload.order_id, 'cancelled');
+  await sagaService.updateSagaStatus(supabase, saga.id, 'failed', 'Saga failed and compensated');
+  await orderService.updateOrderStatus(supabase, payload.order_id, 'cancelled');
 
   console.log(`Saga ${saga.id}: Compensation completed, saga marked as failed`);
   return c.json({ status: 'compensation_completed', saga_id: saga.id });
 }
 
-/**
- * Execute a compensation step
- */
 async function executeCompensationStep(
   supabase: ReturnType<typeof createServiceClient>,
   saga: Saga,
@@ -400,120 +292,52 @@ async function executeCompensationStep(
   switch (step) {
     case 'release_stock':
       return await releaseStock(supabase, saga, payload);
-
     case 'void_payment':
       return await voidPayment(supabase, payload);
-
     default:
       console.log(`No compensation action for step: ${step}`);
   }
 }
 
-/**
- * Release reserved stock (compensation for reserve_stock)
- */
 async function releaseStock(
   supabase: ReturnType<typeof createServiceClient>,
   saga: Saga,
   payload: OrderFulfillmentPayload
 ) {
   for (const item of payload.items) {
-    const { data: inventory } = await supabase
-      .from('inventory')
-      .select('*')
-      .eq('product_id', item.product_id)
-      .eq('warehouse_id', payload.warehouse_id)
-      .single();
+    const inventory = await inventoryService.getInventoryByProductWarehouse(
+      supabase,
+      item.product_id,
+      payload.warehouse_id
+    );
 
     if (inventory) {
-      // Record release movement
-      await supabase
-        .from('stock_movements')
-        .upsert(
-          {
-            correlation_id: saga.correlation_id,
-            product_id: item.product_id,
-            warehouse_id: payload.warehouse_id,
-            movement_type: 'release',
-            quantity: item.quantity,
-            reference_id: payload.order_id,
-            reference_type: 'order',
-            notes: 'Saga compensation - stock release',
-          },
-          {
-            onConflict: 'correlation_id,movement_type,product_id,warehouse_id',
-            ignoreDuplicates: true,
-          }
-        );
+      await stockMovementService.upsertMovement(supabase, {
+        correlation_id: saga.correlation_id,
+        product_id: item.product_id,
+        warehouse_id: payload.warehouse_id,
+        movement_type: 'release',
+        quantity: item.quantity,
+        reference_id: payload.order_id,
+        reference_type: 'order',
+        notes: 'Saga compensation - stock release',
+      });
 
-      // Update inventory
-      await supabase
-        .from('inventory')
-        .update({
-          quantity_reserved: Math.max(0, inventory.quantity_reserved - item.quantity),
-        })
-        .eq('id', inventory.id);
+      await inventoryService.updateInventoryQuantities(supabase, inventory.id, {
+        quantity_reserved: Math.max(0, inventory.quantity_reserved - item.quantity),
+      });
     }
   }
 }
 
-/**
- * Void payment (compensation for process_payment)
- */
 async function voidPayment(
   supabase: ReturnType<typeof createServiceClient>,
   payload: OrderFulfillmentPayload
 ) {
-  // In production, this would call the payment gateway to void/refund
   console.log(`Voiding payment: ${payload.payment_reference}`);
 
-  // Update order to reflect voided payment
-  await supabase
-    .from('orders')
-    .update({
-      notes: `Payment voided: ${payload.payment_reference}`,
-    })
-    .eq('id', payload.order_id);
-}
-
-// Helper functions
-
-async function updateSagaStatus(
-  supabase: ReturnType<typeof createServiceClient>,
-  sagaId: string,
-  status: SagaStatus,
-  errorMessage: string | null
-) {
-  const update: Record<string, unknown> = { status };
-  if (status === 'completed' || status === 'failed') {
-    update.completed_at = new Date().toISOString();
-  }
-  if (errorMessage) {
-    update.error_message = errorMessage;
-  }
-  await supabase.from('sagas').update(update).eq('id', sagaId);
-}
-
-async function updateOrderStatus(
-  supabase: ReturnType<typeof createServiceClient>,
-  orderId: string,
-  status: string
-) {
-  await supabase.from('orders').update({ status }).eq('id', orderId);
-}
-
-async function recordSagaEvent(
-  supabase: ReturnType<typeof createServiceClient>,
-  sagaId: string,
-  stepType: SagaStepType,
-  eventType: string,
-  eventPayload: Record<string, unknown>
-) {
-  await supabase.from('saga_events').insert({
-    saga_id: sagaId,
-    step_type: stepType,
-    event_type: eventType,
-    payload: eventPayload,
+  await orderService.updateOrder(supabase, payload.order_id, {
+    notes: `Payment voided: ${payload.payment_reference}`,
   });
 }
 
@@ -524,9 +348,8 @@ async function handleStepCompletion(
   payload: OrderFulfillmentPayload,
   stepResult?: Record<string, unknown>
 ) {
-  // Record completion and continue
   if (saga.current_step) {
-    await recordSagaEvent(supabase, saga.id, saga.current_step, 'step_completed', stepResult || {});
+    await sagaService.recordSagaEvent(supabase, saga.id, saga.current_step, 'step_completed', stepResult || {});
   }
   return await executeNextStep(c, supabase, saga, payload);
 }
@@ -539,7 +362,7 @@ async function handleStepFailure(
   error?: string
 ) {
   if (saga.current_step) {
-    await recordSagaEvent(supabase, saga.id, saga.current_step, 'step_failed', { error });
+    await sagaService.recordSagaEvent(supabase, saga.id, saga.current_step, 'step_failed', { error });
   }
   return await startCompensation(c, supabase, saga, payload);
 }

@@ -2,16 +2,16 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { createSupabaseClient } from '../_shared/supabase-client.ts';
 import type { CreateProductRequest, UpdateProductRequest } from '../_shared/types.ts';
+import * as productService from '../_shared/services/product-service.ts';
 
 type Variables = {
   supabase: ReturnType<typeof createSupabaseClient>;
 };
 
-const app = new Hono<{ Variables: Variables }>().basePath('/products');
+const app = new Hono<{ Variables: Variables }>()
 
 app.use('/*', cors());
 
-// Supabase client middleware
 app.use('/*', async (c, next) => {
   c.set('supabase', createSupabaseClient(c.req.raw));
   await next();
@@ -22,51 +22,35 @@ app.onError((err, c) => {
   return c.json({ error: err.message || 'Internal server error' }, 500);
 });
 
-// List products
-app.get('/', async (c) => {
+app.get('/products', async (c) => {
   const client = c.get('supabase');
-
   const isActive = c.req.query('is_active');
   const search = c.req.query('search');
   const limit = parseInt(c.req.query('limit') || '100');
   const offset = parseInt(c.req.query('offset') || '0');
 
-  let query = client.from('products').select('*', { count: 'exact' });
+  const result = await productService.listProducts(client, {
+    isActive: isActive !== undefined ? isActive === 'true' : undefined,
+    search,
+    limit,
+    offset,
+  });
 
-  if (isActive !== undefined) {
-    query = query.eq('is_active', isActive === 'true');
-  }
-  if (search) {
-    query = query.or(`name.ilike.%${search}%,sku.ilike.%${search}%`);
-  }
-
-  const { data, error, count } = await query
-    .order('created_at', { ascending: false })
-    .range(offset, offset + limit - 1);
-
-  if (error) throw error;
-  return c.json({ data, count, limit, offset });
+  return c.json(result);
 });
 
-// Get single product
-app.get('/:id', async (c) => {
+app.get('/products/:id', async (c) => {
   const client = c.get('supabase');
   const id = c.req.param('id');
 
-  const { data, error } = await client
-    .from('products')
-    .select('*')
-    .eq('id', id)
-    .single();
-
-  if (error || !data) {
+  const product = await productService.getProduct(client, id);
+  if (!product) {
     return c.json({ error: 'Product not found' }, 404);
   }
-  return c.json(data);
+  return c.json(product);
 });
 
-// Create product
-app.post('/', async (c) => {
+app.post('/products', async (c) => {
   const client = c.get('supabase');
   const body: CreateProductRequest = await c.req.json();
 
@@ -74,63 +58,43 @@ app.post('/', async (c) => {
     return c.json({ error: 'sku and name are required' }, 400);
   }
 
-  const { data, error } = await client
-    .from('products')
-    .insert({
-      sku: body.sku,
-      name: body.name,
-      description: body.description,
-      unit_price: body.unit_price || 0,
-      is_active: body.is_active ?? true,
-    })
-    .select()
-    .single();
-
-  if (error) {
+  try {
+    const product = await productService.createProduct(client, body);
+    return c.json(product, 201);
+  } catch (err) {
+    const error = err as { code?: string };
     if (error.code === '23505') {
       return c.json({ error: 'Product with this SKU already exists' }, 409);
     }
-    throw error;
+    throw err;
   }
-  return c.json(data, 201);
 });
 
-// Update product
-app.put('/:id', async (c) => {
+app.put('/products/:id', async (c) => {
   const client = c.get('supabase');
   const id = c.req.param('id');
   const body: UpdateProductRequest = await c.req.json();
 
-  const { data, error } = await client
-    .from('products')
-    .update(body)
-    .eq('id', id)
-    .select()
-    .single();
-
-  if (error) {
-    if (error.code === 'PGRST116') {
+  try {
+    const product = await productService.updateProduct(client, id, body);
+    if (!product) {
       return c.json({ error: 'Product not found' }, 404);
     }
+    return c.json(product);
+  } catch (err) {
+    const error = err as { code?: string };
     if (error.code === '23505') {
       return c.json({ error: 'Product with this SKU already exists' }, 409);
     }
-    throw error;
+    throw err;
   }
-  return c.json(data);
 });
 
-// Delete product
-app.delete('/:id', async (c) => {
+app.delete('/products/:id', async (c) => {
   const client = c.get('supabase');
   const id = c.req.param('id');
 
-  const { error } = await client
-    .from('products')
-    .delete()
-    .eq('id', id);
-
-  if (error) throw error;
+  await productService.deleteProduct(client, id);
   return c.json({ message: 'Product deleted' });
 });
 

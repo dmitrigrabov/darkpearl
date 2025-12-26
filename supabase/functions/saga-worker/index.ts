@@ -1,6 +1,8 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { createServiceClient } from '../_shared/supabase-client.ts';
+import * as outboxService from '../_shared/services/outbox-service.ts';
+import * as sagaService from '../_shared/services/saga-service.ts';
 
 const MAX_RETRIES = 3;
 const BATCH_SIZE = 10;
@@ -9,12 +11,12 @@ type Variables = {
   serviceClient: ReturnType<typeof createServiceClient>;
 };
 
-const app = new Hono<{ Variables: Variables }>().basePath('/saga-worker');
+const app = new Hono<{ Variables: Variables }>();
 
-app.use('/*', cors());
+app.use('/saga-worker/*', cors());
 
 // Supabase service client middleware
-app.use('/*', async (c, next) => {
+app.use('/saga-worker/*', async (c, next) => {
   c.set('serviceClient', createServiceClient());
   await next();
 });
@@ -25,21 +27,13 @@ app.onError((err, c) => {
 });
 
 // Process outbox events
-app.post('/', async (c) => {
+app.post('/saga-worker', async (c) => {
   const supabase = c.get('serviceClient');
 
   console.log('Saga worker: Starting outbox processing');
 
   // Fetch unprocessed outbox events
-  const { data: events, error: fetchError } = await supabase
-    .from('outbox')
-    .select('*')
-    .is('processed_at', null)
-    .lt('retry_count', MAX_RETRIES)
-    .order('id', { ascending: true })
-    .limit(BATCH_SIZE);
-
-  if (fetchError) throw fetchError;
+  const events = await outboxService.fetchUnprocessedEvents(supabase, BATCH_SIZE, MAX_RETRIES);
 
   if (!events || events.length === 0) {
     console.log('Saga worker: No events to process');
@@ -63,10 +57,7 @@ app.post('/', async (c) => {
       }
 
       // Mark as processed
-      await supabase
-        .from('outbox')
-        .update({ processed_at: new Date().toISOString() })
-        .eq('id', event.id);
+      await outboxService.markEventProcessed(supabase, event.id);
 
       results.push({ id: event.id, status: 'processed' });
       console.log(`Outbox event ${event.id} processed successfully`);
@@ -75,10 +66,7 @@ app.post('/', async (c) => {
       console.error(`Failed to process outbox event ${event.id}:`, eventError);
 
       // Increment retry count
-      await supabase
-        .from('outbox')
-        .update({ retry_count: event.retry_count + 1 })
-        .eq('id', event.id);
+      await outboxService.incrementRetryCount(supabase, event.id);
 
       results.push({
         id: event.id,
@@ -118,11 +106,7 @@ async function processSagaStart(
   };
 
   // Check if saga already exists (idempotency)
-  const { data: existingSaga } = await supabase
-    .from('sagas')
-    .select('id')
-    .eq('correlation_id', event.aggregate_id)
-    .single();
+  const existingSaga = await sagaService.getSagaByCorrelationId(supabase, event.aggregate_id);
 
   if (existingSaga) {
     console.log(`Saga already exists for order ${event.aggregate_id}, skipping creation`);
@@ -130,22 +114,16 @@ async function processSagaStart(
   }
 
   // Create new saga
-  const { data: saga, error: sagaError } = await supabase
-    .from('sagas')
-    .insert({
-      saga_type: payload.saga_type,
-      correlation_id: event.aggregate_id,
-      status: 'started',
-      payload: {
-        order_id: payload.order_id,
-        warehouse_id: payload.warehouse_id,
-        items: payload.items,
-      },
-    })
-    .select()
-    .single();
-
-  if (sagaError) throw sagaError;
+  const saga = await sagaService.createSaga(supabase, {
+    saga_type: payload.saga_type,
+    correlation_id: event.aggregate_id,
+    status: 'started',
+    payload: {
+      order_id: payload.order_id,
+      warehouse_id: payload.warehouse_id,
+      items: payload.items,
+    },
+  });
 
   console.log(`Created saga ${saga.id} for order ${payload.order_id}`);
 

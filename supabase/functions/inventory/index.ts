@@ -2,17 +2,17 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { createSupabaseClient } from '../_shared/supabase-client.ts';
 import type { CreateInventoryRequest, UpdateInventoryRequest } from '../_shared/types.ts';
+import * as inventoryService from '../_shared/services/inventory-service.ts';
 
 type Variables = {
   supabase: ReturnType<typeof createSupabaseClient>;
 };
 
-const app = new Hono<{ Variables: Variables }>().basePath('/inventory');
+const app = new Hono<{ Variables: Variables }>();
 
-app.use('/*', cors());
+app.use('/inventory/*', cors());
 
-// Supabase client middleware
-app.use('/*', async (c, next) => {
+app.use('/inventory/*', async (c, next) => {
   c.set('supabase', createSupabaseClient(c.req.raw));
   await next();
 });
@@ -22,66 +22,37 @@ app.onError((err, c) => {
   return c.json({ error: err.message || 'Internal server error' }, 500);
 });
 
-// List inventory
-app.get('/', async (c) => {
+app.get('/inventory', async (c) => {
   const client = c.get('supabase');
-
   const productId = c.req.query('product_id');
   const warehouseId = c.req.query('warehouse_id');
   const lowStock = c.req.query('low_stock');
   const limit = parseInt(c.req.query('limit') || '100');
   const offset = parseInt(c.req.query('offset') || '0');
 
-  let query = client.from('inventory').select(
-    `
-      *,
-      product:products(id, sku, name),
-      warehouse:warehouses(id, code, name)
-    `,
-    { count: 'exact' }
-  );
+  const result = await inventoryService.listInventory(client, {
+    productId,
+    warehouseId,
+    lowStock: lowStock === 'true',
+    limit,
+    offset,
+  });
 
-  if (productId) {
-    query = query.eq('product_id', productId);
-  }
-  if (warehouseId) {
-    query = query.eq('warehouse_id', warehouseId);
-  }
-  if (lowStock === 'true') {
-    query = query.lte('quantity_available', 'reorder_point');
-  }
-
-  const { data, error, count } = await query
-    .order('updated_at', { ascending: false })
-    .range(offset, offset + limit - 1);
-
-  if (error) throw error;
-  return c.json({ data, count, limit, offset });
+  return c.json(result);
 });
 
-// Get single inventory
-app.get('/:id', async (c) => {
+app.get('/inventory/:id', async (c) => {
   const client = c.get('supabase');
   const id = c.req.param('id');
 
-  const { data, error } = await client
-    .from('inventory')
-    .select(`
-      *,
-      product:products(id, sku, name),
-      warehouse:warehouses(id, code, name)
-    `)
-    .eq('id', id)
-    .single();
-
-  if (error || !data) {
+  const inventory = await inventoryService.getInventory(client, id);
+  if (!inventory) {
     return c.json({ error: 'Inventory not found' }, 404);
   }
-  return c.json(data);
+  return c.json(inventory);
 });
 
-// Create inventory
-app.post('/', async (c) => {
+app.post('/inventory', async (c) => {
   const client = c.get('supabase');
   const body: CreateInventoryRequest = await c.req.json();
 
@@ -89,52 +60,29 @@ app.post('/', async (c) => {
     return c.json({ error: 'product_id and warehouse_id are required' }, 400);
   }
 
-  // Check if product exists
-  const { data: product } = await client
-    .from('products')
-    .select('id')
-    .eq('id', body.product_id)
-    .single();
-
-  if (!product) {
+  const productExists = await inventoryService.productExists(client, body.product_id);
+  if (!productExists) {
     return c.json({ error: 'Product not found' }, 404);
   }
 
-  // Check if warehouse exists
-  const { data: warehouse } = await client
-    .from('warehouses')
-    .select('id')
-    .eq('id', body.warehouse_id)
-    .single();
-
-  if (!warehouse) {
+  const warehouseExists = await inventoryService.warehouseExists(client, body.warehouse_id);
+  if (!warehouseExists) {
     return c.json({ error: 'Warehouse not found' }, 404);
   }
 
-  const { data, error } = await client
-    .from('inventory')
-    .insert({
-      product_id: body.product_id,
-      warehouse_id: body.warehouse_id,
-      quantity_available: body.quantity_available || 0,
-      quantity_reserved: 0,
-      reorder_point: body.reorder_point || 10,
-      reorder_quantity: body.reorder_quantity || 50,
-    })
-    .select()
-    .single();
-
-  if (error) {
+  try {
+    const inventory = await inventoryService.createInventory(client, body);
+    return c.json(inventory, 201);
+  } catch (err) {
+    const error = err as { code?: string };
     if (error.code === '23505') {
       return c.json({ error: 'Inventory already exists for this product-warehouse combination' }, 409);
     }
-    throw error;
+    throw err;
   }
-  return c.json(data, 201);
 });
 
-// Update inventory
-app.put('/:id', async (c) => {
+app.put('/inventory/:id', async (c) => {
   const client = c.get('supabase');
   const id = c.req.param('id');
   const body: UpdateInventoryRequest = await c.req.json();
@@ -146,33 +94,18 @@ app.put('/:id', async (c) => {
     return c.json({ error: 'quantity_reserved cannot be negative' }, 400);
   }
 
-  const { data, error } = await client
-    .from('inventory')
-    .update(body)
-    .eq('id', id)
-    .select()
-    .single();
-
-  if (error) {
-    if (error.code === 'PGRST116') {
-      return c.json({ error: 'Inventory not found' }, 404);
-    }
-    throw error;
+  const inventory = await inventoryService.updateInventory(client, id, body);
+  if (!inventory) {
+    return c.json({ error: 'Inventory not found' }, 404);
   }
-  return c.json(data);
+  return c.json(inventory);
 });
 
-// Delete inventory
-app.delete('/:id', async (c) => {
+app.delete('/inventory/:id', async (c) => {
   const client = c.get('supabase');
   const id = c.req.param('id');
 
-  const { error } = await client
-    .from('inventory')
-    .delete()
-    .eq('id', id);
-
-  if (error) throw error;
+  await inventoryService.deleteInventory(client, id);
   return c.json({ message: 'Inventory deleted' });
 });
 
