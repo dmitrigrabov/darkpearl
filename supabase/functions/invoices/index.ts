@@ -32,9 +32,15 @@ app.get('/invoices', async c => {
   const { supabase } = c.var
   const url = new URL(c.req.url)
 
+  const statusParam = url.searchParams.get('status')
+  const validStatuses = ['draft', 'sent', 'paid', 'partial', 'overdue', 'cancelled', 'refunded'] as const
+  const status = statusParam && validStatuses.includes(statusParam as typeof validStatuses[number])
+    ? statusParam as typeof validStatuses[number]
+    : undefined
+
   const params = {
     customerId: url.searchParams.get('customer_id') || undefined,
-    status: url.searchParams.get('status') || undefined,
+    status,
     overdue: url.searchParams.get('overdue') === 'true',
     dateFrom: url.searchParams.get('date_from') || undefined,
     dateTo: url.searchParams.get('date_to') || undefined,

@@ -4,6 +4,7 @@ import type {
   Job,
   JobTreatment,
   JobConsumption,
+  JobStatus,
   CreateJobRequest,
   UpdateJobRequest,
   AddJobTreatmentRequest,
@@ -17,7 +18,7 @@ export type ListJobsParams = {
   scheduledDate?: string
   dateFrom?: string
   dateTo?: string
-  status?: string
+  status?: JobStatus
   limit?: number
   offset?: number
 }
@@ -104,9 +105,13 @@ export async function createJob(
   client: Client,
   data: CreateJobRequest
 ): Promise<PostgrestSingleResponse<Job>> {
+  // Generate job number: JOB-YYYYMMDD-NNN
+  const jobNumber = await generateJobNumber(client)
+
   return await client
     .from('jobs')
     .insert({
+      job_number: jobNumber,
       lawn_id: data.lawn_id,
       performed_by: data.performed_by,
       route_stop_id: data.route_stop_id,
@@ -120,6 +125,22 @@ export async function createJob(
     })
     .select()
     .single()
+}
+
+async function generateJobNumber(client: Client): Promise<string> {
+  const today = new Date()
+  const dateStr = today.toISOString().split('T')[0].replace(/-/g, '')
+  const startOfDay = today.toISOString().split('T')[0] + 'T00:00:00Z'
+  const endOfDay = today.toISOString().split('T')[0] + 'T23:59:59Z'
+
+  const { count } = await client
+    .from('jobs')
+    .select('*', { count: 'exact', head: true })
+    .gte('created_at', startOfDay)
+    .lte('created_at', endOfDay)
+
+  const seqNum = (count ?? 0) + 1
+  return `JOB-${dateStr}-${seqNum.toString().padStart(3, '0')}`
 }
 
 export async function updateJob(

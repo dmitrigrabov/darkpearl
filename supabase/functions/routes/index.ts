@@ -35,13 +35,19 @@ app.get('/routes', async c => {
   const { supabase } = c.var
   const url = new URL(c.req.url)
 
+  const statusParam = url.searchParams.get('status')
+  const validStatuses = ['draft', 'confirmed', 'in_progress', 'completed', 'cancelled'] as const
+  const status = statusParam && validStatuses.includes(statusParam as typeof validStatuses[number])
+    ? statusParam as typeof validStatuses[number]
+    : undefined
+
   const params = {
     operatorId: url.searchParams.get('operator_id') || undefined,
     depotId: url.searchParams.get('depot_id') || undefined,
     routeDate: url.searchParams.get('route_date') || undefined,
     dateFrom: url.searchParams.get('date_from') || undefined,
     dateTo: url.searchParams.get('date_to') || undefined,
-    status: url.searchParams.get('status') || undefined,
+    status,
     limit: url.searchParams.get('limit') ? parseInt(url.searchParams.get('limit')!) : undefined,
     offset: url.searchParams.get('offset') ? parseInt(url.searchParams.get('offset')!) : undefined
   }

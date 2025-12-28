@@ -3,6 +3,7 @@ import type {
   Client,
   Route,
   RouteStop,
+  RouteStatus,
   CreateRouteRequest,
   UpdateRouteRequest,
   AddRouteStopRequest,
@@ -15,7 +16,7 @@ export type ListRoutesParams = {
   routeDate?: string
   dateFrom?: string
   dateTo?: string
-  status?: string
+  status?: RouteStatus
   limit?: number
   offset?: number
 }

@@ -28,10 +28,16 @@ app.get('/payments', async c => {
   const { supabase } = c.var
   const url = new URL(c.req.url)
 
+  const methodParam = url.searchParams.get('payment_method')
+  const validMethods = ['card', 'bank_transfer', 'direct_debit', 'cash', 'cheque'] as const
+  const paymentMethod = methodParam && validMethods.includes(methodParam as typeof validMethods[number])
+    ? methodParam as typeof validMethods[number]
+    : undefined
+
   const params = {
     customerId: url.searchParams.get('customer_id') || undefined,
     invoiceId: url.searchParams.get('invoice_id') || undefined,
-    paymentMethod: url.searchParams.get('payment_method') || undefined,
+    paymentMethod,
     isConfirmed: url.searchParams.get('is_confirmed') === 'true' ? true : url.searchParams.get('is_confirmed') === 'false' ? false : undefined,
     dateFrom: url.searchParams.get('date_from') || undefined,
     dateTo: url.searchParams.get('date_to') || undefined,

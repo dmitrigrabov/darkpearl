@@ -27,8 +27,14 @@ app.get('/treatments', async c => {
   const { supabase } = c.var
   const url = new URL(c.req.url)
 
+  const seasonParam = url.searchParams.get('season')
+  const validSeasons = ['spring_early', 'spring_late', 'summer', 'autumn_early', 'autumn_late'] as const
+  const season = seasonParam && validSeasons.includes(seasonParam as typeof validSeasons[number])
+    ? seasonParam as typeof validSeasons[number]
+    : undefined
+
   const params = {
-    season: url.searchParams.get('season') || undefined,
+    season,
     isActive: url.searchParams.get('is_active') === 'true' ? true : url.searchParams.get('is_active') === 'false' ? false : undefined,
     limit: url.searchParams.get('limit') ? parseInt(url.searchParams.get('limit')!) : undefined,
     offset: url.searchParams.get('offset') ? parseInt(url.searchParams.get('offset')!) : undefined

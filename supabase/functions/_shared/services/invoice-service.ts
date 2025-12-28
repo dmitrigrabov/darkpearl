@@ -3,6 +3,7 @@ import type {
   Client,
   Invoice,
   InvoiceItem,
+  InvoiceStatus,
   CreateInvoiceRequest,
   UpdateInvoiceRequest,
   AddInvoiceItemRequest,
@@ -11,7 +12,7 @@ import type {
 
 export type ListInvoicesParams = {
   customerId?: string
-  status?: string
+  status?: InvoiceStatus
   overdue?: boolean
   dateFrom?: string
   dateTo?: string
@@ -80,10 +81,14 @@ export async function createInvoice(
   const paymentTermsDays = data.payment_terms_days ?? 30
   const dueDate = data.due_date || calculateDueDate(issueDate, paymentTermsDays)
 
+  // Generate invoice number: INV-YYYY-NNNNN
+  const invoiceNumber = await generateInvoiceNumber(client)
+
   return await client
     .from('invoices')
     .insert({
       customer_id: data.customer_id,
+      invoice_number: invoiceNumber,
       issue_date: issueDate,
       due_date: dueDate,
       payment_terms_days: paymentTermsDays,
@@ -93,6 +98,18 @@ export async function createInvoice(
     })
     .select()
     .single()
+}
+
+async function generateInvoiceNumber(client: Client): Promise<string> {
+  const year = new Date().getFullYear()
+  const { count } = await client
+    .from('invoices')
+    .select('*', { count: 'exact', head: true })
+    .gte('created_at', `${year}-01-01`)
+    .lt('created_at', `${year + 1}-01-01`)
+
+  const seqNum = (count ?? 0) + 1
+  return `INV-${year}-${seqNum.toString().padStart(5, '0')}`
 }
 
 function calculateDueDate(issueDate: string, days: number): string {

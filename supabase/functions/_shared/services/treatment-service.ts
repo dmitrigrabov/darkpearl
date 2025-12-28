@@ -3,13 +3,14 @@ import type {
   Client,
   Treatment,
   TreatmentProduct,
+  TreatmentSeason,
   CreateTreatmentRequest,
   UpdateTreatmentRequest,
   AddTreatmentProductRequest
 } from '../types.ts'
 
 export type ListTreatmentsParams = {
-  season?: string
+  season?: TreatmentSeason
   isActive?: boolean
   limit?: number
   offset?: number

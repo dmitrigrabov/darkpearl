@@ -35,6 +35,12 @@ app.get('/jobs', async c => {
   const { supabase } = c.var
   const url = new URL(c.req.url)
 
+  const statusParam = url.searchParams.get('status')
+  const validStatuses = ['scheduled', 'in_progress', 'completed', 'cancelled', 'skipped', 'rescheduled'] as const
+  const status = statusParam && validStatuses.includes(statusParam as typeof validStatuses[number])
+    ? statusParam as typeof validStatuses[number]
+    : undefined
+
   const params = {
     lawnId: url.searchParams.get('lawn_id') || undefined,
     customerId: url.searchParams.get('customer_id') || undefined,
@@ -42,7 +48,7 @@ app.get('/jobs', async c => {
     scheduledDate: url.searchParams.get('scheduled_date') || undefined,
     dateFrom: url.searchParams.get('date_from') || undefined,
     dateTo: url.searchParams.get('date_to') || undefined,
-    status: url.searchParams.get('status') || undefined,
+    status,
     limit: url.searchParams.get('limit') ? parseInt(url.searchParams.get('limit')!) : undefined,
     offset: url.searchParams.get('offset') ? parseInt(url.searchParams.get('offset')!) : undefined
   }

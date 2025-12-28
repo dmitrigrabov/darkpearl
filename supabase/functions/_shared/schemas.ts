@@ -306,7 +306,7 @@ export const createTreatmentSchema = z.object({
   description: z.string().optional(),
   price_per_sqm: z.number().nonnegative('Price must be non-negative'),
   min_price: z.number().nonnegative('Min price must be non-negative').optional(),
-  minutes_per_100sqm: z.number().int().positive().optional(),
+  minutes_per_100sqm: z.number().positive('Minutes per 100sqm is required'),
   setup_minutes: z.number().int().nonnegative().optional(),
   season: treatmentSeasonSchema.optional(),
   sequence_in_year: z.number().int().positive().optional(),
@@ -353,14 +353,14 @@ export const addTreatmentPlanItemSchema = z.object({
   treatment_id: z.string().uuid('Treatment ID must be a valid UUID'),
   window_start: z.string().datetime().optional(),
   window_end: z.string().datetime().optional(),
-  scheduled_week: z.number().int().min(1).max(53).optional(),
-  price_snapshot: z.number().nonnegative().optional()
+  scheduled_week: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Scheduled week must be a date (YYYY-MM-DD)').optional(),
+  price_snapshot: z.number().nonnegative('Price snapshot is required')
 })
 
 export const updateTreatmentPlanItemSchema = z.object({
   window_start: z.string().datetime().optional(),
   window_end: z.string().datetime().optional(),
-  scheduled_week: z.number().int().min(1).max(53).optional(),
+  scheduled_week: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Scheduled week must be a date (YYYY-MM-DD)').optional(),
   is_completed: z.boolean().optional(),
   price_snapshot: z.number().nonnegative().optional()
 })
@@ -371,10 +371,10 @@ export const createOperatorSchema = z.object({
   first_name: z.string().min(1, 'First name is required'),
   last_name: z.string().min(1, 'Last name is required'),
   email: z.string().email('Invalid email address').optional(),
-  phone: z.string().optional(),
-  depot_id: z.string().uuid('Depot ID must be a valid UUID').optional(),
+  phone: z.string().min(1, 'Phone is required'),
+  depot_id: z.string().uuid('Depot ID must be a valid UUID'),
   user_id: z.string().uuid('User ID must be a valid UUID').optional(),
-  hourly_cost: z.number().nonnegative().optional(),
+  hourly_cost: z.number().nonnegative('Hourly cost is required'),
   is_active: z.boolean().optional()
 })
 
@@ -393,7 +393,7 @@ export const updateOperatorSchema = z.object({
 // Vehicle schemas
 export const createVehicleSchema = z.object({
   registration: z.string().min(1, 'Registration is required'),
-  depot_id: z.string().uuid('Depot ID must be a valid UUID').optional(),
+  depot_id: z.string().uuid('Depot ID must be a valid UUID'),
   make: z.string().optional(),
   vehicle_model: z.string().optional(),
   cost_per_mile: z.number().nonnegative().optional(),
@@ -460,7 +460,7 @@ export const createJobSchema = z.object({
   route_stop_id: z.string().uuid('Route stop ID must be a valid UUID').optional(),
   treatment_plan_item_id: z.string().uuid('Treatment plan item ID must be a valid UUID').optional(),
   scheduled_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD'),
-  lawn_area_sqm: z.number().positive().optional(),
+  lawn_area_sqm: z.number().positive('Lawn area is required'),
   status: jobStatusSchema.optional(),
   lawn_condition_at_job: lawnConditionSchema.optional(),
   before_notes: z.string().optional(),

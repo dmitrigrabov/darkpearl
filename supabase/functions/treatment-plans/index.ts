@@ -33,11 +33,17 @@ app.get('/treatment-plans', async c => {
   const { supabase } = c.var
   const url = new URL(c.req.url)
 
+  const statusParam = url.searchParams.get('status')
+  const validStatuses = ['active', 'paused', 'completed', 'cancelled'] as const
+  const status = statusParam && validStatuses.includes(statusParam as typeof validStatuses[number])
+    ? statusParam as typeof validStatuses[number]
+    : undefined
+
   const params = {
     lawnId: url.searchParams.get('lawn_id') || undefined,
     customerId: url.searchParams.get('customer_id') || undefined,
     year: url.searchParams.get('year') ? parseInt(url.searchParams.get('year')!) : undefined,
-    status: url.searchParams.get('status') || undefined,
+    status,
     limit: url.searchParams.get('limit') ? parseInt(url.searchParams.get('limit')!) : undefined,
     offset: url.searchParams.get('offset') ? parseInt(url.searchParams.get('offset')!) : undefined
   }

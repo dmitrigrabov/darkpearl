@@ -1,10 +1,10 @@
 import type { PostgrestSingleResponse } from '@supabase/supabase-js'
-import type { Client, Payment, CreatePaymentRequest, UpdatePaymentRequest } from '../types.ts'
+import type { Client, Payment, PaymentMethod, CreatePaymentRequest, UpdatePaymentRequest } from '../types.ts'
 
 export type ListPaymentsParams = {
   customerId?: string
   invoiceId?: string
-  paymentMethod?: string
+  paymentMethod?: PaymentMethod
   isConfirmed?: boolean
   dateFrom?: string
   dateTo?: string

@@ -1,110 +1,388 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from './database.types.ts'
 
-// Re-export Database type for convenience
-export type { Database }
-
 // Supabase client type alias
 export type Client = SupabaseClient<Database>
 
-// Enum types derived from generated types
-export type MovementType = Database['public']['Enums']['movement_type']
-export type OrderStatus = Database['public']['Enums']['order_status']
-export type SagaStatus = Database['public']['Enums']['saga_status']
-export type SagaStepType = Database['public']['Enums']['saga_step_type']
+// ============================================
+// ENUM TYPES
+// ============================================
 
-// Lawn care domain enum types (from database)
-export type LawnCondition = Database['public']['Enums']['lawn_condition']
-export type RouteStatus = Database['public']['Enums']['route_status']
-export type JobStatus = Database['public']['Enums']['job_status']
-export type InvoiceStatus = Database['public']['Enums']['invoice_status']
-export type PaymentMethod = Database['public']['Enums']['payment_method']
+// Core domain enums
+export type MovementType = 'receive' | 'transfer_out' | 'transfer_in' | 'adjust' | 'reserve' | 'release' | 'fulfill' | 'consume'
+export type OrderStatus = 'pending' | 'reserved' | 'payment_processing' | 'payment_failed' | 'paid' | 'fulfilling' | 'fulfilled' | 'cancelled'
+export type SagaStatus = 'started' | 'step_pending' | 'step_executing' | 'step_completed' | 'step_failed' | 'compensating' | 'compensation_completed' | 'completed' | 'failed'
+export type SagaStepType = 'reserve_stock' | 'process_payment' | 'fulfill_order' | 'release_stock' | 'void_payment'
 
-// Lawn care domain enum types (from database)
-export type TreatmentSeason = Database['public']['Enums']['treatment_season']
-export type TreatmentPlanStatus = Database['public']['Enums']['treatment_plan_status']
-
-// Lawn care domain string types (not db enums, stored as strings)
+// Lawn care domain enums
+export type LawnCondition = 'excellent' | 'good' | 'fair' | 'poor' | 'new'
+export type RouteStatus = 'draft' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled'
+export type JobStatus = 'scheduled' | 'in_progress' | 'completed' | 'cancelled' | 'skipped' | 'rescheduled'
+export type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'partial' | 'overdue' | 'cancelled' | 'refunded'
+export type PaymentMethod = 'card' | 'bank_transfer' | 'direct_debit' | 'cash' | 'cheque'
+export type TreatmentSeason = 'spring_early' | 'spring_late' | 'summer' | 'autumn_early' | 'autumn_late'
+export type TreatmentPlanStatus = 'active' | 'paused' | 'completed' | 'cancelled'
 export type PreferredContactMethod = 'email' | 'phone' | 'sms'
 
-// Database row types derived from generated types
-export type Product = Database['public']['Tables']['products']['Row']
-export type Warehouse = Database['public']['Tables']['warehouses']['Row']
-export type Inventory = Database['public']['Tables']['inventory']['Row']
-export type StockMovement = Database['public']['Tables']['stock_movements']['Row']
-export type Order = Database['public']['Tables']['orders']['Row']
-export type OrderItem = Database['public']['Tables']['order_items']['Row']
-export type Saga = Database['public']['Tables']['sagas']['Row']
-export type SagaEvent = Database['public']['Tables']['saga_events']['Row']
+// ============================================
+// ROW TYPES (Database entity types)
+// ============================================
 
-// Lawn care domain row types
-export type Customer = Database['public']['Tables']['customers']['Row']
-export type Property = Database['public']['Tables']['properties']['Row']
-export type Lawn = Database['public']['Tables']['lawns']['Row']
-export type Treatment = Database['public']['Tables']['treatments']['Row']
-export type TreatmentProduct = Database['public']['Tables']['treatment_products']['Row']
-export type TreatmentPlan = Database['public']['Tables']['treatment_plans']['Row']
-export type TreatmentPlanItem = Database['public']['Tables']['treatment_plan_items']['Row']
-export type Operator = Database['public']['Tables']['operators']['Row']
-export type Vehicle = Database['public']['Tables']['vehicles']['Row']
-export type Route = Database['public']['Tables']['routes']['Row']
-export type RouteStop = Database['public']['Tables']['route_stops']['Row']
-export type Job = Database['public']['Tables']['jobs']['Row']
-export type JobTreatment = Database['public']['Tables']['job_treatments']['Row']
-export type JobConsumption = Database['public']['Tables']['job_consumptions']['Row']
-export type Invoice = Database['public']['Tables']['invoices']['Row']
-export type InvoiceItem = Database['public']['Tables']['invoice_items']['Row']
-export type Payment = Database['public']['Tables']['payments']['Row']
+// Core domain types
+export type Product = {
+  id: string
+  sku: string
+  name: string
+  description: string | null
+  unit_price: number
+  is_active: boolean
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
 
-// Insert types for creating records
-export type ProductInsert = Database['public']['Tables']['products']['Insert']
-export type WarehouseInsert = Database['public']['Tables']['warehouses']['Insert']
-export type InventoryInsert = Database['public']['Tables']['inventory']['Insert']
-export type StockMovementInsert = Database['public']['Tables']['stock_movements']['Insert']
-export type OrderInsert = Database['public']['Tables']['orders']['Insert']
-export type OrderItemInsert = Database['public']['Tables']['order_items']['Insert']
+export type Warehouse = {
+  id: string
+  code: string
+  name: string
+  address: string | null
+  is_active: boolean
+  is_depot: boolean
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
 
-// Lawn care domain insert types
-export type CustomerInsert = Database['public']['Tables']['customers']['Insert']
-export type PropertyInsert = Database['public']['Tables']['properties']['Insert']
-export type LawnInsert = Database['public']['Tables']['lawns']['Insert']
-export type TreatmentInsert = Database['public']['Tables']['treatments']['Insert']
-export type TreatmentProductInsert = Database['public']['Tables']['treatment_products']['Insert']
-export type TreatmentPlanInsert = Database['public']['Tables']['treatment_plans']['Insert']
-export type TreatmentPlanItemInsert = Database['public']['Tables']['treatment_plan_items']['Insert']
-export type OperatorInsert = Database['public']['Tables']['operators']['Insert']
-export type VehicleInsert = Database['public']['Tables']['vehicles']['Insert']
-export type RouteInsert = Database['public']['Tables']['routes']['Insert']
-export type RouteStopInsert = Database['public']['Tables']['route_stops']['Insert']
-export type JobInsert = Database['public']['Tables']['jobs']['Insert']
-export type JobTreatmentInsert = Database['public']['Tables']['job_treatments']['Insert']
-export type JobConsumptionInsert = Database['public']['Tables']['job_consumptions']['Insert']
-export type InvoiceInsert = Database['public']['Tables']['invoices']['Insert']
-export type InvoiceItemInsert = Database['public']['Tables']['invoice_items']['Insert']
-export type PaymentInsert = Database['public']['Tables']['payments']['Insert']
+export type Inventory = {
+  id: string
+  product_id: string
+  warehouse_id: string
+  quantity_available: number
+  quantity_reserved: number
+  reorder_point: number
+  reorder_quantity: number
+  created_at: string
+  updated_at: string
+}
 
-// Update types for modifying records
-export type ProductUpdate = Database['public']['Tables']['products']['Update']
-export type WarehouseUpdate = Database['public']['Tables']['warehouses']['Update']
-export type InventoryUpdate = Database['public']['Tables']['inventory']['Update']
+export type StockMovement = {
+  id: string
+  correlation_id: string | null
+  product_id: string
+  warehouse_id: string
+  movement_type: MovementType
+  quantity: number
+  reference_id: string | null
+  reference_type: string | null
+  notes: string | null
+  created_by: string | null
+  created_at: string
+}
 
-// Lawn care domain update types
-export type CustomerUpdate = Database['public']['Tables']['customers']['Update']
-export type PropertyUpdate = Database['public']['Tables']['properties']['Update']
-export type LawnUpdate = Database['public']['Tables']['lawns']['Update']
-export type TreatmentUpdate = Database['public']['Tables']['treatments']['Update']
-export type TreatmentPlanUpdate = Database['public']['Tables']['treatment_plans']['Update']
-export type TreatmentPlanItemUpdate = Database['public']['Tables']['treatment_plan_items']['Update']
-export type OperatorUpdate = Database['public']['Tables']['operators']['Update']
-export type VehicleUpdate = Database['public']['Tables']['vehicles']['Update']
-export type RouteUpdate = Database['public']['Tables']['routes']['Update']
-export type RouteStopUpdate = Database['public']['Tables']['route_stops']['Update']
-export type JobUpdate = Database['public']['Tables']['jobs']['Update']
-export type InvoiceUpdate = Database['public']['Tables']['invoices']['Update']
-export type InvoiceItemUpdate = Database['public']['Tables']['invoice_items']['Update']
-export type PaymentUpdate = Database['public']['Tables']['payments']['Update']
+export type Order = {
+  id: string
+  order_number: string
+  customer_id: string | null
+  warehouse_id: string
+  status: OrderStatus
+  total_amount: number
+  notes: string | null
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
 
-// Request/Response types for API endpoints
+export type OrderItem = {
+  id: string
+  order_id: string
+  product_id: string
+  quantity: number
+  unit_price: number
+  created_at: string
+}
+
+export type Saga = {
+  id: string
+  saga_type: string
+  correlation_id: string
+  payload: Record<string, unknown>
+  status: SagaStatus
+  current_step: string | null
+  steps_completed: string[]
+  error_message: string | null
+  retry_count: number
+  started_at: string
+  completed_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type SagaEvent = {
+  id: string
+  saga_id: string
+  step_type: SagaStepType
+  event_type: string
+  payload: Record<string, unknown> | null
+  error_message: string | null
+  created_at: string
+}
+
+// Lawn care domain types
+export type Customer = {
+  id: string
+  customer_number: string
+  first_name: string
+  last_name: string
+  email: string | null
+  phone: string | null
+  phone_secondary: string | null
+  preferred_contact_method: string | null
+  billing_address_line1: string | null
+  billing_address_line2: string | null
+  billing_city: string | null
+  billing_postcode: string | null
+  marketing_consent: boolean
+  notes: string | null
+  is_active: boolean
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type Property = {
+  id: string
+  customer_id: string
+  address_line1: string
+  address_line2: string | null
+  city: string
+  postcode: string
+  latitude: number | null
+  longitude: number | null
+  access_notes: string | null
+  is_active: boolean
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type Lawn = {
+  id: string
+  property_id: string
+  name: string
+  area_sqm: number
+  lawn_condition: LawnCondition | null
+  boundary: unknown | null
+  access_notes: string | null
+  is_active: boolean
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type Treatment = {
+  id: string
+  code: string
+  name: string
+  description: string | null
+  price_per_sqm: number
+  min_price: number | null
+  minutes_per_100sqm: number
+  setup_minutes: number | null
+  season: TreatmentSeason | null
+  sequence_in_year: number | null
+  is_active: boolean
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type TreatmentProduct = {
+  id: string
+  treatment_id: string
+  product_id: string
+  quantity_per_100sqm: number
+  quantity_multiplier_poor: number | null
+  created_at: string
+}
+
+export type TreatmentPlan = {
+  id: string
+  lawn_id: string
+  year: number
+  status: TreatmentPlanStatus
+  total_estimated_price: number | null
+  notes: string | null
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type TreatmentPlanItem = {
+  id: string
+  treatment_plan_id: string
+  treatment_id: string
+  window_start: string | null
+  window_end: string | null
+  scheduled_week: number | null
+  is_completed: boolean
+  price_snapshot: number | null
+  created_at: string
+}
+
+export type Operator = {
+  id: string
+  employee_number: string
+  first_name: string
+  last_name: string
+  email: string | null
+  phone: string | null
+  depot_id: string | null
+  user_id: string | null
+  hourly_cost: number | null
+  is_active: boolean
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type Vehicle = {
+  id: string
+  registration: string
+  depot_id: string | null
+  make: string | null
+  vehicle_model: string | null
+  cost_per_mile: number | null
+  load_capacity_kg: number | null
+  is_active: boolean
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type Route = {
+  id: string
+  operator_id: string
+  depot_id: string
+  vehicle_id: string | null
+  route_date: string
+  status: RouteStatus
+  estimated_duration_minutes: number | null
+  estimated_distance_miles: number | null
+  actual_duration_minutes: number | null
+  actual_distance_miles: number | null
+  started_at: string | null
+  completed_at: string | null
+  notes: string | null
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type RouteStop = {
+  id: string
+  route_id: string
+  lawn_id: string
+  stop_order: number
+  estimated_arrival: string | null
+  estimated_departure: string | null
+  actual_arrival: string | null
+  actual_departure: string | null
+  distance_from_previous_miles: number | null
+  created_at: string
+}
+
+export type Job = {
+  id: string
+  job_number: string
+  lawn_id: string
+  performed_by: string | null
+  route_stop_id: string | null
+  treatment_plan_item_id: string | null
+  scheduled_date: string
+  lawn_area_sqm: number
+  status: JobStatus
+  lawn_condition_at_job: LawnCondition | null
+  before_notes: string | null
+  before_photos: unknown | null
+  after_notes: string | null
+  after_photos: unknown | null
+  customer_signature_url: string | null
+  started_at: string | null
+  completed_at: string | null
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type JobTreatment = {
+  id: string
+  job_id: string
+  treatment_id: string
+  price_charged: number
+  duration_minutes: number | null
+  created_at: string
+}
+
+export type JobConsumption = {
+  id: string
+  job_treatment_id: string
+  product_id: string
+  warehouse_id: string
+  quantity_consumed: number
+  stock_movement_id: string | null
+  created_at: string
+}
+
+export type Invoice = {
+  id: string
+  customer_id: string
+  invoice_number: string
+  status: InvoiceStatus
+  issue_date: string
+  due_date: string
+  subtotal: number
+  vat_rate: number | null
+  vat_amount: number
+  total_amount: number
+  amount_paid: number
+  payment_terms_days: number | null
+  notes: string | null
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type InvoiceItem = {
+  id: string
+  invoice_id: string
+  job_id: string | null
+  description: string
+  quantity: number
+  unit_price: number
+  line_total: number
+  created_at: string
+}
+
+export type Payment = {
+  id: string
+  invoice_id: string
+  customer_id: string
+  payment_reference: string | null
+  payment_method: PaymentMethod
+  amount: number
+  payment_date: string
+  is_confirmed: boolean
+  notes: string | null
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+// ============================================
+// REQUEST/RESPONSE TYPES FOR API ENDPOINTS
+// ============================================
+
+// Product requests
 export type CreateProductRequest = {
   sku: string
   name: string
@@ -121,6 +399,7 @@ export type UpdateProductRequest = {
   is_active?: boolean
 }
 
+// Warehouse requests
 export type CreateWarehouseRequest = {
   code: string
   name: string
@@ -135,6 +414,7 @@ export type UpdateWarehouseRequest = {
   is_active?: boolean
 }
 
+// Inventory requests
 export type CreateInventoryRequest = {
   product_id: string
   warehouse_id: string
@@ -150,6 +430,7 @@ export type UpdateInventoryRequest = {
   reorder_quantity?: number
 }
 
+// Stock movement requests
 export type CreateStockMovementRequest = {
   correlation_id?: string
   product_id: string
@@ -161,6 +442,7 @@ export type CreateStockMovementRequest = {
   notes?: string
 }
 
+// Order requests
 export type CreateOrderRequest = {
   customer_id?: string
   warehouse_id: string
@@ -276,7 +558,7 @@ export type CreateTreatmentRequest = {
   description?: string
   price_per_sqm: number
   min_price?: number
-  minutes_per_100sqm?: number
+  minutes_per_100sqm: number
   setup_minutes?: number
   season?: TreatmentSeason
   sequence_in_year?: number
@@ -321,14 +603,14 @@ export type AddTreatmentPlanItemRequest = {
   treatment_id: string
   window_start?: string
   window_end?: string
-  scheduled_week?: number
-  price_snapshot?: number
+  scheduled_week?: string
+  price_snapshot: number
 }
 
 export type UpdateTreatmentPlanItemRequest = {
   window_start?: string
   window_end?: string
-  scheduled_week?: number
+  scheduled_week?: string
   is_completed?: boolean
   price_snapshot?: number
 }
@@ -339,10 +621,10 @@ export type CreateOperatorRequest = {
   first_name: string
   last_name: string
   email?: string
-  phone?: string
-  depot_id?: string
+  phone: string
+  depot_id: string
   user_id?: string
-  hourly_cost?: number
+  hourly_cost: number
   is_active?: boolean
 }
 
@@ -361,7 +643,7 @@ export type UpdateOperatorRequest = {
 // Vehicle requests
 export type CreateVehicleRequest = {
   registration: string
-  depot_id?: string
+  depot_id: string
   make?: string
   vehicle_model?: string
   cost_per_mile?: number
@@ -427,7 +709,7 @@ export type CreateJobRequest = {
   route_stop_id?: string
   treatment_plan_item_id?: string
   scheduled_date: string
-  lawn_area_sqm?: number
+  lawn_area_sqm: number
   status?: JobStatus
   lawn_condition_at_job?: LawnCondition
   before_notes?: string
@@ -515,7 +797,10 @@ export type UpdatePaymentRequest = {
   is_confirmed?: boolean
 }
 
-// Hono environment types
+// ============================================
+// HONO ENVIRONMENT TYPES
+// ============================================
+
 export type SupabaseEnv = {
   Variables: {
     supabase: Client

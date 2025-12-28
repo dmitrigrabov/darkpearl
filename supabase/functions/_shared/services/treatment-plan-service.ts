@@ -3,6 +3,7 @@ import type {
   Client,
   TreatmentPlan,
   TreatmentPlanItem,
+  TreatmentPlanStatus,
   CreateTreatmentPlanRequest,
   UpdateTreatmentPlanRequest,
   AddTreatmentPlanItemRequest,
@@ -13,7 +14,7 @@ export type ListTreatmentPlansParams = {
   lawnId?: string
   customerId?: string
   year?: number
-  status?: string
+  status?: TreatmentPlanStatus
   limit?: number
   offset?: number
 }
