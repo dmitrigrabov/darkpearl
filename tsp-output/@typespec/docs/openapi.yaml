@@ -1,15 +1,170 @@
 openapi: 3.0.0
 info:
-  title: DarkPearl Stock Management API
-  version: 1.0.0
-  description: Stock management backend with Saga pattern for order fulfillment
+  title: Green Man Lawn Care ERP API
+  description: Lawn care ERP backend with stock management and Saga pattern for order fulfillment
+  version: 0.0.0
 tags:
   - name: Products
   - name: Warehouses
   - name: Inventory
   - name: Stock Movements
   - name: Orders
+  - name: Customers
+  - name: Lawns
+  - name: Treatments
+  - name: Treatment Plans
+  - name: Operators
+  - name: Vehicles
+  - name: Routes
+  - name: Jobs
+  - name: Invoices
+  - name: Payments
 paths:
+  /customers:
+    get:
+      operationId: Customers_list
+      description: List all customers with optional filters
+      parameters:
+        - name: is_active
+          in: query
+          required: false
+          schema:
+            type: boolean
+          explode: false
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+          explode: false
+        - name: postcode
+          in: query
+          required: false
+          schema:
+            type: string
+          explode: false
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 100
+          explode: false
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+          explode: false
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.CustomerListResponse'
+      tags:
+        - Customers
+    post:
+      operationId: Customers_create
+      description: Create a new customer
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.ErrorResponse'
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.Customer'
+      tags:
+        - Customers
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.CreateCustomerRequest'
+  /customers/{id}:
+    get:
+      operationId: Customers_get
+      description: Get a customer by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Models.Customer'
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Customers
+    put:
+      operationId: Customers_update
+      description: Update an existing customer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Models.Customer'
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Customers
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.UpdateCustomerRequest'
+    delete:
+      operationId: Customers_delete
+      description: Delete a customer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Customers
   /inventory:
     get:
       operationId: Inventory_list
@@ -155,6 +310,890 @@ paths:
                   - $ref: '#/components/schemas/Models.ErrorResponse'
       tags:
         - Inventory
+  /invoices:
+    get:
+      operationId: Invoices_list
+      description: List all invoices with optional filters
+      parameters:
+        - name: customer_id
+          in: query
+          required: false
+          schema:
+            type: string
+          explode: false
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/Models.InvoiceStatus'
+          explode: false
+        - name: overdue
+          in: query
+          required: false
+          schema:
+            type: boolean
+          explode: false
+        - name: date_from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          explode: false
+        - name: date_to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          explode: false
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 100
+          explode: false
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+          explode: false
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.InvoiceListResponse'
+      tags:
+        - Invoices
+    post:
+      operationId: Invoices_create
+      description: Create a new invoice
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.ErrorResponse'
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.Invoice'
+      tags:
+        - Invoices
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.CreateInvoiceRequest'
+  /invoices/{id}:
+    get:
+      operationId: Invoices_get
+      description: Get an invoice by ID with items
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Models.InvoiceWithDetails'
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Invoices
+    put:
+      operationId: Invoices_update
+      description: Update an existing invoice
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Models.Invoice'
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Invoices
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.UpdateInvoiceRequest'
+    delete:
+      operationId: Invoices_delete
+      description: Delete an invoice
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Invoices
+  /invoices/{id}/items:
+    post:
+      operationId: Invoices_addItem
+      description: Add item to invoice
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.ErrorResponse'
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.InvoiceItem'
+      tags:
+        - Invoices
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.CreateInvoiceItemRequest'
+  /invoices/{id}/items/{itemId}:
+    put:
+      operationId: Invoices_updateItem
+      description: Update an invoice item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Models.InvoiceItem'
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Invoices
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.UpdateInvoiceItemRequest'
+    delete:
+      operationId: Invoices_removeItem
+      description: Remove item from invoice
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Invoices
+  /invoices/{id}/mark-paid:
+    post:
+      operationId: Invoices_markPaid
+      description: Mark invoice as paid
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Models.Invoice'
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Invoices
+  /invoices/{id}/send:
+    post:
+      operationId: Invoices_send
+      description: Send invoice to customer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Models.Invoice'
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Invoices
+  /jobs:
+    get:
+      operationId: Jobs_list
+      description: List all jobs with optional filters
+      parameters:
+        - name: lawn_id
+          in: query
+          required: false
+          schema:
+            type: string
+          explode: false
+        - name: customer_id
+          in: query
+          required: false
+          schema:
+            type: string
+          explode: false
+        - name: operator_id
+          in: query
+          required: false
+          schema:
+            type: string
+          explode: false
+        - name: scheduled_date
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          explode: false
+        - name: date_from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          explode: false
+        - name: date_to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          explode: false
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/Models.JobStatus'
+          explode: false
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 100
+          explode: false
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+          explode: false
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.JobListResponse'
+      tags:
+        - Jobs
+    post:
+      operationId: Jobs_create
+      description: Create a new job
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.ErrorResponse'
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.Job'
+      tags:
+        - Jobs
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.CreateJobRequest'
+  /jobs/{id}:
+    get:
+      operationId: Jobs_get
+      description: Get a job by ID with treatments
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Models.JobWithDetails'
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Jobs
+    put:
+      operationId: Jobs_update
+      description: Update an existing job
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Models.Job'
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Jobs
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.UpdateJobRequest'
+    delete:
+      operationId: Jobs_delete
+      description: Delete a job
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Jobs
+  /jobs/{id}/complete:
+    post:
+      operationId: Jobs_complete
+      description: Complete job execution
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Models.Job'
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Jobs
+  /jobs/{id}/consumptions:
+    post:
+      operationId: Jobs_addConsumption
+      description: Record product consumption
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.ErrorResponse'
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.JobConsumption'
+      tags:
+        - Jobs
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.CreateJobConsumptionRequest'
+  /jobs/{id}/skip:
+    post:
+      operationId: Jobs_skip
+      description: Skip job
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Models.Job'
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Jobs
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+  /jobs/{id}/start:
+    post:
+      operationId: Jobs_start
+      description: Start job execution
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Models.Job'
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Jobs
+  /jobs/{id}/treatments:
+    post:
+      operationId: Jobs_addTreatment
+      description: Add treatment to job
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.ErrorResponse'
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.JobTreatment'
+      tags:
+        - Jobs
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.CreateJobTreatmentRequest'
+  /lawns:
+    get:
+      operationId: Lawns_list
+      description: List all lawns with optional filters
+      parameters:
+        - name: customer_id
+          in: query
+          required: false
+          schema:
+            type: string
+          explode: false
+        - name: postcode
+          in: query
+          required: false
+          schema:
+            type: string
+          explode: false
+        - name: is_active
+          in: query
+          required: false
+          schema:
+            type: boolean
+          explode: false
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 100
+          explode: false
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+          explode: false
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.LawnListResponse'
+      tags:
+        - Lawns
+    post:
+      operationId: Lawns_create
+      description: Create a new lawn
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.ErrorResponse'
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.Lawn'
+      tags:
+        - Lawns
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.CreateLawnRequest'
+  /lawns/{id}:
+    get:
+      operationId: Lawns_get
+      description: Get a lawn by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Models.LawnWithDetails'
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Lawns
+    put:
+      operationId: Lawns_update
+      description: Update an existing lawn
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Models.Lawn'
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Lawns
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.UpdateLawnRequest'
+    delete:
+      operationId: Lawns_delete
+      description: Delete a lawn
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Lawns
+  /operators:
+    get:
+      operationId: Operators_list
+      description: List all operators with optional filters
+      parameters:
+        - name: depot_id
+          in: query
+          required: false
+          schema:
+            type: string
+          explode: false
+        - name: is_active
+          in: query
+          required: false
+          schema:
+            type: boolean
+          explode: false
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 100
+          explode: false
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+          explode: false
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.OperatorListResponse'
+      tags:
+        - Operators
+    post:
+      operationId: Operators_create
+      description: Create a new operator
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.ErrorResponse'
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.Operator'
+      tags:
+        - Operators
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.CreateOperatorRequest'
+  /operators/{id}:
+    get:
+      operationId: Operators_get
+      description: Get an operator by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Models.OperatorWithDetails'
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Operators
+    put:
+      operationId: Operators_update
+      description: Update an existing operator
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Models.Operator'
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Operators
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.UpdateOperatorRequest'
+    delete:
+      operationId: Operators_delete
+      description: Delete an operator
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Operators
   /orders:
     get:
       operationId: Orders_list
@@ -268,6 +1307,192 @@ paths:
                   - $ref: '#/components/schemas/Models.ErrorResponse'
       tags:
         - Orders
+  /payments:
+    get:
+      operationId: Payments_list
+      description: List all payments with optional filters
+      parameters:
+        - name: customer_id
+          in: query
+          required: false
+          schema:
+            type: string
+          explode: false
+        - name: invoice_id
+          in: query
+          required: false
+          schema:
+            type: string
+          explode: false
+        - name: payment_method
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/Models.PaymentMethod'
+          explode: false
+        - name: is_confirmed
+          in: query
+          required: false
+          schema:
+            type: boolean
+          explode: false
+        - name: date_from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          explode: false
+        - name: date_to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          explode: false
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 100
+          explode: false
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+          explode: false
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.PaymentListResponse'
+      tags:
+        - Payments
+    post:
+      operationId: Payments_create
+      description: Create a new payment
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.ErrorResponse'
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.Payment'
+      tags:
+        - Payments
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.CreatePaymentRequest'
+  /payments/{id}:
+    get:
+      operationId: Payments_get
+      description: Get a payment by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Models.PaymentWithDetails'
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Payments
+    put:
+      operationId: Payments_update
+      description: Update an existing payment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Models.Payment'
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Payments
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.UpdatePaymentRequest'
+    delete:
+      operationId: Payments_delete
+      description: Delete a payment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Payments
+  /payments/{id}/confirm:
+    post:
+      operationId: Payments_confirm
+      description: Confirm payment (bank confirmation received)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Models.Payment'
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Payments
   /products:
     get:
       operationId: Products_list
@@ -407,6 +1632,307 @@ paths:
                   - $ref: '#/components/schemas/Models.ErrorResponse'
       tags:
         - Products
+  /routes:
+    get:
+      operationId: Routes_list
+      description: List all routes with optional filters
+      parameters:
+        - name: operator_id
+          in: query
+          required: false
+          schema:
+            type: string
+          explode: false
+        - name: depot_id
+          in: query
+          required: false
+          schema:
+            type: string
+          explode: false
+        - name: route_date
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          explode: false
+        - name: date_from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          explode: false
+        - name: date_to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          explode: false
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/Models.RouteStatus'
+          explode: false
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 100
+          explode: false
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+          explode: false
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.RouteListResponse'
+      tags:
+        - Routes
+    post:
+      operationId: Routes_create
+      description: Create a new route
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.ErrorResponse'
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.Route'
+      tags:
+        - Routes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.CreateRouteRequest'
+  /routes/{id}:
+    get:
+      operationId: Routes_get
+      description: Get a route by ID with stops
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Models.RouteWithDetails'
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Routes
+    put:
+      operationId: Routes_update
+      description: Update an existing route
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Models.Route'
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Routes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.UpdateRouteRequest'
+    delete:
+      operationId: Routes_delete
+      description: Delete a route
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Routes
+  /routes/{id}/complete:
+    post:
+      operationId: Routes_complete
+      description: Complete route execution
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Models.Route'
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Routes
+  /routes/{id}/start:
+    post:
+      operationId: Routes_start
+      description: Start route execution
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Models.Route'
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Routes
+  /routes/{id}/stops:
+    post:
+      operationId: Routes_addStop
+      description: Add stop to route
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.ErrorResponse'
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.RouteStop'
+      tags:
+        - Routes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.CreateRouteStopRequest'
+  /routes/{id}/stops/{stopId}:
+    put:
+      operationId: Routes_updateStop
+      description: Update a route stop
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: stopId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Models.RouteStop'
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Routes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.UpdateRouteStopRequest'
+    delete:
+      operationId: Routes_removeStop
+      description: Remove stop from route
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: stopId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Routes
   /stock-movements:
     get:
       operationId: StockMovements_list
@@ -513,6 +2039,591 @@ paths:
                   - $ref: '#/components/schemas/Models.ErrorResponse'
       tags:
         - Stock Movements
+  /treatment-plans:
+    get:
+      operationId: TreatmentPlans_list
+      description: List all treatment plans with optional filters
+      parameters:
+        - name: lawn_id
+          in: query
+          required: false
+          schema:
+            type: string
+          explode: false
+        - name: customer_id
+          in: query
+          required: false
+          schema:
+            type: string
+          explode: false
+        - name: year
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+          explode: false
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/Models.TreatmentPlanStatus'
+          explode: false
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 100
+          explode: false
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+          explode: false
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.TreatmentPlanListResponse'
+      tags:
+        - Treatment Plans
+    post:
+      operationId: TreatmentPlans_create
+      description: Create a new treatment plan
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.ErrorResponse'
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.TreatmentPlan'
+      tags:
+        - Treatment Plans
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.CreateTreatmentPlanRequest'
+  /treatment-plans/{id}:
+    get:
+      operationId: TreatmentPlans_get
+      description: Get a treatment plan by ID with items
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Models.TreatmentPlanWithDetails'
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Treatment Plans
+    put:
+      operationId: TreatmentPlans_update
+      description: Update an existing treatment plan
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Models.TreatmentPlan'
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Treatment Plans
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.UpdateTreatmentPlanRequest'
+    delete:
+      operationId: TreatmentPlans_delete
+      description: Delete a treatment plan
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Treatment Plans
+  /treatment-plans/{id}/items:
+    post:
+      operationId: TreatmentPlans_addItem
+      description: Add item to treatment plan
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.ErrorResponse'
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.TreatmentPlanItem'
+      tags:
+        - Treatment Plans
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.CreateTreatmentPlanItemRequest'
+  /treatment-plans/{id}/items/{itemId}:
+    put:
+      operationId: TreatmentPlans_updateItem
+      description: Update a treatment plan item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Models.TreatmentPlanItem'
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Treatment Plans
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.UpdateTreatmentPlanItemRequest'
+    delete:
+      operationId: TreatmentPlans_removeItem
+      description: Remove item from treatment plan
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Treatment Plans
+  /treatments:
+    get:
+      operationId: Treatments_list
+      description: List all treatments with optional filters
+      parameters:
+        - name: season
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/Models.TreatmentSeason'
+          explode: false
+        - name: is_active
+          in: query
+          required: false
+          schema:
+            type: boolean
+          explode: false
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 100
+          explode: false
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+          explode: false
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.TreatmentListResponse'
+      tags:
+        - Treatments
+    post:
+      operationId: Treatments_create
+      description: Create a new treatment
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.ErrorResponse'
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.Treatment'
+      tags:
+        - Treatments
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.CreateTreatmentRequest'
+  /treatments/{id}:
+    get:
+      operationId: Treatments_get
+      description: Get a treatment by ID with products
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Models.TreatmentWithProducts'
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Treatments
+    put:
+      operationId: Treatments_update
+      description: Update an existing treatment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Models.Treatment'
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Treatments
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.UpdateTreatmentRequest'
+    delete:
+      operationId: Treatments_delete
+      description: Delete a treatment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Treatments
+  /treatments/{id}/products:
+    post:
+      operationId: Treatments_addProduct
+      description: Add product to treatment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.ErrorResponse'
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.TreatmentProduct'
+      tags:
+        - Treatments
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.CreateTreatmentProductRequest'
+  /treatments/{id}/products/{productId}:
+    delete:
+      operationId: Treatments_removeProduct
+      description: Remove product from treatment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Treatments
+  /vehicles:
+    get:
+      operationId: Vehicles_list
+      description: List all vehicles with optional filters
+      parameters:
+        - name: depot_id
+          in: query
+          required: false
+          schema:
+            type: string
+          explode: false
+        - name: is_active
+          in: query
+          required: false
+          schema:
+            type: boolean
+          explode: false
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 100
+          explode: false
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+          explode: false
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.VehicleListResponse'
+      tags:
+        - Vehicles
+    post:
+      operationId: Vehicles_create
+      description: Create a new vehicle
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.ErrorResponse'
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.Vehicle'
+      tags:
+        - Vehicles
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.CreateVehicleRequest'
+  /vehicles/{id}:
+    get:
+      operationId: Vehicles_get
+      description: Get a vehicle by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Models.VehicleWithDetails'
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Vehicles
+    put:
+      operationId: Vehicles_update
+      description: Update an existing vehicle
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Models.Vehicle'
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Vehicles
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.UpdateVehicleRequest'
+    delete:
+      operationId: Vehicles_delete
+      description: Delete a vehicle
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Vehicles
   /warehouses:
     get:
       operationId: Warehouses_list
@@ -648,6 +2759,52 @@ paths:
         - Warehouses
 components:
   schemas:
+    Models.CreateCustomerRequest:
+      type: object
+      required:
+        - first_name
+        - last_name
+      properties:
+        first_name:
+          type: string
+          description: First name
+        last_name:
+          type: string
+          description: Last name
+        email:
+          type: string
+          description: Email address
+        phone:
+          type: string
+          description: Primary phone number
+        phone_secondary:
+          type: string
+          description: Secondary phone number
+        billing_address_line1:
+          type: string
+          description: Billing address line 1
+        billing_address_line2:
+          type: string
+          description: Billing address line 2
+        billing_city:
+          type: string
+          description: Billing city
+        billing_postcode:
+          type: string
+          description: Billing postcode (UK format)
+        is_active:
+          type: boolean
+          description: Whether customer is active (defaults to true)
+        preferred_contact_method:
+          type: string
+          description: Preferred contact method (defaults to email)
+        marketing_consent:
+          type: boolean
+          description: Marketing consent given (defaults to false)
+        notes:
+          type: string
+          description: Additional notes
+      description: Request to create a new customer
     Models.CreateInventoryRequest:
       type: object
       required:
@@ -673,6 +2830,219 @@ components:
           format: int32
           description: Reorder quantity (defaults to 50)
       description: Request to create inventory record
+    Models.CreateInvoiceItemRequest:
+      type: object
+      required:
+        - description
+        - quantity
+        - unit_price
+      properties:
+        job_id:
+          type: string
+          description: Linked job (if applicable)
+        description:
+          type: string
+          description: Item description
+        quantity:
+          type: number
+          format: double
+          description: Quantity
+        unit_price:
+          type: number
+          format: double
+          description: Unit price
+      description: Request to add item to invoice
+    Models.CreateInvoiceRequest:
+      type: object
+      required:
+        - customer_id
+        - due_date
+      properties:
+        customer_id:
+          type: string
+          description: Customer being billed
+        status:
+          allOf:
+            - $ref: '#/components/schemas/Models.InvoiceStatus'
+          description: Invoice status (defaults to draft)
+        issue_date:
+          type: string
+          format: date
+          description: Issue date (defaults to today)
+        due_date:
+          type: string
+          format: date
+          description: Due date
+        vat_rate:
+          type: number
+          format: double
+          description: VAT rate (defaults to 20.00)
+        payment_terms_days:
+          type: integer
+          format: int32
+          description: Payment terms in days (defaults to 30)
+        notes:
+          type: string
+          description: Additional notes
+      description: Request to create an invoice
+    Models.CreateJobConsumptionRequest:
+      type: object
+      required:
+        - job_treatment_id
+        - product_id
+        - warehouse_id
+        - quantity_consumed
+      properties:
+        job_treatment_id:
+          type: string
+          description: Job treatment this relates to
+        product_id:
+          type: string
+          description: Product consumed
+        warehouse_id:
+          type: string
+          description: Depot stock was taken from
+        quantity_consumed:
+          type: number
+          format: double
+          description: Quantity consumed
+      description: Request to record product consumption
+    Models.CreateJobRequest:
+      type: object
+      required:
+        - lawn_id
+        - scheduled_date
+        - lawn_area_sqm
+      properties:
+        lawn_id:
+          type: string
+          description: Lawn where work is performed
+        route_stop_id:
+          type: string
+          description: Route stop (if scheduled via route)
+        treatment_plan_item_id:
+          type: string
+          description: Treatment plan item being fulfilled
+        status:
+          allOf:
+            - $ref: '#/components/schemas/Models.JobStatus'
+          description: Job status (defaults to scheduled)
+        scheduled_date:
+          type: string
+          format: date
+          description: Scheduled date
+        lawn_area_sqm:
+          type: number
+          format: double
+          description: Lawn area at time of job
+        lawn_condition_at_job:
+          allOf:
+            - $ref: '#/components/schemas/Models.LawnCondition'
+          description: Lawn condition at time of job
+        before_notes:
+          type: string
+          description: Access notes for operators
+      description: Request to create a job
+    Models.CreateJobTreatmentRequest:
+      type: object
+      required:
+        - treatment_id
+        - price_charged
+      properties:
+        treatment_id:
+          type: string
+          description: Treatment type
+        price_charged:
+          type: number
+          format: double
+          description: Price charged
+        duration_minutes:
+          type: integer
+          format: int32
+          description: Duration in minutes
+      description: Request to add treatment to job
+    Models.CreateLawnRequest:
+      type: object
+      required:
+        - customer_id
+        - address_line1
+        - city
+        - postcode
+        - area_sqm
+      properties:
+        customer_id:
+          type: string
+          description: Customer who owns this lawn
+        address_line1:
+          type: string
+          description: Address line 1
+        address_line2:
+          type: string
+          description: Address line 2
+        city:
+          type: string
+          description: City
+        postcode:
+          type: string
+          description: UK postcode
+        latitude:
+          type: number
+          format: double
+          description: Latitude for routing
+        longitude:
+          type: number
+          format: double
+          description: Longitude for routing
+        area_sqm:
+          type: number
+          format: double
+          description: Lawn area in square meters
+        lawn_condition:
+          allOf:
+            - $ref: '#/components/schemas/Models.LawnCondition'
+          description: Current lawn condition (defaults to new)
+        access_notes:
+          type: string
+          description: Access notes for operators
+        is_active:
+          type: boolean
+          description: Whether lawn is active (defaults to true)
+      description: Request to create a new lawn
+    Models.CreateOperatorRequest:
+      type: object
+      required:
+        - depot_id
+        - first_name
+        - last_name
+        - phone
+        - hourly_cost
+      properties:
+        user_id:
+          type: string
+          description: Linked auth user (if operator logs in)
+        depot_id:
+          type: string
+          description: Home depot (warehouse)
+        first_name:
+          type: string
+          description: First name
+        last_name:
+          type: string
+          description: Last name
+        email:
+          type: string
+          description: Email address
+        phone:
+          type: string
+          description: Phone number
+        hourly_cost:
+          type: number
+          format: double
+          description: Hourly cost for P&L
+        is_active:
+          type: boolean
+          description: Whether operator is active (defaults to true)
+      description: Request to create a new operator
     Models.CreateOrderItemRequest:
       type: object
       required:
@@ -730,6 +3100,42 @@ components:
       allOf:
         - $ref: '#/components/schemas/Models.Order'
       description: Response after creating an order
+    Models.CreatePaymentRequest:
+      type: object
+      required:
+        - invoice_id
+        - customer_id
+        - payment_method
+        - amount
+      properties:
+        invoice_id:
+          type: string
+          description: Invoice being paid
+        customer_id:
+          type: string
+          description: Customer making payment
+        payment_reference:
+          type: string
+          description: Payment reference
+        payment_method:
+          allOf:
+            - $ref: '#/components/schemas/Models.PaymentMethod'
+          description: Payment method
+        amount:
+          type: number
+          format: double
+          description: Payment amount
+        payment_date:
+          type: string
+          format: date
+          description: Payment date (defaults to today)
+        is_confirmed:
+          type: boolean
+          description: Whether payment is confirmed (defaults to false)
+        notes:
+          type: string
+          description: Additional notes
+      description: Request to create a payment
     Models.CreateProductRequest:
       type: object
       required:
@@ -754,6 +3160,60 @@ components:
           type: boolean
           description: Whether product is active (defaults to true)
       description: Request to create a new product
+    Models.CreateRouteRequest:
+      type: object
+      required:
+        - operator_id
+        - depot_id
+        - route_date
+      properties:
+        operator_id:
+          type: string
+          description: Assigned operator
+        vehicle_id:
+          type: string
+          description: Assigned vehicle
+        depot_id:
+          type: string
+          description: Starting depot
+        route_date:
+          type: string
+          format: date
+          description: Route date
+        status:
+          allOf:
+            - $ref: '#/components/schemas/Models.RouteStatus'
+          description: Route status (defaults to draft)
+        notes:
+          type: string
+          description: Additional notes
+      description: Request to create a route
+    Models.CreateRouteStopRequest:
+      type: object
+      required:
+        - lawn_id
+        - stop_order
+      properties:
+        lawn_id:
+          type: string
+          description: Lawn to visit
+        stop_order:
+          type: integer
+          format: int32
+          description: Order in route
+        estimated_arrival:
+          type: string
+          format: date-time
+          description: Estimated arrival time
+        estimated_departure:
+          type: string
+          format: date-time
+          description: Estimated departure time
+        distance_from_previous_miles:
+          type: number
+          format: double
+          description: Distance from previous stop in miles
+      description: Request to add stop to route
     Models.CreateStockMovementRequest:
       type: object
       required:
@@ -789,6 +3249,150 @@ components:
           type: string
           description: Additional notes
       description: Request to create a stock movement
+    Models.CreateTreatmentPlanItemRequest:
+      type: object
+      required:
+        - treatment_id
+        - price_snapshot
+      properties:
+        treatment_id:
+          type: string
+          description: Treatment type
+        scheduled_week:
+          type: string
+          format: date
+          description: Target week for treatment
+        window_start:
+          type: string
+          format: date
+          description: Earliest acceptable date
+        window_end:
+          type: string
+          format: date
+          description: Latest acceptable date
+        price_snapshot:
+          type: number
+          format: double
+          description: Price at time of planning
+      description: Request to add item to treatment plan
+    Models.CreateTreatmentPlanRequest:
+      type: object
+      required:
+        - lawn_id
+        - year
+      properties:
+        lawn_id:
+          type: string
+          description: Lawn this plan is for
+        year:
+          type: integer
+          format: int32
+          description: Plan year
+        status:
+          allOf:
+            - $ref: '#/components/schemas/Models.TreatmentPlanStatus'
+          description: Plan status (defaults to active)
+        total_estimated_price:
+          type: number
+          format: double
+          description: Total estimated price
+        notes:
+          type: string
+          description: Additional notes
+      description: Request to create a treatment plan
+    Models.CreateTreatmentProductRequest:
+      type: object
+      required:
+        - product_id
+        - quantity_per_100sqm
+      properties:
+        product_id:
+          type: string
+          description: Product to link
+        quantity_per_100sqm:
+          type: number
+          format: double
+          description: Quantity per 100 sqm
+        quantity_multiplier_poor:
+          type: number
+          format: double
+          description: Multiplier for poor condition lawns (defaults to 1.2)
+      description: Request to link product to treatment
+    Models.CreateTreatmentRequest:
+      type: object
+      required:
+        - code
+        - name
+        - price_per_sqm
+        - minutes_per_100sqm
+      properties:
+        code:
+          type: string
+          description: Treatment code - must be unique
+        name:
+          type: string
+          description: Treatment name
+        description:
+          type: string
+          description: Treatment description
+        season:
+          allOf:
+            - $ref: '#/components/schemas/Models.TreatmentSeason'
+          description: Typical season for application
+        sequence_in_year:
+          type: integer
+          format: int32
+          description: Sequence in annual treatment program (1-5)
+        price_per_sqm:
+          type: number
+          format: double
+          description: Base price per square meter
+        min_price:
+          type: number
+          format: double
+          description: Minimum charge for treatment (defaults to 0)
+        minutes_per_100sqm:
+          type: number
+          format: double
+          description: Minutes to treat 100 sqm
+        setup_minutes:
+          type: integer
+          format: int32
+          description: Setup time per lawn in minutes (defaults to 5)
+        is_active:
+          type: boolean
+          description: Whether treatment is active (defaults to true)
+      description: Request to create a new treatment
+    Models.CreateVehicleRequest:
+      type: object
+      required:
+        - depot_id
+        - registration
+      properties:
+        depot_id:
+          type: string
+          description: Home depot (warehouse)
+        registration:
+          type: string
+          description: Vehicle registration (UK format)
+        make:
+          type: string
+          description: Vehicle make
+        vehicle_model:
+          type: string
+          description: Vehicle model
+        cost_per_mile:
+          type: number
+          format: double
+          description: Cost per mile
+        load_capacity_kg:
+          type: number
+          format: double
+          description: Load capacity in kg
+        is_active:
+          type: boolean
+          description: Whether vehicle is active (defaults to true)
+      description: Request to create a new vehicle
     Models.CreateWarehouseRequest:
       type: object
       required:
@@ -808,6 +3412,98 @@ components:
           type: boolean
           description: Whether warehouse is active (defaults to true)
       description: Request to create a new warehouse
+    Models.Customer:
+      type: object
+      required:
+        - id
+        - customer_number
+        - first_name
+        - last_name
+        - is_active
+        - marketing_consent
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          description: Unique customer identifier
+        customer_number:
+          type: string
+          description: Customer number (e.g., GM-10001)
+        first_name:
+          type: string
+          description: First name
+        last_name:
+          type: string
+          description: Last name
+        email:
+          type: string
+          description: Email address
+        phone:
+          type: string
+          description: Primary phone number
+        phone_secondary:
+          type: string
+          description: Secondary phone number
+        billing_address_line1:
+          type: string
+          description: Billing address line 1
+        billing_address_line2:
+          type: string
+          description: Billing address line 2
+        billing_city:
+          type: string
+          description: Billing city
+        billing_postcode:
+          type: string
+          description: Billing postcode (UK format)
+        is_active:
+          type: boolean
+          description: Whether customer is active
+        preferred_contact_method:
+          type: string
+          description: Preferred contact method
+        marketing_consent:
+          type: boolean
+          description: Marketing consent given
+        notes:
+          type: string
+          description: Additional notes
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+      description: Customer who owns lawns
+    Models.CustomerListResponse:
+      type: object
+      required:
+        - data
+        - count
+        - limit
+        - offset
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Models.Customer'
+          description: List of customers
+        count:
+          type: integer
+          format: int32
+          description: Total count of items
+        limit:
+          type: integer
+          format: int32
+          description: Maximum items per page
+        offset:
+          type: integer
+          format: int32
+          description: Offset from start
+      description: Paginated list of customers
     Models.ErrorResponse:
       type: object
       required:
@@ -927,6 +3623,870 @@ components:
       allOf:
         - $ref: '#/components/schemas/Models.InventoryLevel'
       description: Inventory with related product and warehouse info
+    Models.Invoice:
+      type: object
+      required:
+        - id
+        - customer_id
+        - invoice_number
+        - status
+        - issue_date
+        - due_date
+        - subtotal
+        - vat_rate
+        - vat_amount
+        - total_amount
+        - amount_paid
+        - payment_terms_days
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          description: Unique invoice identifier
+        customer_id:
+          type: string
+          description: Customer being billed
+        invoice_number:
+          type: string
+          description: Invoice number (e.g., INV-2024-00123)
+        status:
+          allOf:
+            - $ref: '#/components/schemas/Models.InvoiceStatus'
+          description: Invoice status
+        issue_date:
+          type: string
+          format: date
+          description: Issue date
+        due_date:
+          type: string
+          format: date
+          description: Due date
+        subtotal:
+          type: number
+          format: double
+          description: Subtotal before VAT
+        vat_rate:
+          type: number
+          format: double
+          description: VAT rate (e.g., 20.00 for 20%)
+        vat_amount:
+          type: number
+          format: double
+          description: VAT amount
+        total_amount:
+          type: number
+          format: double
+          description: Total amount including VAT
+        amount_paid:
+          type: number
+          format: double
+          description: Amount already paid
+        payment_terms_days:
+          type: integer
+          format: int32
+          description: Payment terms in days
+        notes:
+          type: string
+          description: Additional notes
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+      description: Customer invoice
+    Models.InvoiceItem:
+      type: object
+      required:
+        - id
+        - invoice_id
+        - description
+        - quantity
+        - unit_price
+        - line_total
+        - created_at
+      properties:
+        id:
+          type: string
+          description: Unique item identifier
+        invoice_id:
+          type: string
+          description: Parent invoice
+        job_id:
+          type: string
+          description: Linked job (if applicable)
+        description:
+          type: string
+          description: Item description
+        quantity:
+          type: number
+          format: double
+          description: Quantity
+        unit_price:
+          type: number
+          format: double
+          description: Unit price
+        line_total:
+          type: number
+          format: double
+          description: Line total
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+      description: Invoice line item
+    Models.InvoiceItemWithDetails:
+      type: object
+      required:
+        - id
+        - invoice_id
+        - description
+        - quantity
+        - unit_price
+        - line_total
+        - created_at
+      properties:
+        id:
+          type: string
+          description: Unique item identifier
+        invoice_id:
+          type: string
+          description: Parent invoice
+        job_id:
+          type: string
+          description: Linked job (if applicable)
+        description:
+          type: string
+          description: Item description
+        quantity:
+          type: number
+          format: double
+          description: Quantity
+        unit_price:
+          type: number
+          format: double
+          description: Unit price
+        line_total:
+          type: number
+          format: double
+          description: Line total
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        job:
+          type: object
+          properties:
+            id:
+              type: string
+            job_number:
+              type: string
+            scheduled_date:
+              type: string
+              format: date
+          required:
+            - id
+            - job_number
+            - scheduled_date
+          description: Job details
+      description: Invoice item with job details
+    Models.InvoiceListResponse:
+      type: object
+      required:
+        - data
+        - count
+        - limit
+        - offset
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Models.InvoiceWithDetails'
+          description: List of invoices
+        count:
+          type: integer
+          format: int32
+          description: Total count of items
+        limit:
+          type: integer
+          format: int32
+          description: Maximum items per page
+        offset:
+          type: integer
+          format: int32
+          description: Offset from start
+      description: Paginated list of invoices
+    Models.InvoiceStatus:
+      type: string
+      enum:
+        - draft
+        - sent
+        - paid
+        - partial
+        - overdue
+        - cancelled
+        - refunded
+      description: Invoice status
+    Models.InvoiceWithDetails:
+      type: object
+      required:
+        - id
+        - customer_id
+        - invoice_number
+        - status
+        - issue_date
+        - due_date
+        - subtotal
+        - vat_rate
+        - vat_amount
+        - total_amount
+        - amount_paid
+        - payment_terms_days
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          description: Unique invoice identifier
+        customer_id:
+          type: string
+          description: Customer being billed
+        invoice_number:
+          type: string
+          description: Invoice number (e.g., INV-2024-00123)
+        status:
+          allOf:
+            - $ref: '#/components/schemas/Models.InvoiceStatus'
+          description: Invoice status
+        issue_date:
+          type: string
+          format: date
+          description: Issue date
+        due_date:
+          type: string
+          format: date
+          description: Due date
+        subtotal:
+          type: number
+          format: double
+          description: Subtotal before VAT
+        vat_rate:
+          type: number
+          format: double
+          description: VAT rate (e.g., 20.00 for 20%)
+        vat_amount:
+          type: number
+          format: double
+          description: VAT amount
+        total_amount:
+          type: number
+          format: double
+          description: Total amount including VAT
+        amount_paid:
+          type: number
+          format: double
+          description: Amount already paid
+        payment_terms_days:
+          type: integer
+          format: int32
+          description: Payment terms in days
+        notes:
+          type: string
+          description: Additional notes
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Models.InvoiceItemWithDetails'
+          description: Invoice line items
+        customer:
+          type: object
+          properties:
+            id:
+              type: string
+            customer_number:
+              type: string
+            first_name:
+              type: string
+            last_name:
+              type: string
+            email:
+              type: string
+            billing_address_line1:
+              type: string
+            billing_postcode:
+              type: string
+          required:
+            - id
+            - customer_number
+            - first_name
+            - last_name
+          description: Customer details
+        amount_outstanding:
+          type: number
+          format: double
+          description: Amount outstanding
+      description: Invoice with full details
+    Models.Job:
+      type: object
+      required:
+        - id
+        - lawn_id
+        - job_number
+        - status
+        - scheduled_date
+        - lawn_area_sqm
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          description: Unique job identifier
+        lawn_id:
+          type: string
+          description: Lawn where work is performed
+        route_stop_id:
+          type: string
+          description: Route stop (if scheduled via route)
+        treatment_plan_item_id:
+          type: string
+          description: Treatment plan item being fulfilled
+        job_number:
+          type: string
+          description: Job number (e.g., JOB-20240315-001)
+        status:
+          allOf:
+            - $ref: '#/components/schemas/Models.JobStatus'
+          description: Job status
+        scheduled_date:
+          type: string
+          format: date
+          description: Scheduled date
+        started_at:
+          type: string
+          format: date-time
+          description: When work started
+        completed_at:
+          type: string
+          format: date-time
+          description: When work completed
+        performed_by:
+          type: string
+          description: Operator who performed the work
+        lawn_area_sqm:
+          type: number
+          format: double
+          description: Lawn area at time of job
+        lawn_condition_at_job:
+          allOf:
+            - $ref: '#/components/schemas/Models.LawnCondition'
+          description: Lawn condition at time of job
+        before_notes:
+          type: string
+          description: Notes before work
+        after_notes:
+          type: string
+          description: Notes after work
+        customer_signature_url:
+          type: string
+          description: Customer signature URL
+        before_photos:
+          type: array
+          items:
+            type: string
+          description: Before photos (array of URLs)
+        after_photos:
+          type: array
+          items:
+            type: string
+          description: After photos (array of URLs)
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+      description: Actual work performed at a lawn
+    Models.JobConsumption:
+      type: object
+      required:
+        - id
+        - job_id
+        - job_treatment_id
+        - product_id
+        - warehouse_id
+        - quantity_consumed
+        - created_at
+      properties:
+        id:
+          type: string
+          description: Unique identifier
+        job_id:
+          type: string
+          description: Parent job
+        job_treatment_id:
+          type: string
+          description: Job treatment this relates to
+        product_id:
+          type: string
+          description: Product consumed
+        warehouse_id:
+          type: string
+          description: Depot stock was taken from
+        quantity_consumed:
+          type: number
+          format: double
+          description: Quantity consumed
+        stock_movement_id:
+          type: string
+          description: Stock movement reference
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+      description: Product consumed during a job
+    Models.JobListResponse:
+      type: object
+      required:
+        - data
+        - count
+        - limit
+        - offset
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Models.JobWithDetails'
+          description: List of jobs
+        count:
+          type: integer
+          format: int32
+          description: Total count of items
+        limit:
+          type: integer
+          format: int32
+          description: Maximum items per page
+        offset:
+          type: integer
+          format: int32
+          description: Offset from start
+      description: Paginated list of jobs
+    Models.JobStatus:
+      type: string
+      enum:
+        - scheduled
+        - in_progress
+        - completed
+        - cancelled
+        - skipped
+        - rescheduled
+      description: Job execution status
+    Models.JobTreatment:
+      type: object
+      required:
+        - id
+        - job_id
+        - treatment_id
+        - price_charged
+        - created_at
+      properties:
+        id:
+          type: string
+          description: Unique identifier
+        job_id:
+          type: string
+          description: Parent job
+        treatment_id:
+          type: string
+          description: Treatment type
+        price_charged:
+          type: number
+          format: double
+          description: Price charged
+        duration_minutes:
+          type: integer
+          format: int32
+          description: Duration in minutes
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+      description: Treatment performed within a job
+    Models.JobTreatmentWithDetails:
+      type: object
+      required:
+        - id
+        - job_id
+        - treatment_id
+        - price_charged
+        - created_at
+      properties:
+        id:
+          type: string
+          description: Unique identifier
+        job_id:
+          type: string
+          description: Parent job
+        treatment_id:
+          type: string
+          description: Treatment type
+        price_charged:
+          type: number
+          format: double
+          description: Price charged
+        duration_minutes:
+          type: integer
+          format: int32
+          description: Duration in minutes
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        treatment:
+          type: object
+          properties:
+            id:
+              type: string
+            code:
+              type: string
+            name:
+              type: string
+          required:
+            - id
+            - code
+            - name
+          description: Treatment details
+        consumptions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Models.JobConsumption'
+          description: Consumptions for this treatment
+      description: Job treatment with details
+    Models.JobWithDetails:
+      type: object
+      required:
+        - id
+        - lawn_id
+        - job_number
+        - status
+        - scheduled_date
+        - lawn_area_sqm
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          description: Unique job identifier
+        lawn_id:
+          type: string
+          description: Lawn where work is performed
+        route_stop_id:
+          type: string
+          description: Route stop (if scheduled via route)
+        treatment_plan_item_id:
+          type: string
+          description: Treatment plan item being fulfilled
+        job_number:
+          type: string
+          description: Job number (e.g., JOB-20240315-001)
+        status:
+          allOf:
+            - $ref: '#/components/schemas/Models.JobStatus'
+          description: Job status
+        scheduled_date:
+          type: string
+          format: date
+          description: Scheduled date
+        started_at:
+          type: string
+          format: date-time
+          description: When work started
+        completed_at:
+          type: string
+          format: date-time
+          description: When work completed
+        performed_by:
+          type: string
+          description: Operator who performed the work
+        lawn_area_sqm:
+          type: number
+          format: double
+          description: Lawn area at time of job
+        lawn_condition_at_job:
+          allOf:
+            - $ref: '#/components/schemas/Models.LawnCondition'
+          description: Lawn condition at time of job
+        before_notes:
+          type: string
+          description: Notes before work
+        after_notes:
+          type: string
+          description: Notes after work
+        customer_signature_url:
+          type: string
+          description: Customer signature URL
+        before_photos:
+          type: array
+          items:
+            type: string
+          description: Before photos (array of URLs)
+        after_photos:
+          type: array
+          items:
+            type: string
+          description: After photos (array of URLs)
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+        treatments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Models.JobTreatmentWithDetails'
+          description: Treatments performed
+        lawn:
+          type: object
+          properties:
+            id:
+              type: string
+            address_line1:
+              type: string
+            postcode:
+              type: string
+          required:
+            - id
+            - address_line1
+            - postcode
+          description: Lawn details
+        customer:
+          type: object
+          properties:
+            id:
+              type: string
+            customer_number:
+              type: string
+            first_name:
+              type: string
+            last_name:
+              type: string
+          required:
+            - id
+            - customer_number
+            - first_name
+            - last_name
+          description: Customer details
+        operator:
+          type: object
+          properties:
+            id:
+              type: string
+            employee_number:
+              type: string
+            first_name:
+              type: string
+            last_name:
+              type: string
+          required:
+            - id
+            - employee_number
+            - first_name
+            - last_name
+          description: Operator details
+      description: Job with full details
+    Models.Lawn:
+      type: object
+      required:
+        - id
+        - customer_id
+        - address_line1
+        - city
+        - postcode
+        - area_sqm
+        - lawn_condition
+        - is_active
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          description: Unique lawn identifier
+        customer_id:
+          type: string
+          description: Customer who owns this lawn
+        address_line1:
+          type: string
+          description: Address line 1
+        address_line2:
+          type: string
+          description: Address line 2
+        city:
+          type: string
+          description: City
+        postcode:
+          type: string
+          description: UK postcode
+        latitude:
+          type: number
+          format: double
+          description: Latitude for routing
+        longitude:
+          type: number
+          format: double
+          description: Longitude for routing
+        area_sqm:
+          type: number
+          format: double
+          description: Lawn area in square meters
+        lawn_condition:
+          allOf:
+            - $ref: '#/components/schemas/Models.LawnCondition'
+          description: Current lawn condition
+        access_notes:
+          type: string
+          description: Access notes for operators
+        is_active:
+          type: boolean
+          description: Whether lawn is active
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+      description: Property/lawn belonging to a customer
+    Models.LawnCondition:
+      type: string
+      enum:
+        - excellent
+        - good
+        - fair
+        - poor
+        - new
+      description: Lawn condition assessment
+    Models.LawnListResponse:
+      type: object
+      required:
+        - data
+        - count
+        - limit
+        - offset
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Models.LawnWithDetails'
+          description: List of lawns
+        count:
+          type: integer
+          format: int32
+          description: Total count of items
+        limit:
+          type: integer
+          format: int32
+          description: Maximum items per page
+        offset:
+          type: integer
+          format: int32
+          description: Offset from start
+      description: Paginated list of lawns
+    Models.LawnWithDetails:
+      type: object
+      required:
+        - id
+        - customer_id
+        - address_line1
+        - city
+        - postcode
+        - area_sqm
+        - lawn_condition
+        - is_active
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          description: Unique lawn identifier
+        customer_id:
+          type: string
+          description: Customer who owns this lawn
+        address_line1:
+          type: string
+          description: Address line 1
+        address_line2:
+          type: string
+          description: Address line 2
+        city:
+          type: string
+          description: City
+        postcode:
+          type: string
+          description: UK postcode
+        latitude:
+          type: number
+          format: double
+          description: Latitude for routing
+        longitude:
+          type: number
+          format: double
+          description: Longitude for routing
+        area_sqm:
+          type: number
+          format: double
+          description: Lawn area in square meters
+        lawn_condition:
+          allOf:
+            - $ref: '#/components/schemas/Models.LawnCondition'
+          description: Current lawn condition
+        access_notes:
+          type: string
+          description: Access notes for operators
+        is_active:
+          type: boolean
+          description: Whether lawn is active
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+        customer:
+          type: object
+          properties:
+            id:
+              type: string
+            customer_number:
+              type: string
+            first_name:
+              type: string
+            last_name:
+              type: string
+          required:
+            - id
+            - customer_number
+            - first_name
+            - last_name
+          description: Customer details
+      description: Lawn with customer details
     Models.MovementType:
       type: string
       enum:
@@ -938,6 +4498,154 @@ components:
         - release
         - fulfill
       description: Type of stock movement
+    Models.Operator:
+      type: object
+      required:
+        - id
+        - depot_id
+        - employee_number
+        - first_name
+        - last_name
+        - phone
+        - hourly_cost
+        - is_active
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          description: Unique operator identifier
+        user_id:
+          type: string
+          description: Linked auth user (if operator logs in)
+        depot_id:
+          type: string
+          description: Home depot (warehouse)
+        employee_number:
+          type: string
+          description: Employee number (e.g., OP-001)
+        first_name:
+          type: string
+          description: First name
+        last_name:
+          type: string
+          description: Last name
+        email:
+          type: string
+          description: Email address
+        phone:
+          type: string
+          description: Phone number
+        hourly_cost:
+          type: number
+          format: double
+          description: Hourly cost for P&L
+        is_active:
+          type: boolean
+          description: Whether operator is active
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+      description: Technician who performs treatments
+    Models.OperatorListResponse:
+      type: object
+      required:
+        - data
+        - count
+        - limit
+        - offset
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Models.OperatorWithDetails'
+          description: List of operators
+        count:
+          type: integer
+          format: int32
+          description: Total count of items
+        limit:
+          type: integer
+          format: int32
+          description: Maximum items per page
+        offset:
+          type: integer
+          format: int32
+          description: Offset from start
+      description: Paginated list of operators
+    Models.OperatorWithDetails:
+      type: object
+      required:
+        - id
+        - depot_id
+        - employee_number
+        - first_name
+        - last_name
+        - phone
+        - hourly_cost
+        - is_active
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          description: Unique operator identifier
+        user_id:
+          type: string
+          description: Linked auth user (if operator logs in)
+        depot_id:
+          type: string
+          description: Home depot (warehouse)
+        employee_number:
+          type: string
+          description: Employee number (e.g., OP-001)
+        first_name:
+          type: string
+          description: First name
+        last_name:
+          type: string
+          description: Last name
+        email:
+          type: string
+          description: Email address
+        phone:
+          type: string
+          description: Phone number
+        hourly_cost:
+          type: number
+          format: double
+          description: Hourly cost for P&L
+        is_active:
+          type: boolean
+          description: Whether operator is active
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+        depot:
+          type: object
+          properties:
+            id:
+              type: string
+            code:
+              type: string
+            name:
+              type: string
+          required:
+            - id
+            - code
+            - name
+          description: Depot details
+      description: Operator with depot details
     Models.Order:
       type: object
       required:
@@ -1124,6 +4832,181 @@ components:
           format: int32
           description: Offset from start
       description: Paginated list response metadata
+    Models.Payment:
+      type: object
+      required:
+        - id
+        - invoice_id
+        - customer_id
+        - payment_method
+        - amount
+        - payment_date
+        - is_confirmed
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          description: Unique payment identifier
+        invoice_id:
+          type: string
+          description: Invoice being paid
+        customer_id:
+          type: string
+          description: Customer making payment
+        payment_reference:
+          type: string
+          description: Payment reference (bank ref, card auth code)
+        payment_method:
+          allOf:
+            - $ref: '#/components/schemas/Models.PaymentMethod'
+          description: Payment method
+        amount:
+          type: number
+          format: double
+          description: Payment amount
+        payment_date:
+          type: string
+          format: date
+          description: Payment date
+        is_confirmed:
+          type: boolean
+          description: Whether payment is confirmed by bank
+        notes:
+          type: string
+          description: Additional notes
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+      description: Customer payment
+    Models.PaymentListResponse:
+      type: object
+      required:
+        - data
+        - count
+        - limit
+        - offset
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Models.PaymentWithDetails'
+          description: List of payments
+        count:
+          type: integer
+          format: int32
+          description: Total count of items
+        limit:
+          type: integer
+          format: int32
+          description: Maximum items per page
+        offset:
+          type: integer
+          format: int32
+          description: Offset from start
+      description: Paginated list of payments
+    Models.PaymentMethod:
+      type: string
+      enum:
+        - card
+        - bank_transfer
+        - direct_debit
+        - cash
+        - cheque
+      description: Payment method
+    Models.PaymentWithDetails:
+      type: object
+      required:
+        - id
+        - invoice_id
+        - customer_id
+        - payment_method
+        - amount
+        - payment_date
+        - is_confirmed
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          description: Unique payment identifier
+        invoice_id:
+          type: string
+          description: Invoice being paid
+        customer_id:
+          type: string
+          description: Customer making payment
+        payment_reference:
+          type: string
+          description: Payment reference (bank ref, card auth code)
+        payment_method:
+          allOf:
+            - $ref: '#/components/schemas/Models.PaymentMethod'
+          description: Payment method
+        amount:
+          type: number
+          format: double
+          description: Payment amount
+        payment_date:
+          type: string
+          format: date
+          description: Payment date
+        is_confirmed:
+          type: boolean
+          description: Whether payment is confirmed by bank
+        notes:
+          type: string
+          description: Additional notes
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+        invoice:
+          type: object
+          properties:
+            id:
+              type: string
+            invoice_number:
+              type: string
+            total_amount:
+              type: number
+              format: double
+            amount_paid:
+              type: number
+              format: double
+          required:
+            - id
+            - invoice_number
+            - total_amount
+            - amount_paid
+          description: Invoice details
+        customer:
+          type: object
+          properties:
+            id:
+              type: string
+            customer_number:
+              type: string
+            first_name:
+              type: string
+            last_name:
+              type: string
+          required:
+            - id
+            - customer_number
+            - first_name
+            - last_name
+          description: Customer details
+      description: Payment with invoice and customer details
     Models.Product:
       type: object
       required:
@@ -1189,6 +5072,381 @@ components:
           format: int32
           description: Offset from start
       description: Paginated list of products
+    Models.Route:
+      type: object
+      required:
+        - id
+        - operator_id
+        - depot_id
+        - route_date
+        - status
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          description: Unique route identifier
+        operator_id:
+          type: string
+          description: Assigned operator
+        vehicle_id:
+          type: string
+          description: Assigned vehicle
+        depot_id:
+          type: string
+          description: Starting depot
+        route_date:
+          type: string
+          format: date
+          description: Route date
+        status:
+          allOf:
+            - $ref: '#/components/schemas/Models.RouteStatus'
+          description: Route status
+        estimated_distance_miles:
+          type: number
+          format: double
+          description: Estimated distance in miles
+        actual_distance_miles:
+          type: number
+          format: double
+          description: Actual distance in miles
+        estimated_duration_minutes:
+          type: integer
+          format: int32
+          description: Estimated duration in minutes
+        actual_duration_minutes:
+          type: integer
+          format: int32
+          description: Actual duration in minutes
+        started_at:
+          type: string
+          format: date-time
+          description: When route started
+        completed_at:
+          type: string
+          format: date-time
+          description: When route completed
+        notes:
+          type: string
+          description: Additional notes
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+      description: Daily route for an operator
+    Models.RouteListResponse:
+      type: object
+      required:
+        - data
+        - count
+        - limit
+        - offset
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Models.RouteWithDetails'
+          description: List of routes
+        count:
+          type: integer
+          format: int32
+          description: Total count of items
+        limit:
+          type: integer
+          format: int32
+          description: Maximum items per page
+        offset:
+          type: integer
+          format: int32
+          description: Offset from start
+      description: Paginated list of routes
+    Models.RouteStatus:
+      type: string
+      enum:
+        - draft
+        - confirmed
+        - in_progress
+        - completed
+        - cancelled
+      description: Route execution status
+    Models.RouteStop:
+      type: object
+      required:
+        - id
+        - route_id
+        - lawn_id
+        - stop_order
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          description: Unique stop identifier
+        route_id:
+          type: string
+          description: Parent route
+        lawn_id:
+          type: string
+          description: Lawn to visit
+        job_id:
+          type: string
+          description: Job for this stop
+        stop_order:
+          type: integer
+          format: int32
+          description: Order in route (1, 2, 3...)
+        estimated_arrival:
+          type: string
+          format: date-time
+          description: Estimated arrival time
+        estimated_departure:
+          type: string
+          format: date-time
+          description: Estimated departure time
+        actual_arrival:
+          type: string
+          format: date-time
+          description: Actual arrival time
+        actual_departure:
+          type: string
+          format: date-time
+          description: Actual departure time
+        distance_from_previous_miles:
+          type: number
+          format: double
+          description: Distance from previous stop in miles
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+      description: Stop within a route
+    Models.RouteStopWithDetails:
+      type: object
+      required:
+        - id
+        - route_id
+        - lawn_id
+        - stop_order
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          description: Unique stop identifier
+        route_id:
+          type: string
+          description: Parent route
+        lawn_id:
+          type: string
+          description: Lawn to visit
+        job_id:
+          type: string
+          description: Job for this stop
+        stop_order:
+          type: integer
+          format: int32
+          description: Order in route (1, 2, 3...)
+        estimated_arrival:
+          type: string
+          format: date-time
+          description: Estimated arrival time
+        estimated_departure:
+          type: string
+          format: date-time
+          description: Estimated departure time
+        actual_arrival:
+          type: string
+          format: date-time
+          description: Actual arrival time
+        actual_departure:
+          type: string
+          format: date-time
+          description: Actual departure time
+        distance_from_previous_miles:
+          type: number
+          format: double
+          description: Distance from previous stop in miles
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+        lawn:
+          type: object
+          properties:
+            id:
+              type: string
+            address_line1:
+              type: string
+            postcode:
+              type: string
+            area_sqm:
+              type: number
+              format: double
+            latitude:
+              type: number
+              format: double
+            longitude:
+              type: number
+              format: double
+            access_notes:
+              type: string
+          required:
+            - id
+            - address_line1
+            - postcode
+            - area_sqm
+          description: Lawn details
+        customer:
+          type: object
+          properties:
+            id:
+              type: string
+            first_name:
+              type: string
+            last_name:
+              type: string
+            phone:
+              type: string
+          required:
+            - id
+            - first_name
+            - last_name
+          description: Customer details
+      description: Route stop with lawn and customer details
+    Models.RouteWithDetails:
+      type: object
+      required:
+        - id
+        - operator_id
+        - depot_id
+        - route_date
+        - status
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          description: Unique route identifier
+        operator_id:
+          type: string
+          description: Assigned operator
+        vehicle_id:
+          type: string
+          description: Assigned vehicle
+        depot_id:
+          type: string
+          description: Starting depot
+        route_date:
+          type: string
+          format: date
+          description: Route date
+        status:
+          allOf:
+            - $ref: '#/components/schemas/Models.RouteStatus'
+          description: Route status
+        estimated_distance_miles:
+          type: number
+          format: double
+          description: Estimated distance in miles
+        actual_distance_miles:
+          type: number
+          format: double
+          description: Actual distance in miles
+        estimated_duration_minutes:
+          type: integer
+          format: int32
+          description: Estimated duration in minutes
+        actual_duration_minutes:
+          type: integer
+          format: int32
+          description: Actual duration in minutes
+        started_at:
+          type: string
+          format: date-time
+          description: When route started
+        completed_at:
+          type: string
+          format: date-time
+          description: When route completed
+        notes:
+          type: string
+          description: Additional notes
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+        stops:
+          type: array
+          items:
+            $ref: '#/components/schemas/Models.RouteStopWithDetails'
+          description: Route stops
+        operator:
+          type: object
+          properties:
+            id:
+              type: string
+            employee_number:
+              type: string
+            first_name:
+              type: string
+            last_name:
+              type: string
+            phone:
+              type: string
+          required:
+            - id
+            - employee_number
+            - first_name
+            - last_name
+            - phone
+          description: Operator details
+        vehicle:
+          type: object
+          properties:
+            id:
+              type: string
+            registration:
+              type: string
+            make:
+              type: string
+            vehicle_model:
+              type: string
+          required:
+            - id
+            - registration
+          description: Vehicle details
+        depot:
+          type: object
+          properties:
+            id:
+              type: string
+            code:
+              type: string
+            name:
+              type: string
+          required:
+            - id
+            - code
+            - name
+          description: Depot details
+      description: Route with full details
     Models.Saga:
       type: object
       required:
@@ -1427,6 +5685,515 @@ components:
           format: date-time
           description: Last update timestamp
       description: Standard timestamps for entities
+    Models.Treatment:
+      type: object
+      required:
+        - id
+        - code
+        - name
+        - price_per_sqm
+        - min_price
+        - minutes_per_100sqm
+        - setup_minutes
+        - is_active
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          description: Unique treatment identifier
+        code:
+          type: string
+          description: Treatment code (e.g., FERT-01)
+        name:
+          type: string
+          description: Treatment name
+        description:
+          type: string
+          description: Treatment description
+        season:
+          allOf:
+            - $ref: '#/components/schemas/Models.TreatmentSeason'
+          description: Typical season for application
+        sequence_in_year:
+          type: integer
+          format: int32
+          description: Sequence in annual treatment program (1-5)
+        price_per_sqm:
+          type: number
+          format: double
+          description: Base price per square meter
+        min_price:
+          type: number
+          format: double
+          description: Minimum charge for treatment
+        minutes_per_100sqm:
+          type: number
+          format: double
+          description: Minutes to treat 100 sqm
+        setup_minutes:
+          type: integer
+          format: int32
+          description: Setup time per lawn in minutes
+        is_active:
+          type: boolean
+          description: Whether treatment is active
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+      description: Treatment type catalog
+    Models.TreatmentListResponse:
+      type: object
+      required:
+        - data
+        - count
+        - limit
+        - offset
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Models.Treatment'
+          description: List of treatments
+        count:
+          type: integer
+          format: int32
+          description: Total count of items
+        limit:
+          type: integer
+          format: int32
+          description: Maximum items per page
+        offset:
+          type: integer
+          format: int32
+          description: Offset from start
+      description: Paginated list of treatments
+    Models.TreatmentPlan:
+      type: object
+      required:
+        - id
+        - lawn_id
+        - year
+        - status
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          description: Unique plan identifier
+        lawn_id:
+          type: string
+          description: Lawn this plan is for
+        year:
+          type: integer
+          format: int32
+          description: Plan year
+        status:
+          allOf:
+            - $ref: '#/components/schemas/Models.TreatmentPlanStatus'
+          description: Plan status
+        total_estimated_price:
+          type: number
+          format: double
+          description: Total estimated price
+        notes:
+          type: string
+          description: Additional notes
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+      description: Annual treatment plan for a lawn
+    Models.TreatmentPlanItem:
+      type: object
+      required:
+        - id
+        - treatment_plan_id
+        - treatment_id
+        - price_snapshot
+        - is_completed
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          description: Unique item identifier
+        treatment_plan_id:
+          type: string
+          description: Parent treatment plan
+        treatment_id:
+          type: string
+          description: Treatment type
+        scheduled_week:
+          type: string
+          format: date
+          description: Target week for treatment
+        window_start:
+          type: string
+          format: date
+          description: Earliest acceptable date
+        window_end:
+          type: string
+          format: date
+          description: Latest acceptable date
+        price_snapshot:
+          type: number
+          format: double
+          description: Price at time of planning
+        is_completed:
+          type: boolean
+          description: Whether treatment has been completed
+        completed_job_id:
+          type: string
+          description: Job that completed this item
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+      description: Individual treatment within a plan
+    Models.TreatmentPlanItemWithDetails:
+      type: object
+      required:
+        - id
+        - treatment_plan_id
+        - treatment_id
+        - price_snapshot
+        - is_completed
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          description: Unique item identifier
+        treatment_plan_id:
+          type: string
+          description: Parent treatment plan
+        treatment_id:
+          type: string
+          description: Treatment type
+        scheduled_week:
+          type: string
+          format: date
+          description: Target week for treatment
+        window_start:
+          type: string
+          format: date
+          description: Earliest acceptable date
+        window_end:
+          type: string
+          format: date
+          description: Latest acceptable date
+        price_snapshot:
+          type: number
+          format: double
+          description: Price at time of planning
+        is_completed:
+          type: boolean
+          description: Whether treatment has been completed
+        completed_job_id:
+          type: string
+          description: Job that completed this item
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+        treatment:
+          type: object
+          properties:
+            id:
+              type: string
+            code:
+              type: string
+            name:
+              type: string
+          required:
+            - id
+            - code
+            - name
+          description: Treatment details
+      description: Treatment plan item with treatment details
+    Models.TreatmentPlanListResponse:
+      type: object
+      required:
+        - data
+        - count
+        - limit
+        - offset
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Models.TreatmentPlanWithDetails'
+          description: List of treatment plans
+        count:
+          type: integer
+          format: int32
+          description: Total count of items
+        limit:
+          type: integer
+          format: int32
+          description: Maximum items per page
+        offset:
+          type: integer
+          format: int32
+          description: Offset from start
+      description: Paginated list of treatment plans
+    Models.TreatmentPlanStatus:
+      type: string
+      enum:
+        - active
+        - paused
+        - completed
+        - cancelled
+      description: Treatment plan status
+    Models.TreatmentPlanWithDetails:
+      type: object
+      required:
+        - id
+        - lawn_id
+        - year
+        - status
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          description: Unique plan identifier
+        lawn_id:
+          type: string
+          description: Lawn this plan is for
+        year:
+          type: integer
+          format: int32
+          description: Plan year
+        status:
+          allOf:
+            - $ref: '#/components/schemas/Models.TreatmentPlanStatus'
+          description: Plan status
+        total_estimated_price:
+          type: number
+          format: double
+          description: Total estimated price
+        notes:
+          type: string
+          description: Additional notes
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Models.TreatmentPlanItemWithDetails'
+          description: Plan items
+        lawn:
+          type: object
+          properties:
+            id:
+              type: string
+            address_line1:
+              type: string
+            postcode:
+              type: string
+            area_sqm:
+              type: number
+              format: double
+          required:
+            - id
+            - address_line1
+            - postcode
+            - area_sqm
+          description: Lawn details
+        customer:
+          type: object
+          properties:
+            id:
+              type: string
+            customer_number:
+              type: string
+            first_name:
+              type: string
+            last_name:
+              type: string
+          required:
+            - id
+            - customer_number
+            - first_name
+            - last_name
+          description: Customer details
+      description: Treatment plan with all items and lawn details
+    Models.TreatmentProduct:
+      type: object
+      required:
+        - id
+        - treatment_id
+        - product_id
+        - quantity_per_100sqm
+        - quantity_multiplier_poor
+        - created_at
+      properties:
+        id:
+          type: string
+          description: Unique identifier
+        treatment_id:
+          type: string
+          description: Treatment this applies to
+        product_id:
+          type: string
+          description: Product consumed
+        quantity_per_100sqm:
+          type: number
+          format: double
+          description: Quantity per 100 sqm
+        quantity_multiplier_poor:
+          type: number
+          format: double
+          description: Multiplier for poor condition lawns
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+      description: Product consumption for a treatment
+    Models.TreatmentSeason:
+      type: string
+      enum:
+        - spring_early
+        - spring_late
+        - summer
+        - autumn_early
+        - autumn_late
+      description: Treatment season/timing
+    Models.TreatmentWithProducts:
+      type: object
+      required:
+        - id
+        - code
+        - name
+        - price_per_sqm
+        - min_price
+        - minutes_per_100sqm
+        - setup_minutes
+        - is_active
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          description: Unique treatment identifier
+        code:
+          type: string
+          description: Treatment code (e.g., FERT-01)
+        name:
+          type: string
+          description: Treatment name
+        description:
+          type: string
+          description: Treatment description
+        season:
+          allOf:
+            - $ref: '#/components/schemas/Models.TreatmentSeason'
+          description: Typical season for application
+        sequence_in_year:
+          type: integer
+          format: int32
+          description: Sequence in annual treatment program (1-5)
+        price_per_sqm:
+          type: number
+          format: double
+          description: Base price per square meter
+        min_price:
+          type: number
+          format: double
+          description: Minimum charge for treatment
+        minutes_per_100sqm:
+          type: number
+          format: double
+          description: Minutes to treat 100 sqm
+        setup_minutes:
+          type: integer
+          format: int32
+          description: Setup time per lawn in minutes
+        is_active:
+          type: boolean
+          description: Whether treatment is active
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+        products:
+          type: array
+          items:
+            $ref: '#/components/schemas/Models.TreatmentProduct'
+          description: Products consumed by this treatment
+      description: Treatment with product details
+    Models.UpdateCustomerRequest:
+      type: object
+      properties:
+        first_name:
+          type: string
+          description: First name
+        last_name:
+          type: string
+          description: Last name
+        email:
+          type: string
+          description: Email address
+        phone:
+          type: string
+          description: Primary phone number
+        phone_secondary:
+          type: string
+          description: Secondary phone number
+        billing_address_line1:
+          type: string
+          description: Billing address line 1
+        billing_address_line2:
+          type: string
+          description: Billing address line 2
+        billing_city:
+          type: string
+          description: Billing city
+        billing_postcode:
+          type: string
+          description: Billing postcode (UK format)
+        is_active:
+          type: boolean
+          description: Whether customer is active
+        preferred_contact_method:
+          type: string
+          description: Preferred contact method
+        marketing_consent:
+          type: boolean
+          description: Marketing consent given
+        notes:
+          type: string
+          description: Additional notes
+      description: Request to update an existing customer
     Models.UpdateInventoryRequest:
       type: object
       properties:
@@ -1447,6 +6214,178 @@ components:
           format: int32
           description: Reorder quantity
       description: Request to update inventory record
+    Models.UpdateInvoiceItemRequest:
+      type: object
+      properties:
+        description:
+          type: string
+          description: Item description
+        quantity:
+          type: number
+          format: double
+          description: Quantity
+        unit_price:
+          type: number
+          format: double
+          description: Unit price
+      description: Request to update an invoice item
+    Models.UpdateInvoiceRequest:
+      type: object
+      properties:
+        status:
+          allOf:
+            - $ref: '#/components/schemas/Models.InvoiceStatus'
+          description: Invoice status
+        due_date:
+          type: string
+          format: date
+          description: Due date
+        vat_rate:
+          type: number
+          format: double
+          description: VAT rate
+        payment_terms_days:
+          type: integer
+          format: int32
+          description: Payment terms in days
+        notes:
+          type: string
+          description: Additional notes
+      description: Request to update an invoice
+    Models.UpdateJobRequest:
+      type: object
+      properties:
+        status:
+          allOf:
+            - $ref: '#/components/schemas/Models.JobStatus'
+          description: Job status
+        started_at:
+          type: string
+          format: date-time
+          description: When work started
+        completed_at:
+          type: string
+          format: date-time
+          description: When work completed
+        performed_by:
+          type: string
+          description: Operator who performed the work
+        lawn_condition_at_job:
+          allOf:
+            - $ref: '#/components/schemas/Models.LawnCondition'
+          description: Lawn condition at time of job
+        before_notes:
+          type: string
+          description: Notes before work
+        after_notes:
+          type: string
+          description: Notes after work
+        customer_signature_url:
+          type: string
+          description: Customer signature URL
+        before_photos:
+          type: array
+          items:
+            type: string
+          description: Before photos (array of URLs)
+        after_photos:
+          type: array
+          items:
+            type: string
+          description: After photos (array of URLs)
+      description: Request to update a job
+    Models.UpdateLawnRequest:
+      type: object
+      properties:
+        address_line1:
+          type: string
+          description: Address line 1
+        address_line2:
+          type: string
+          description: Address line 2
+        city:
+          type: string
+          description: City
+        postcode:
+          type: string
+          description: UK postcode
+        latitude:
+          type: number
+          format: double
+          description: Latitude for routing
+        longitude:
+          type: number
+          format: double
+          description: Longitude for routing
+        area_sqm:
+          type: number
+          format: double
+          description: Lawn area in square meters
+        lawn_condition:
+          allOf:
+            - $ref: '#/components/schemas/Models.LawnCondition'
+          description: Current lawn condition
+        access_notes:
+          type: string
+          description: Access notes for operators
+        is_active:
+          type: boolean
+          description: Whether lawn is active
+      description: Request to update an existing lawn
+    Models.UpdateOperatorRequest:
+      type: object
+      properties:
+        user_id:
+          type: string
+          description: Linked auth user
+        depot_id:
+          type: string
+          description: Home depot
+        first_name:
+          type: string
+          description: First name
+        last_name:
+          type: string
+          description: Last name
+        email:
+          type: string
+          description: Email address
+        phone:
+          type: string
+          description: Phone number
+        hourly_cost:
+          type: number
+          format: double
+          description: Hourly cost for P&L
+        is_active:
+          type: boolean
+          description: Whether operator is active
+      description: Request to update an existing operator
+    Models.UpdatePaymentRequest:
+      type: object
+      properties:
+        payment_reference:
+          type: string
+          description: Payment reference
+        payment_method:
+          allOf:
+            - $ref: '#/components/schemas/Models.PaymentMethod'
+          description: Payment method
+        amount:
+          type: number
+          format: double
+          description: Payment amount
+        payment_date:
+          type: string
+          format: date
+          description: Payment date
+        is_confirmed:
+          type: boolean
+          description: Whether payment is confirmed
+        notes:
+          type: string
+          description: Additional notes
+      description: Request to update a payment
     Models.UpdateProductRequest:
       type: object
       properties:
@@ -1467,6 +6406,181 @@ components:
           type: boolean
           description: Whether product is active
       description: Request to update an existing product
+    Models.UpdateRouteRequest:
+      type: object
+      properties:
+        operator_id:
+          type: string
+          description: Assigned operator
+        vehicle_id:
+          type: string
+          description: Assigned vehicle
+        route_date:
+          type: string
+          format: date
+          description: Route date
+        status:
+          allOf:
+            - $ref: '#/components/schemas/Models.RouteStatus'
+          description: Route status
+        estimated_distance_miles:
+          type: number
+          format: double
+          description: Estimated distance in miles
+        actual_distance_miles:
+          type: number
+          format: double
+          description: Actual distance in miles
+        estimated_duration_minutes:
+          type: integer
+          format: int32
+          description: Estimated duration in minutes
+        actual_duration_minutes:
+          type: integer
+          format: int32
+          description: Actual duration in minutes
+        started_at:
+          type: string
+          format: date-time
+          description: When route started
+        completed_at:
+          type: string
+          format: date-time
+          description: When route completed
+        notes:
+          type: string
+          description: Additional notes
+      description: Request to update a route
+    Models.UpdateRouteStopRequest:
+      type: object
+      properties:
+        stop_order:
+          type: integer
+          format: int32
+          description: Order in route
+        estimated_arrival:
+          type: string
+          format: date-time
+          description: Estimated arrival time
+        estimated_departure:
+          type: string
+          format: date-time
+          description: Estimated departure time
+        actual_arrival:
+          type: string
+          format: date-time
+          description: Actual arrival time
+        actual_departure:
+          type: string
+          format: date-time
+          description: Actual departure time
+        distance_from_previous_miles:
+          type: number
+          format: double
+          description: Distance from previous stop in miles
+      description: Request to update a route stop
+    Models.UpdateTreatmentPlanItemRequest:
+      type: object
+      properties:
+        scheduled_week:
+          type: string
+          format: date
+          description: Target week for treatment
+        window_start:
+          type: string
+          format: date
+          description: Earliest acceptable date
+        window_end:
+          type: string
+          format: date
+          description: Latest acceptable date
+        price_snapshot:
+          type: number
+          format: double
+          description: Price snapshot
+      description: Request to update a treatment plan item
+    Models.UpdateTreatmentPlanRequest:
+      type: object
+      properties:
+        status:
+          allOf:
+            - $ref: '#/components/schemas/Models.TreatmentPlanStatus'
+          description: Plan status
+        total_estimated_price:
+          type: number
+          format: double
+          description: Total estimated price
+        notes:
+          type: string
+          description: Additional notes
+      description: Request to update a treatment plan
+    Models.UpdateTreatmentRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Treatment code
+        name:
+          type: string
+          description: Treatment name
+        description:
+          type: string
+          description: Treatment description
+        season:
+          allOf:
+            - $ref: '#/components/schemas/Models.TreatmentSeason'
+          description: Typical season for application
+        sequence_in_year:
+          type: integer
+          format: int32
+          description: Sequence in annual treatment program (1-5)
+        price_per_sqm:
+          type: number
+          format: double
+          description: Base price per square meter
+        min_price:
+          type: number
+          format: double
+          description: Minimum charge for treatment
+        minutes_per_100sqm:
+          type: number
+          format: double
+          description: Minutes to treat 100 sqm
+        setup_minutes:
+          type: integer
+          format: int32
+          description: Setup time per lawn in minutes
+        is_active:
+          type: boolean
+          description: Whether treatment is active
+      description: Request to update an existing treatment
+    Models.UpdateVehicleRequest:
+      type: object
+      properties:
+        depot_id:
+          type: string
+          description: Home depot
+        registration:
+          type: string
+          description: Vehicle registration
+        make:
+          type: string
+          description: Vehicle make
+        vehicle_model:
+          type: string
+          description: Vehicle model
+        cost_per_mile:
+          type: number
+          format: double
+          description: Cost per mile
+        load_capacity_kg:
+          type: number
+          format: double
+          description: Load capacity in kg
+        is_active:
+          type: boolean
+          description: Whether vehicle is active
+      description: Request to update an existing vehicle
     Models.UpdateWarehouseRequest:
       type: object
       properties:
@@ -1483,6 +6597,136 @@ components:
           type: boolean
           description: Whether warehouse is active
       description: Request to update an existing warehouse
+    Models.Vehicle:
+      type: object
+      required:
+        - id
+        - depot_id
+        - registration
+        - is_active
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          description: Unique vehicle identifier
+        depot_id:
+          type: string
+          description: Home depot (warehouse)
+        registration:
+          type: string
+          description: Vehicle registration (UK format)
+        make:
+          type: string
+          description: Vehicle make
+        vehicle_model:
+          type: string
+          description: Vehicle model
+        cost_per_mile:
+          type: number
+          format: double
+          description: Cost per mile
+        load_capacity_kg:
+          type: number
+          format: double
+          description: Load capacity in kg
+        is_active:
+          type: boolean
+          description: Whether vehicle is active
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+      description: Company vehicle
+    Models.VehicleListResponse:
+      type: object
+      required:
+        - data
+        - count
+        - limit
+        - offset
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Models.VehicleWithDetails'
+          description: List of vehicles
+        count:
+          type: integer
+          format: int32
+          description: Total count of items
+        limit:
+          type: integer
+          format: int32
+          description: Maximum items per page
+        offset:
+          type: integer
+          format: int32
+          description: Offset from start
+      description: Paginated list of vehicles
+    Models.VehicleWithDetails:
+      type: object
+      required:
+        - id
+        - depot_id
+        - registration
+        - is_active
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          description: Unique vehicle identifier
+        depot_id:
+          type: string
+          description: Home depot (warehouse)
+        registration:
+          type: string
+          description: Vehicle registration (UK format)
+        make:
+          type: string
+          description: Vehicle make
+        vehicle_model:
+          type: string
+          description: Vehicle model
+        cost_per_mile:
+          type: number
+          format: double
+          description: Cost per mile
+        load_capacity_kg:
+          type: number
+          format: double
+          description: Load capacity in kg
+        is_active:
+          type: boolean
+          description: Whether vehicle is active
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+        depot:
+          type: object
+          properties:
+            id:
+              type: string
+            code:
+              type: string
+            name:
+              type: string
+          required:
+            - id
+            - code
+            - name
+          description: Depot details
+      description: Vehicle with depot details
     Models.Warehouse:
       type: object
       required:
