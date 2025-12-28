@@ -1,10 +1,13 @@
 # CLAUDE.md
 
+DO NOT ADD CLAUDE to commits as ao-author
+
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
 
 DarkPearl is a stock management system with:
+
 - **Backend**: Supabase Edge Functions (Deno/Hono) + PostgreSQL
 - **Frontend**: React + Vite + TailwindCSS + TanStack Query
 - **Background Jobs**: Trigger.dev for durable saga execution
@@ -42,6 +45,7 @@ pnpm typespec:watch    # Watch mode for TypeSpec
 ### Frontend (React + Vite)
 
 Located in `src/`:
+
 - `pages/` - Route pages (products, warehouses, inventory, orders, etc.)
 - `components/` - UI components (shadcn/ui style) and layouts
 - `hooks/` - TanStack Query hooks for data fetching (e.g., `use-products.ts`)
@@ -60,6 +64,7 @@ All edge functions use Hono and are in `supabase/functions/`:
 - **Saga system**: `saga-webhook/` (triggers Trigger.dev tasks)
 
 Each function has its own `deno.json`. Shared code in `_shared/`:
+
 - `supabase-client.ts` - Two client types:
   - `createSupabaseClient(req)` - Uses user JWT, respects RLS
   - `createServiceClient()` - Bypasses RLS (for saga operations)
@@ -81,6 +86,7 @@ Flow triggered by order creation:
    - `void_payment` (compensates `process_payment`)
 
 Task files in `supabase/trigger/`:
+
 - `orderFulfillmentSaga.ts` - Main saga orchestrator
 - `steps/` - Individual saga steps
 - `compensation/` - Compensation tasks
@@ -92,6 +98,7 @@ Key tables: `sagas`, `saga_events`
 ### Database Schema
 
 Schema files in `supabase/schemas/` (ordered by filename prefix):
+
 - `00_extensions.sql` - UUID extension
 - `01_enums.sql` - `movement_type`, `order_status`, `saga_status`, `saga_step_type`
 - `02-06_*.sql` - Core domain tables (products, warehouses, inventory, stock_movements, orders)
@@ -102,6 +109,7 @@ Schema files in `supabase/schemas/` (ordered by filename prefix):
 ### TypeSpec API Definition
 
 TypeSpec files in `typespec/`:
+
 - `main.tsp` - Service definition
 - `models/*.tsp` - Data models
 - `operations/*.tsp` - API operations
@@ -119,3 +127,5 @@ Compiles to OpenAPI at `tsp-output/@typespec/openapi3/openapi.yaml`.
 - `saga-webhook` has `verify_jwt = false` in `supabase/config.toml` (called from PostgreSQL triggers via pg_net)
 - Trigger.dev config in `trigger.config.ts` - tasks dir is `./supabase/trigger`
 - Auth redirects configured for `localhost:5173` in `supabase/config.toml`
+
+Please use types over interfaces and avoid inline imports
