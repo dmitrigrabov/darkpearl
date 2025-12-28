@@ -3,12 +3,19 @@ import { ColumnDef } from '@tanstack/react-table';
 import { useStockMovements, useCreateStockMovement } from '@/hooks/use-stock-movements';
 import { useProducts } from '@/hooks/use-products';
 import { useWarehouses } from '@/hooks/use-warehouses';
+import { CanCreate } from '@/components/auth';
 import { DataTable } from '@/components/data-table/DataTable';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/toaster';
 import { Plus } from 'lucide-react';
@@ -38,6 +45,9 @@ const MOVEMENT_TYPE_COLORS: Record<MovementType, 'default' | 'secondary' | 'dest
 export function StockMovementsPage() {
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedProductId, setSelectedProductId] = useState('');
+  const [selectedWarehouseId, setSelectedWarehouseId] = useState('');
+  const [selectedMovementType, setSelectedMovementType] = useState<MovementType | ''>('');
   const { toast } = useToast();
 
   const { data, isLoading } = useStockMovements({
@@ -49,20 +59,36 @@ export function StockMovementsPage() {
   const { data: warehouses } = useWarehouses({ limit: 100 });
   const createMutation = useCreateStockMovement();
 
+  const resetForm = () => {
+    setSelectedProductId('');
+    setSelectedWarehouseId('');
+    setSelectedMovementType('');
+  };
+
+  const handleDialogChange = (open: boolean) => {
+    setIsDialogOpen(open);
+    if (!open) resetForm();
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
 
+    if (!selectedProductId || !selectedWarehouseId || !selectedMovementType) {
+      toast({ title: 'Error', description: 'Please fill all required fields', variant: 'destructive' });
+      return;
+    }
+
     try {
       await createMutation.mutateAsync({
-        product_id: formData.get('product_id') as string,
-        warehouse_id: formData.get('warehouse_id') as string,
-        movement_type: formData.get('movement_type') as MovementType,
+        product_id: selectedProductId,
+        warehouse_id: selectedWarehouseId,
+        movement_type: selectedMovementType,
         quantity: parseInt(formData.get('quantity') as string),
         notes: (formData.get('notes') as string) || undefined,
       });
       toast({ title: 'Stock movement created successfully' });
-      setIsDialogOpen(false);
+      handleDialogChange(false);
     } catch (error) {
       toast({ title: 'Error', description: (error as Error).message, variant: 'destructive' });
     }
@@ -100,9 +126,11 @@ export function StockMovementsPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Stock Movements</h1>
-        <Button onClick={() => setIsDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" /> New Movement
-        </Button>
+        <CanCreate>
+          <Button onClick={() => setIsDialogOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" /> New Movement
+          </Button>
+        </CanCreate>
       </div>
 
       <DataTable
@@ -115,43 +143,55 @@ export function StockMovementsPage() {
         isLoading={isLoading}
       />
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent onClose={() => setIsDialogOpen(false)}>
+      <Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
+        <DialogContent onClose={() => handleDialogChange(false)}>
           <DialogHeader>
             <DialogTitle>New Stock Movement</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="product_id">Product</Label>
-              <Select id="product_id" name="product_id" required>
-                <option value="">Select a product</option>
-                {products?.data?.map((product) => (
-                  <option key={product.id} value={product.id}>
-                    {product.sku} - {product.name}
-                  </option>
-                ))}
+              <Label>Product</Label>
+              <Select value={selectedProductId} onValueChange={setSelectedProductId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a product" />
+                </SelectTrigger>
+                <SelectContent>
+                  {products?.data?.map((product) => (
+                    <SelectItem key={product.id} value={product.id}>
+                      {product.sku} - {product.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="warehouse_id">Warehouse</Label>
-              <Select id="warehouse_id" name="warehouse_id" required>
-                <option value="">Select a warehouse</option>
-                {warehouses?.data?.map((warehouse) => (
-                  <option key={warehouse.id} value={warehouse.id}>
-                    {warehouse.code} - {warehouse.name}
-                  </option>
-                ))}
+              <Label>Warehouse</Label>
+              <Select value={selectedWarehouseId} onValueChange={setSelectedWarehouseId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a warehouse" />
+                </SelectTrigger>
+                <SelectContent>
+                  {warehouses?.data?.map((warehouse) => (
+                    <SelectItem key={warehouse.id} value={warehouse.id}>
+                      {warehouse.code} - {warehouse.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="movement_type">Movement Type</Label>
-              <Select id="movement_type" name="movement_type" required>
-                <option value="">Select a type</option>
-                {MOVEMENT_TYPES.map((type) => (
-                  <option key={type} value={type}>
-                    {type.replace('_', ' ')}
-                  </option>
-                ))}
+              <Label>Movement Type</Label>
+              <Select value={selectedMovementType} onValueChange={(v) => setSelectedMovementType(v as MovementType)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {MOVEMENT_TYPES.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {type.replace('_', ' ')}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">

@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
 import { useProducts, useCreateProduct, useUpdateProduct, useDeleteProduct } from '@/hooks/use-products';
+import { useAuth } from '@/providers/AuthProvider';
+import { CanCreate } from '@/components/auth';
 import { DataTable } from '@/components/data-table/DataTable';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +16,7 @@ import { format } from 'date-fns';
 import type { Product, CreateProductRequest } from '@/types/api.types';
 
 export function ProductsPage() {
+  const { canUpdate, canDelete } = useAuth();
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [search, setSearch] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -92,19 +95,23 @@ export function ProductsPage() {
       id: 'actions',
       cell: ({ row }) => (
         <div className="flex gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              setEditingProduct(row.original);
-              setIsDialogOpen(true);
-            }}
-          >
-            <Pencil className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => handleDelete(row.original.id)}>
-            <Trash className="h-4 w-4" />
-          </Button>
+          {canUpdate && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setEditingProduct(row.original);
+                setIsDialogOpen(true);
+              }}
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+          )}
+          {canDelete && (
+            <Button variant="ghost" size="sm" onClick={() => handleDelete(row.original.id)}>
+              <Trash className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       ),
     },
@@ -114,14 +121,16 @@ export function ProductsPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Products</h1>
-        <Button
-          onClick={() => {
-            setEditingProduct(null);
-            setIsDialogOpen(true);
-          }}
-        >
-          <Plus className="mr-2 h-4 w-4" /> Add Product
-        </Button>
+        <CanCreate>
+          <Button
+            onClick={() => {
+              setEditingProduct(null);
+              setIsDialogOpen(true);
+            }}
+          >
+            <Plus className="mr-2 h-4 w-4" /> Add Product
+          </Button>
+        </CanCreate>
       </div>
 
       <Input

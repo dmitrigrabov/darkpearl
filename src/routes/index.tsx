@@ -1,5 +1,6 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { ProtectedRoute } from './ProtectedRoute';
+import { AdminRoute } from './AdminRoute';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { LoginPage } from '@/pages/auth/LoginPage';
 import { AuthCallback } from '@/pages/auth/AuthCallback';
@@ -10,6 +11,7 @@ import { InventoryPage } from '@/pages/inventory/InventoryPage';
 import { StockMovementsPage } from '@/pages/stock-movements/StockMovementsPage';
 import { OrdersPage } from '@/pages/orders/OrdersPage';
 import { OrderDetailPage } from '@/pages/orders/OrderDetailPage';
+import { UserManagementPage } from '@/pages/users/UserManagementPage';
 
 export const router = createBrowserRouter([
   {
@@ -57,6 +59,16 @@ export const router = createBrowserRouter([
           {
             path: '/orders/:id',
             element: <OrderDetailPage />,
+          },
+          // Admin-only routes
+          {
+            element: <AdminRoute />,
+            children: [
+              {
+                path: '/users',
+                element: <UserManagementPage />,
+              },
+            ],
           },
         ],
       },

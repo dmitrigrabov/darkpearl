@@ -4,12 +4,20 @@ import { ColumnDef } from '@tanstack/react-table';
 import { useOrders, useCreateOrder, useCancelOrder } from '@/hooks/use-orders';
 import { useProducts } from '@/hooks/use-products';
 import { useWarehouses } from '@/hooks/use-warehouses';
+import { useAuth } from '@/providers/AuthProvider';
+import { CanCreate } from '@/components/auth';
 import { DataTable } from '@/components/data-table/DataTable';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/toaster';
 import { Plus, Eye, X, Trash } from 'lucide-react';
@@ -29,9 +37,11 @@ const STATUS_COLORS: Record<OrderStatus, 'default' | 'secondary' | 'destructive'
 
 export function OrdersPage() {
   const navigate = useNavigate();
+  const { canUpdate } = useAuth();
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [orderItems, setOrderItems] = useState<CreateOrderItemRequest[]>([]);
+  const [selectedWarehouseId, setSelectedWarehouseId] = useState('');
   const { toast } = useToast();
 
   const { data, isLoading } = useOrders({
@@ -44,9 +54,24 @@ export function OrdersPage() {
   const createMutation = useCreateOrder();
   const cancelMutation = useCancelOrder();
 
+  const resetForm = () => {
+    setOrderItems([]);
+    setSelectedWarehouseId('');
+  };
+
+  const handleDialogChange = (open: boolean) => {
+    setIsDialogOpen(open);
+    if (!open) resetForm();
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+
+    if (!selectedWarehouseId) {
+      toast({ title: 'Error', description: 'Please select a warehouse', variant: 'destructive' });
+      return;
+    }
 
     if (orderItems.length === 0) {
       toast({ title: 'Error', description: 'Add at least one item', variant: 'destructive' });
@@ -55,13 +80,12 @@ export function OrdersPage() {
 
     try {
       await createMutation.mutateAsync({
-        warehouse_id: formData.get('warehouse_id') as string,
+        warehouse_id: selectedWarehouseId,
         notes: (formData.get('notes') as string) || undefined,
         items: orderItems,
       });
       toast({ title: 'Order created successfully' });
-      setIsDialogOpen(false);
-      setOrderItems([]);
+      handleDialogChange(false);
     } catch (error) {
       toast({ title: 'Error', description: (error as Error).message, variant: 'destructive' });
     }
@@ -128,13 +152,13 @@ export function OrdersPage() {
     {
       id: 'actions',
       cell: ({ row }) => {
-        const canCancel = ['pending', 'reserved', 'payment_failed'].includes(row.original.status);
+        const statusAllowsCancel = ['pending', 'reserved', 'payment_failed'].includes(row.original.status);
         return (
           <div className="flex gap-2">
             <Button variant="ghost" size="sm" onClick={() => navigate(`/orders/${row.original.id}`)}>
               <Eye className="h-4 w-4" />
             </Button>
-            {canCancel && (
+            {canUpdate && statusAllowsCancel && (
               <Button variant="ghost" size="sm" onClick={() => handleCancel(row.original.id)}>
                 <X className="h-4 w-4" />
               </Button>
@@ -149,9 +173,11 @@ export function OrdersPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Orders</h1>
-        <Button onClick={() => setIsDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" /> New Order
-        </Button>
+        <CanCreate>
+          <Button onClick={() => setIsDialogOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" /> New Order
+          </Button>
+        </CanCreate>
       </div>
 
       <DataTable
@@ -164,21 +190,25 @@ export function OrdersPage() {
         isLoading={isLoading}
       />
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent onClose={() => setIsDialogOpen(false)}>
+      <Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
+        <DialogContent onClose={() => handleDialogChange(false)}>
           <DialogHeader>
             <DialogTitle>New Order</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="warehouse_id">Warehouse</Label>
-              <Select id="warehouse_id" name="warehouse_id" required>
-                <option value="">Select a warehouse</option>
-                {warehouses?.data?.map((warehouse) => (
-                  <option key={warehouse.id} value={warehouse.id}>
-                    {warehouse.code} - {warehouse.name}
-                  </option>
-                ))}
+              <Label>Warehouse</Label>
+              <Select value={selectedWarehouseId} onValueChange={setSelectedWarehouseId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a warehouse" />
+                </SelectTrigger>
+                <SelectContent>
+                  {warehouses?.data?.map((warehouse) => (
+                    <SelectItem key={warehouse.id} value={warehouse.id}>
+                      {warehouse.code} - {warehouse.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
             </div>
 
@@ -195,14 +225,17 @@ export function OrdersPage() {
                     <Select
                       value={item.product_id}
                       onValueChange={(v) => updateItem(index, 'product_id', v)}
-                      required
                     >
-                      <option value="">Product</option>
-                      {products?.data?.map((product) => (
-                        <option key={product.id} value={product.id}>
-                          {product.name}
-                        </option>
-                      ))}
+                      <SelectTrigger>
+                        <SelectValue placeholder="Product" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {products?.data?.map((product) => (
+                          <SelectItem key={product.id} value={product.id}>
+                            {product.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
                     </Select>
                   </div>
                   <Input

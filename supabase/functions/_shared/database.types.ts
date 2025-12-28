@@ -37,6 +37,7 @@ export type Database = {
       inventory: {
         Row: {
           created_at: string
+          created_by: string | null
           id: string
           product_id: string
           quantity_available: number
@@ -48,6 +49,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          created_by?: string | null
           id?: string
           product_id: string
           quantity_available?: number
@@ -59,6 +61,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          created_by?: string | null
           id?: string
           product_id?: string
           quantity_available?: number
@@ -88,6 +91,7 @@ export type Database = {
       order_items: {
         Row: {
           created_at: string
+          created_by: string | null
           id: string
           order_id: string
           product_id: string
@@ -96,6 +100,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          created_by?: string | null
           id?: string
           order_id: string
           product_id: string
@@ -104,6 +109,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          created_by?: string | null
           id?: string
           order_id?: string
           product_id?: string
@@ -130,6 +136,7 @@ export type Database = {
       orders: {
         Row: {
           created_at: string
+          created_by: string | null
           customer_id: string | null
           id: string
           notes: string | null
@@ -142,6 +149,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          created_by?: string | null
           customer_id?: string | null
           id?: string
           notes?: string | null
@@ -154,6 +162,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          created_by?: string | null
           customer_id?: string | null
           id?: string
           notes?: string | null
@@ -177,6 +186,7 @@ export type Database = {
       products: {
         Row: {
           created_at: string
+          created_by: string | null
           description: string | null
           id: string
           is_active: boolean
@@ -187,6 +197,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          created_by?: string | null
           description?: string | null
           id?: string
           is_active?: boolean
@@ -197,6 +208,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          created_by?: string | null
           description?: string | null
           id?: string
           is_active?: boolean
@@ -255,6 +267,7 @@ export type Database = {
           retry_count: number
           saga_type: string
           status: Database["public"]["Enums"]["saga_status"]
+          trigger_run_id: string | null
           updated_at: string
         }
         Insert: {
@@ -269,6 +282,7 @@ export type Database = {
           retry_count?: number
           saga_type: string
           status?: Database["public"]["Enums"]["saga_status"]
+          trigger_run_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -283,6 +297,7 @@ export type Database = {
           retry_count?: number
           saga_type?: string
           status?: Database["public"]["Enums"]["saga_status"]
+          trigger_run_id?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -344,11 +359,33 @@ export type Database = {
           },
         ]
       }
+      user_profiles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       warehouses: {
         Row: {
           address: string | null
           code: string
           created_at: string
+          created_by: string | null
           id: string
           is_active: boolean
           name: string
@@ -358,6 +395,7 @@ export type Database = {
           address?: string | null
           code: string
           created_at?: string
+          created_by?: string | null
           id?: string
           is_active?: boolean
           name: string
@@ -367,6 +405,7 @@ export type Database = {
           address?: string | null
           code?: string
           created_at?: string
+          created_by?: string | null
           id?: string
           is_active?: boolean
           name?: string
@@ -385,6 +424,17 @@ export type Database = {
           p_quantity: number
           p_warehouse_id: string
         }
+        Returns: boolean
+      }
+      custom_access_token_hook: { Args: { event: Json }; Returns: Json }
+      get_user_role: {
+        Args: never
+        Returns: Database["public"]["Enums"]["user_role"]
+      }
+      is_admin: { Args: never; Returns: boolean }
+      is_admin_or_manager: { Args: never; Returns: boolean }
+      owns_or_is_admin: {
+        Args: { resource_created_by: string }
         Returns: boolean
       }
     }
@@ -422,6 +472,7 @@ export type Database = {
         | "fulfill_order"
         | "release_stock"
         | "void_payment"
+      user_role: "admin" | "manager" | "viewer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -589,6 +640,7 @@ export const Constants = {
         "release_stock",
         "void_payment",
       ],
+      user_role: ["admin", "manager", "viewer"],
     },
   },
 } as const

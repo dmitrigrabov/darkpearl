@@ -29,7 +29,7 @@ const SAGA_STEPS = [
 function buildStepsFromSaga(
   events: SagaEvent[],
   currentStep: string | null,
-  sagaStatus: string,
+  _sagaStatus: string,
   errorMessage: string | null
 ): Step[] {
   return SAGA_STEPS.map((stepDef) => {

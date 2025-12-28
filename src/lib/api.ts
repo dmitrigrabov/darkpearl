@@ -151,3 +151,32 @@ export const ordersApi = {
     fetchWithAuth<Order>('/orders', { method: 'POST', body: JSON.stringify(data) }),
   cancel: (id: string) => fetchWithAuth<{ message: string }>(`/orders/${id}`, { method: 'DELETE' }),
 };
+
+// User role type
+export type UserRole = 'admin' | 'manager' | 'viewer';
+
+// User profile with email
+export interface UserProfileWithEmail {
+  id: string;
+  role: UserRole;
+  email: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// User Profiles API (admin only)
+export const userProfilesApi = {
+  me: () => fetchWithAuth<UserProfileWithEmail>('/user-profiles/me'),
+  list: (params?: PaginationParams) => {
+    const searchParams = new URLSearchParams();
+    if (params?.limit) searchParams.set('limit', String(params.limit));
+    if (params?.offset) searchParams.set('offset', String(params.offset));
+    return fetchWithAuth<PaginatedResponse<UserProfileWithEmail>>(`/user-profiles?${searchParams}`);
+  },
+  get: (id: string) => fetchWithAuth<UserProfileWithEmail>(`/user-profiles/${id}`),
+  updateRole: (id: string, role: UserRole) =>
+    fetchWithAuth<UserProfileWithEmail>(`/user-profiles/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ role }),
+    }),
+};

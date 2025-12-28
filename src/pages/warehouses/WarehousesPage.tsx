@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
 import { useWarehouses, useCreateWarehouse, useUpdateWarehouse, useDeleteWarehouse } from '@/hooks/use-warehouses';
+import { useAuth } from '@/providers/AuthProvider';
+import { CanCreate } from '@/components/auth';
 import { DataTable } from '@/components/data-table/DataTable';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +15,7 @@ import { Plus, Pencil, Trash } from 'lucide-react';
 import type { Warehouse, CreateWarehouseRequest } from '@/types/api.types';
 
 export function WarehousesPage() {
+  const { canUpdate, canDelete } = useAuth();
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingWarehouse, setEditingWarehouse] = useState<Warehouse | null>(null);
@@ -79,19 +82,23 @@ export function WarehousesPage() {
       id: 'actions',
       cell: ({ row }) => (
         <div className="flex gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              setEditingWarehouse(row.original);
-              setIsDialogOpen(true);
-            }}
-          >
-            <Pencil className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => handleDelete(row.original.id)}>
-            <Trash className="h-4 w-4" />
-          </Button>
+          {canUpdate && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setEditingWarehouse(row.original);
+                setIsDialogOpen(true);
+              }}
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+          )}
+          {canDelete && (
+            <Button variant="ghost" size="sm" onClick={() => handleDelete(row.original.id)}>
+              <Trash className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       ),
     },
@@ -101,14 +108,16 @@ export function WarehousesPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Warehouses</h1>
-        <Button
-          onClick={() => {
-            setEditingWarehouse(null);
-            setIsDialogOpen(true);
-          }}
-        >
-          <Plus className="mr-2 h-4 w-4" /> Add Warehouse
-        </Button>
+        <CanCreate>
+          <Button
+            onClick={() => {
+              setEditingWarehouse(null);
+              setIsDialogOpen(true);
+            }}
+          >
+            <Plus className="mr-2 h-4 w-4" /> Add Warehouse
+          </Button>
+        </CanCreate>
       </div>
 
       <DataTable
