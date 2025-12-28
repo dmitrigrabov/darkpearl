@@ -1,9 +1,16 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
+import { ZodError } from 'zod'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '../_shared/database.types.ts'
-import type { CreateInventoryRequest, UpdateInventoryRequest } from '../_shared/types.ts'
+import {
+  CreateInventorySchema,
+  UpdateInventorySchema,
+  type CreateInventoryInput,
+  type UpdateInventoryInput
+} from '../_shared/schemas.ts'
 import { supabaseMiddleware } from '../_shared/middleware.ts'
+import { zodValidator, getValidatedBody, formatZodError } from '../_shared/validation.ts'
 import * as inventoryService from '../_shared/services/inventory-service.ts'
 import * as productService from '../_shared/services/product-service.ts'
 import * as warehouseService from '../_shared/services/warehouse-service.ts'
@@ -22,6 +29,9 @@ app.use('/inventory/*', supabaseMiddleware)
 
 app.onError((err, c) => {
   console.error('Inventory error:', err)
+  if (err instanceof ZodError) {
+    return c.json(formatZodError(err), 400)
+  }
   return c.json({ error: err.message || 'Internal server error' }, 500)
 })
 
@@ -58,13 +68,9 @@ app.get('/inventory/:id', async c => {
     })
 })
 
-app.post('/inventory', async c => {
+app.post('/inventory', zodValidator(CreateInventorySchema), async c => {
   const client = c.get('supabase')
-  const body: CreateInventoryRequest = await c.req.json()
-
-  if (!body.product_id || !body.warehouse_id) {
-    return c.json({ error: 'product_id and warehouse_id are required' }, 400)
-  }
+  const body = getValidatedBody<CreateInventoryInput>(c)
 
   const productExists = await productService.productExists(client, body.product_id)
   if (!productExists) {
@@ -88,17 +94,10 @@ app.post('/inventory', async c => {
     })
 })
 
-app.put('/inventory/:id', async c => {
+app.put('/inventory/:id', zodValidator(UpdateInventorySchema), async c => {
   const client = c.get('supabase')
   const id = c.req.param('id')
-  const body: UpdateInventoryRequest = await c.req.json()
-
-  if (body.quantity_available !== undefined && body.quantity_available < 0) {
-    return c.json({ error: 'quantity_available cannot be negative' }, 400)
-  }
-  if (body.quantity_reserved !== undefined && body.quantity_reserved < 0) {
-    return c.json({ error: 'quantity_reserved cannot be negative' }, 400)
-  }
+  const body = getValidatedBody<UpdateInventoryInput>(c)
 
   const result = await inventoryService.updateInventory(client, id, body)
 

@@ -176,16 +176,3 @@ export type SagaPayload = z.infer<typeof SagaPayloadSchema>
 export type SagaPayloadItem = z.infer<typeof SagaPayloadItemSchema>
 export type SagaStartPayload = z.infer<typeof SagaStartPayloadSchema>
 export type SagaStepPayload = z.infer<typeof SagaStepPayloadSchema>
-
-// Validation helper that returns formatted error response
-export function validateBody<T>(
-  schema: z.ZodType<T>,
-  data: unknown
-): { success: true; data: T } | { success: false; error: string } {
-  const result = schema.safeParse(data)
-  if (!result.success) {
-    const errors = result.error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')
-    return { success: false, error: errors }
-  }
-  return { success: true, data: result.data }
-}

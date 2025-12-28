@@ -1,10 +1,16 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
+import { ZodError } from 'zod'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '../_shared/database.types.ts'
-import type { CreateProductRequest } from '../_shared/types.ts'
-import { updateProductSchema } from '../_shared/schemas.ts'
+import {
+  CreateProductSchema,
+  updateProductSchema,
+  type CreateProductInput,
+  type UpdateProductInput
+} from '../_shared/schemas.ts'
 import { supabaseMiddleware } from '../_shared/middleware.ts'
+import { zodValidator, getValidatedBody, formatZodError } from '../_shared/validation.ts'
 import * as productService from '../_shared/services/product-service.ts'
 import { match, P } from 'ts-pattern'
 
@@ -21,6 +27,9 @@ app.use('/*', supabaseMiddleware)
 
 app.onError((err, c) => {
   console.error('Products error:', err)
+  if (err instanceof ZodError) {
+    return c.json(formatZodError(err), 400)
+  }
   return c.json({ error: err.message || 'Internal server error' }, 500)
 })
 
@@ -55,13 +64,9 @@ app.get('/products/:id', async c => {
     })
 })
 
-app.post('/products', async c => {
+app.post('/products', zodValidator(CreateProductSchema), async c => {
   const client = c.get('supabase')
-  const body: CreateProductRequest = await c.req.json()
-
-  if (!body.sku || !body.name) {
-    return c.json({ error: 'sku and name are required' }, 400)
-  }
+  const body = getValidatedBody<CreateProductInput>(c)
 
   const result = await productService.createProduct(client, body)
 
@@ -75,12 +80,10 @@ app.post('/products', async c => {
     })
 })
 
-app.put('/products/:id', async c => {
+app.put('/products/:id', zodValidator(updateProductSchema), async c => {
   const client = c.get('supabase')
   const id = c.req.param('id')
-
-  const bodyJson = await c.req.json()
-  const body = updateProductSchema.parse(bodyJson)
+  const body = getValidatedBody<UpdateProductInput>(c)
 
   const result = await productService.updateProduct(client, id, body)
 

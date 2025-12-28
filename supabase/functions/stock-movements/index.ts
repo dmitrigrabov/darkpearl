@@ -1,22 +1,15 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
+import { ZodError } from 'zod';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../_shared/database.types.ts';
-import type { CreateStockMovementRequest, MovementType } from '../_shared/types.ts';
+import type { MovementType } from '../_shared/types.ts';
+import { CreateStockMovementSchema, type CreateStockMovementInput } from '../_shared/schemas.ts';
 import { supabaseMiddleware } from '../_shared/middleware.ts';
+import { zodValidator, getValidatedBody, formatZodError } from '../_shared/validation.ts';
 import * as stockMovementService from '../_shared/services/stock-movement-service.ts';
 import * as inventoryService from '../_shared/services/inventory-service.ts';
 import { match, P } from 'ts-pattern';
-
-const VALID_MOVEMENT_TYPES: MovementType[] = [
-  'receive',
-  'transfer_out',
-  'transfer_in',
-  'adjust',
-  'reserve',
-  'release',
-  'fulfill',
-];
 
 type Env = {
   Variables: {
@@ -31,6 +24,9 @@ app.use('/stock-movements/*', supabaseMiddleware);
 
 app.onError((err, c) => {
   console.error('Stock movements error:', err);
+  if (err instanceof ZodError) {
+    return c.json(formatZodError(err), 400);
+  }
   return c.json({ error: err.message || 'Internal server error' }, 500);
 });
 
@@ -71,17 +67,9 @@ app.get('/stock-movements/:id', async (c) => {
     });
 });
 
-app.post('/stock-movements', async (c) => {
+app.post('/stock-movements', zodValidator(CreateStockMovementSchema), async (c) => {
   const client = c.get('supabase');
-  const body: CreateStockMovementRequest = await c.req.json();
-
-  if (!body.product_id || !body.warehouse_id || !body.movement_type || body.quantity === undefined) {
-    return c.json({ error: 'product_id, warehouse_id, movement_type, and quantity are required' }, 400);
-  }
-
-  if (!VALID_MOVEMENT_TYPES.includes(body.movement_type)) {
-    return c.json({ error: `Invalid movement_type. Must be one of: ${VALID_MOVEMENT_TYPES.join(', ')}` }, 400);
-  }
+  const body = getValidatedBody<CreateStockMovementInput>(c);
 
   // Get current inventory
   const inventory = await inventoryService.getInventoryByProductWarehouse(

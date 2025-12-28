@@ -1,9 +1,16 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
+import { ZodError } from 'zod';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../_shared/database.types.ts';
-import type { CreateWarehouseRequest, UpdateWarehouseRequest } from '../_shared/types.ts';
+import {
+  CreateWarehouseSchema,
+  UpdateWarehouseSchema,
+  type CreateWarehouseInput,
+  type UpdateWarehouseInput
+} from '../_shared/schemas.ts';
 import { supabaseMiddleware } from '../_shared/middleware.ts';
+import { zodValidator, getValidatedBody, formatZodError } from '../_shared/validation.ts';
 import * as warehouseService from '../_shared/services/warehouse-service.ts';
 import { match, P } from 'ts-pattern';
 
@@ -20,6 +27,9 @@ app.use('/warehouses/*', supabaseMiddleware);
 
 app.onError((err, c) => {
   console.error('Warehouses error:', err);
+  if (err instanceof ZodError) {
+    return c.json(formatZodError(err), 400);
+  }
   return c.json({ error: err.message || 'Internal server error' }, 500);
 });
 
@@ -52,13 +62,9 @@ app.get('/warehouses/:id', async (c) => {
     });
 });
 
-app.post('/warehouses', async (c) => {
+app.post('/warehouses', zodValidator(CreateWarehouseSchema), async (c) => {
   const client = c.get('supabase');
-  const body: CreateWarehouseRequest = await c.req.json();
-
-  if (!body.code || !body.name) {
-    return c.json({ error: 'code and name are required' }, 400);
-  }
+  const body = getValidatedBody<CreateWarehouseInput>(c);
 
   const result = await warehouseService.createWarehouse(client, body);
 
@@ -72,10 +78,10 @@ app.post('/warehouses', async (c) => {
     });
 });
 
-app.put('/warehouses/:id', async (c) => {
+app.put('/warehouses/:id', zodValidator(UpdateWarehouseSchema), async (c) => {
   const client = c.get('supabase');
   const id = c.req.param('id');
-  const body: UpdateWarehouseRequest = await c.req.json();
+  const body = getValidatedBody<UpdateWarehouseInput>(c);
 
   const result = await warehouseService.updateWarehouse(client, id, body);
 

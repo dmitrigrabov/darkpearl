@@ -1,14 +1,16 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
+import { ZodError } from 'zod'
 import { tasks } from '@trigger.dev/sdk/v3'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '../_shared/database.types.ts'
-import type { CreateOrderRequest, OrderStatus } from '../_shared/types.ts'
+import type { OrderStatus } from '../_shared/types.ts'
+import { CreateOrderSchema, SagaPayloadSchema, type CreateOrderInput } from '../_shared/schemas.ts'
 import { supabaseWithServiceMiddleware } from '../_shared/middleware.ts'
+import { zodValidator, getValidatedBody, formatZodError } from '../_shared/validation.ts'
 import * as orderService from '../_shared/services/order-service.ts'
 import * as sagaService from '../_shared/services/saga-service.ts'
 import * as warehouseService from '../_shared/services/warehouse-service.ts'
-import { SagaPayloadSchema } from '../_shared/schemas.ts'
 
 type Env = {
   Variables: {
@@ -24,6 +26,9 @@ app.use('/orders/*', supabaseWithServiceMiddleware)
 
 app.onError((err, c) => {
   console.error('Orders error:', err)
+  if (err instanceof ZodError) {
+    return c.json(formatZodError(err), 400)
+  }
   return c.json({ error: err.message || 'Internal server error' }, 500)
 })
 
@@ -60,13 +65,9 @@ app.get('/orders/:id', async c => {
   return c.json({ ...order, saga: saga || null })
 })
 
-app.post('/orders', async c => {
+app.post('/orders', zodValidator(CreateOrderSchema), async c => {
   const client = c.get('supabase')
-  const body: CreateOrderRequest = await c.req.json()
-
-  if (!body.warehouse_id || !body.items || body.items.length === 0) {
-    return c.json({ error: 'warehouse_id and at least one item are required' }, 400)
-  }
+  const body = getValidatedBody<CreateOrderInput>(c)
 
   // Validate warehouse exists
   const warehouseExists = await warehouseService.warehouseExists(client, body.warehouse_id)
@@ -77,10 +78,6 @@ app.post('/orders', async c => {
   // Validate all products exist and calculate total
   let totalAmount = 0
   for (const item of body.items) {
-    if (!item.product_id || !item.quantity || item.quantity <= 0) {
-      return c.json({ error: 'Each item must have product_id and positive quantity' }, 400)
-    }
-
     const productPrice = await orderService.getProductPrice(client, item.product_id)
     if (productPrice === null) {
       return c.json({ error: `Product ${item.product_id} not found` }, 404)
