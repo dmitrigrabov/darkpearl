@@ -10,6 +10,7 @@ tags:
   - name: Stock Movements
   - name: Orders
   - name: Customers
+  - name: Properties
   - name: Lawns
   - name: Treatments
   - name: Treatment Plans
@@ -915,13 +916,13 @@ paths:
       operationId: Lawns_list
       description: List all lawns with optional filters
       parameters:
-        - name: customer_id
+        - name: property_id
           in: query
           required: false
           schema:
             type: string
           explode: false
-        - name: postcode
+        - name: customer_id
           in: query
           required: false
           schema:
@@ -1632,6 +1633,151 @@ paths:
                   - $ref: '#/components/schemas/Models.ErrorResponse'
       tags:
         - Products
+  /properties:
+    get:
+      operationId: Properties_list
+      description: List all properties with optional filters
+      parameters:
+        - name: customer_id
+          in: query
+          required: false
+          schema:
+            type: string
+          explode: false
+        - name: postcode
+          in: query
+          required: false
+          schema:
+            type: string
+          explode: false
+        - name: is_active
+          in: query
+          required: false
+          schema:
+            type: boolean
+          explode: false
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 100
+          explode: false
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+          explode: false
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.PropertyListResponse'
+      tags:
+        - Properties
+    post:
+      operationId: Properties_create
+      description: Create a new property
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.ErrorResponse'
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.Property'
+      tags:
+        - Properties
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.CreatePropertyRequest'
+  /properties/{id}:
+    get:
+      operationId: Properties_get
+      description: Get a property by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Models.PropertyWithDetails'
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Properties
+    put:
+      operationId: Properties_update
+      description: Update an existing property
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Models.Property'
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Properties
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.UpdatePropertyRequest'
+    delete:
+      operationId: Properties_delete
+      description: Delete a property
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                  - $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - Properties
   /routes:
     get:
       operationId: Routes_list
@@ -2759,6 +2905,21 @@ paths:
         - Warehouses
 components:
   schemas:
+    Models.Coordinate:
+      type: object
+      required:
+        - latitude
+        - longitude
+      properties:
+        latitude:
+          type: number
+          format: double
+          description: Latitude
+        longitude:
+          type: number
+          format: double
+          description: Longitude
+      description: Coordinate point for polygon boundary
     Models.CreateCustomerRequest:
       type: object
       required:
@@ -2964,35 +3125,16 @@ components:
     Models.CreateLawnRequest:
       type: object
       required:
-        - customer_id
-        - address_line1
-        - city
-        - postcode
+        - property_id
+        - name
         - area_sqm
       properties:
-        customer_id:
+        property_id:
           type: string
-          description: Customer who owns this lawn
-        address_line1:
+          description: Property this lawn belongs to
+        name:
           type: string
-          description: Address line 1
-        address_line2:
-          type: string
-          description: Address line 2
-        city:
-          type: string
-          description: City
-        postcode:
-          type: string
-          description: UK postcode
-        latitude:
-          type: number
-          format: double
-          description: Latitude for routing
-        longitude:
-          type: number
-          format: double
-          description: Longitude for routing
+          description: Lawn name (e.g., 'Front Garden', 'Back Garden')
         area_sqm:
           type: number
           format: double
@@ -3001,9 +3143,14 @@ components:
           allOf:
             - $ref: '#/components/schemas/Models.LawnCondition'
           description: Current lawn condition (defaults to new)
+        boundary:
+          type: array
+          items:
+            $ref: '#/components/schemas/Models.Coordinate'
+          description: Polygon boundary coordinates
         access_notes:
           type: string
-          description: Access notes for operators
+          description: Access notes for this specific lawn
         is_active:
           type: boolean
           description: Whether lawn is active (defaults to true)
@@ -3160,6 +3307,44 @@ components:
           type: boolean
           description: Whether product is active (defaults to true)
       description: Request to create a new product
+    Models.CreatePropertyRequest:
+      type: object
+      required:
+        - customer_id
+        - address_line1
+        - city
+        - postcode
+      properties:
+        customer_id:
+          type: string
+          description: Customer who owns this property
+        address_line1:
+          type: string
+          description: Address line 1
+        address_line2:
+          type: string
+          description: Address line 2
+        city:
+          type: string
+          description: City
+        postcode:
+          type: string
+          description: UK postcode
+        latitude:
+          type: number
+          format: double
+          description: Latitude for routing
+        longitude:
+          type: number
+          format: double
+          description: Longitude for routing
+        access_notes:
+          type: string
+          description: Access notes for operators
+        is_active:
+          type: boolean
+          description: Whether property is active (defaults to true)
+      description: Request to create a new property
     Models.CreateRouteRequest:
       type: object
       required:
@@ -4313,10 +4498,8 @@ components:
       type: object
       required:
         - id
-        - customer_id
-        - address_line1
-        - city
-        - postcode
+        - property_id
+        - name
         - area_sqm
         - lawn_condition
         - is_active
@@ -4326,29 +4509,12 @@ components:
         id:
           type: string
           description: Unique lawn identifier
-        customer_id:
+        property_id:
           type: string
-          description: Customer who owns this lawn
-        address_line1:
+          description: Property this lawn belongs to
+        name:
           type: string
-          description: Address line 1
-        address_line2:
-          type: string
-          description: Address line 2
-        city:
-          type: string
-          description: City
-        postcode:
-          type: string
-          description: UK postcode
-        latitude:
-          type: number
-          format: double
-          description: Latitude for routing
-        longitude:
-          type: number
-          format: double
-          description: Longitude for routing
+          description: Lawn name (e.g., 'Front Garden', 'Back Garden')
         area_sqm:
           type: number
           format: double
@@ -4357,9 +4523,14 @@ components:
           allOf:
             - $ref: '#/components/schemas/Models.LawnCondition'
           description: Current lawn condition
+        boundary:
+          type: array
+          items:
+            $ref: '#/components/schemas/Models.Coordinate'
+          description: Polygon boundary coordinates
         access_notes:
           type: string
-          description: Access notes for operators
+          description: Access notes for this specific lawn
         is_active:
           type: boolean
           description: Whether lawn is active
@@ -4371,7 +4542,7 @@ components:
           type: string
           format: date-time
           description: Last update timestamp
-      description: Property/lawn belonging to a customer
+      description: Lawn area within a property
     Models.LawnCondition:
       type: string
       enum:
@@ -4411,10 +4582,8 @@ components:
       type: object
       required:
         - id
-        - customer_id
-        - address_line1
-        - city
-        - postcode
+        - property_id
+        - name
         - area_sqm
         - lawn_condition
         - is_active
@@ -4424,29 +4593,12 @@ components:
         id:
           type: string
           description: Unique lawn identifier
-        customer_id:
+        property_id:
           type: string
-          description: Customer who owns this lawn
-        address_line1:
+          description: Property this lawn belongs to
+        name:
           type: string
-          description: Address line 1
-        address_line2:
-          type: string
-          description: Address line 2
-        city:
-          type: string
-          description: City
-        postcode:
-          type: string
-          description: UK postcode
-        latitude:
-          type: number
-          format: double
-          description: Latitude for routing
-        longitude:
-          type: number
-          format: double
-          description: Longitude for routing
+          description: Lawn name (e.g., 'Front Garden', 'Back Garden')
         area_sqm:
           type: number
           format: double
@@ -4455,9 +4607,14 @@ components:
           allOf:
             - $ref: '#/components/schemas/Models.LawnCondition'
           description: Current lawn condition
+        boundary:
+          type: array
+          items:
+            $ref: '#/components/schemas/Models.Coordinate'
+          description: Polygon boundary coordinates
         access_notes:
           type: string
-          description: Access notes for operators
+          description: Access notes for this specific lawn
         is_active:
           type: boolean
           description: Whether lawn is active
@@ -4469,6 +4626,26 @@ components:
           type: string
           format: date-time
           description: Last update timestamp
+        property:
+          type: object
+          properties:
+            id:
+              type: string
+            address_line1:
+              type: string
+            postcode:
+              type: string
+            latitude:
+              type: number
+              format: double
+            longitude:
+              type: number
+              format: double
+          required:
+            - id
+            - address_line1
+            - postcode
+          description: Property details
         customer:
           type: object
           properties:
@@ -4486,7 +4663,7 @@ components:
             - first_name
             - last_name
           description: Customer details
-      description: Lawn with customer details
+      description: Lawn with property and customer details
     Models.MovementType:
       type: string
       enum:
@@ -5072,6 +5249,155 @@ components:
           format: int32
           description: Offset from start
       description: Paginated list of products
+    Models.Property:
+      type: object
+      required:
+        - id
+        - customer_id
+        - address_line1
+        - city
+        - postcode
+        - is_active
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          description: Unique property identifier
+        customer_id:
+          type: string
+          description: Customer who owns this property
+        address_line1:
+          type: string
+          description: Address line 1
+        address_line2:
+          type: string
+          description: Address line 2
+        city:
+          type: string
+          description: City
+        postcode:
+          type: string
+          description: UK postcode
+        latitude:
+          type: number
+          format: double
+          description: Latitude for routing
+        longitude:
+          type: number
+          format: double
+          description: Longitude for routing
+        access_notes:
+          type: string
+          description: Access notes for operators
+        is_active:
+          type: boolean
+          description: Whether property is active
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+      description: Property belonging to a customer (physical location)
+    Models.PropertyListResponse:
+      type: object
+      required:
+        - data
+        - count
+        - limit
+        - offset
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Models.PropertyWithDetails'
+          description: List of properties
+        count:
+          type: integer
+          format: int32
+          description: Total count of items
+        limit:
+          type: integer
+          format: int32
+          description: Maximum items per page
+        offset:
+          type: integer
+          format: int32
+          description: Offset from start
+      description: Paginated list of properties
+    Models.PropertyWithDetails:
+      type: object
+      required:
+        - id
+        - customer_id
+        - address_line1
+        - city
+        - postcode
+        - is_active
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          description: Unique property identifier
+        customer_id:
+          type: string
+          description: Customer who owns this property
+        address_line1:
+          type: string
+          description: Address line 1
+        address_line2:
+          type: string
+          description: Address line 2
+        city:
+          type: string
+          description: City
+        postcode:
+          type: string
+          description: UK postcode
+        latitude:
+          type: number
+          format: double
+          description: Latitude for routing
+        longitude:
+          type: number
+          format: double
+          description: Longitude for routing
+        access_notes:
+          type: string
+          description: Access notes for operators
+        is_active:
+          type: boolean
+          description: Whether property is active
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+        customer:
+          type: object
+          properties:
+            id:
+              type: string
+            customer_number:
+              type: string
+            first_name:
+              type: string
+            last_name:
+              type: string
+          required:
+            - id
+            - customer_number
+            - first_name
+            - last_name
+          description: Customer details
+      description: Property with customer details
     Models.Route:
       type: object
       required:
@@ -6297,26 +6623,9 @@ components:
     Models.UpdateLawnRequest:
       type: object
       properties:
-        address_line1:
+        name:
           type: string
-          description: Address line 1
-        address_line2:
-          type: string
-          description: Address line 2
-        city:
-          type: string
-          description: City
-        postcode:
-          type: string
-          description: UK postcode
-        latitude:
-          type: number
-          format: double
-          description: Latitude for routing
-        longitude:
-          type: number
-          format: double
-          description: Longitude for routing
+          description: Lawn name
         area_sqm:
           type: number
           format: double
@@ -6325,9 +6634,14 @@ components:
           allOf:
             - $ref: '#/components/schemas/Models.LawnCondition'
           description: Current lawn condition
+        boundary:
+          type: array
+          items:
+            $ref: '#/components/schemas/Models.Coordinate'
+          description: Polygon boundary coordinates
         access_notes:
           type: string
-          description: Access notes for operators
+          description: Access notes for this specific lawn
         is_active:
           type: boolean
           description: Whether lawn is active
@@ -6406,6 +6720,36 @@ components:
           type: boolean
           description: Whether product is active
       description: Request to update an existing product
+    Models.UpdatePropertyRequest:
+      type: object
+      properties:
+        address_line1:
+          type: string
+          description: Address line 1
+        address_line2:
+          type: string
+          description: Address line 2
+        city:
+          type: string
+          description: City
+        postcode:
+          type: string
+          description: UK postcode
+        latitude:
+          type: number
+          format: double
+          description: Latitude for routing
+        longitude:
+          type: number
+          format: double
+          description: Longitude for routing
+        access_notes:
+          type: string
+          description: Access notes for operators
+        is_active:
+          type: boolean
+          description: Whether property is active
+      description: Request to update an existing property
     Models.UpdateRouteRequest:
       type: object
       properties:

@@ -2,6 +2,7 @@
 
 -- Enable RLS
 ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE properties ENABLE ROW LEVEL SECURITY;
 ALTER TABLE lawns ENABLE ROW LEVEL SECURITY;
 ALTER TABLE treatments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE treatment_products ENABLE ROW LEVEL SECURITY;
@@ -46,6 +47,37 @@ CREATE POLICY "customers_update"
 
 CREATE POLICY "customers_delete"
   ON customers FOR DELETE
+  TO authenticated
+  USING (is_admin());
+
+-- ============================================
+-- PROPERTIES
+-- ============================================
+CREATE POLICY "properties_select"
+  ON properties FOR SELECT
+  TO authenticated
+  USING (
+    is_admin()
+    OR created_by = auth.uid()
+    OR created_by IS NULL
+  );
+
+CREATE POLICY "properties_insert"
+  ON properties FOR INSERT
+  TO authenticated
+  WITH CHECK (
+    is_admin_or_manager()
+    AND (created_by IS NULL OR created_by = auth.uid())
+  );
+
+CREATE POLICY "properties_update"
+  ON properties FOR UPDATE
+  TO authenticated
+  USING (owns_or_is_admin(created_by))
+  WITH CHECK (owns_or_is_admin(created_by));
+
+CREATE POLICY "properties_delete"
+  ON properties FOR DELETE
   TO authenticated
   USING (is_admin());
 

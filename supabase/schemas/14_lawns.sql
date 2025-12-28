@@ -1,24 +1,20 @@
--- Properties/lawns belonging to customers
+-- Lawns within properties
 
 CREATE TABLE lawns (
   id UUID PRIMARY KEY DEFAULT extensions.uuid_generate_v4(),
-  customer_id UUID NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+  property_id UUID NOT NULL REFERENCES properties(id) ON DELETE CASCADE,
 
-  -- Location details
-  address_line1 VARCHAR(255) NOT NULL,
-  address_line2 VARCHAR(255),
-  city VARCHAR(100) NOT NULL,
-  postcode VARCHAR(10) NOT NULL,
-
-  -- Geolocation for routing
-  latitude DECIMAL(10, 8),
-  longitude DECIMAL(11, 8),
+  -- Lawn identification
+  name VARCHAR(100) NOT NULL,
 
   -- Lawn characteristics
   area_sqm DECIMAL(10, 2) NOT NULL,
   lawn_condition lawn_condition NOT NULL DEFAULT 'new',
 
-  -- Access info for operators
+  -- Polygon boundary (array of {latitude, longitude} coordinates)
+  boundary JSONB,
+
+  -- Access info for this specific lawn
   access_notes TEXT,
 
   -- Status
@@ -31,9 +27,7 @@ CREATE TABLE lawns (
 );
 
 -- Indexes
-CREATE INDEX idx_lawns_customer ON lawns(customer_id);
-CREATE INDEX idx_lawns_postcode ON lawns(postcode);
-CREATE INDEX idx_lawns_location ON lawns(latitude, longitude);
+CREATE INDEX idx_lawns_property ON lawns(property_id);
 CREATE INDEX idx_lawns_active ON lawns(is_active) WHERE is_active = true;
 CREATE INDEX idx_lawns_created_by ON lawns(created_by);
 

@@ -482,61 +482,49 @@ export type Database = {
       lawns: {
         Row: {
           access_notes: string | null
-          address_line1: string
-          address_line2: string | null
           area_sqm: number
-          city: string
+          boundary: Json | null
           created_at: string
           created_by: string | null
-          customer_id: string
           id: string
           is_active: boolean
-          latitude: number | null
           lawn_condition: Database["public"]["Enums"]["lawn_condition"]
-          longitude: number | null
-          postcode: string
+          name: string
+          property_id: string
           updated_at: string
         }
         Insert: {
           access_notes?: string | null
-          address_line1: string
-          address_line2?: string | null
           area_sqm: number
-          city: string
+          boundary?: Json | null
           created_at?: string
           created_by?: string | null
-          customer_id: string
           id?: string
           is_active?: boolean
-          latitude?: number | null
           lawn_condition?: Database["public"]["Enums"]["lawn_condition"]
-          longitude?: number | null
-          postcode: string
+          name: string
+          property_id: string
           updated_at?: string
         }
         Update: {
           access_notes?: string | null
-          address_line1?: string
-          address_line2?: string | null
           area_sqm?: number
-          city?: string
+          boundary?: Json | null
           created_at?: string
           created_by?: string | null
-          customer_id?: string
           id?: string
           is_active?: boolean
-          latitude?: number | null
           lawn_condition?: Database["public"]["Enums"]["lawn_condition"]
-          longitude?: number | null
-          postcode?: string
+          name?: string
+          property_id?: string
           updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "lawns_customer_id_fkey"
-            columns: ["customer_id"]
+            foreignKeyName: "lawns_property_id_fkey"
+            columns: ["property_id"]
             isOneToOne: false
-            referencedRelation: "customers"
+            referencedRelation: "properties"
             referencedColumns: ["id"]
           },
         ]
@@ -787,6 +775,62 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      properties: {
+        Row: {
+          access_notes: string | null
+          address_line1: string
+          address_line2: string | null
+          city: string
+          created_at: string
+          created_by: string | null
+          customer_id: string
+          id: string
+          is_active: boolean
+          latitude: number | null
+          longitude: number | null
+          postcode: string
+          updated_at: string
+        }
+        Insert: {
+          access_notes?: string | null
+          address_line1: string
+          address_line2?: string | null
+          city: string
+          created_at?: string
+          created_by?: string | null
+          customer_id: string
+          id?: string
+          is_active?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          postcode: string
+          updated_at?: string
+        }
+        Update: {
+          access_notes?: string | null
+          address_line1?: string
+          address_line2?: string | null
+          city?: string
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string
+          id?: string
+          is_active?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          postcode?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "properties_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       route_stops: {
         Row: {

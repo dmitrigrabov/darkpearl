@@ -16,6 +16,7 @@ import "./models/saga.tsp";
 
 // Lawn care domain models
 import "./models/customer.tsp";
+import "./models/property.tsp";
 import "./models/lawn.tsp";
 import "./models/treatment.tsp";
 import "./models/treatment-plan.tsp";
@@ -35,6 +36,7 @@ import "./operations/orders.tsp";
 
 // Lawn care domain operations
 import "./operations/customers.tsp";
+import "./operations/properties.tsp";
 import "./operations/lawns.tsp";
 import "./operations/treatments.tsp";
 import "./operations/treatment-plans.tsp";

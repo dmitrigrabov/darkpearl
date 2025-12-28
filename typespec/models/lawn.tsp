@@ -1,30 +1,24 @@
 namespace DarkPearl.Models;
 
-@doc("Property/lawn belonging to a customer")
+@doc("Coordinate point for polygon boundary")
+model Coordinate {
+  @doc("Latitude")
+  latitude: float64;
+
+  @doc("Longitude")
+  longitude: float64;
+}
+
+@doc("Lawn area within a property")
 model Lawn {
   @doc("Unique lawn identifier")
   id: string;
 
-  @doc("Customer who owns this lawn")
-  customer_id: string;
+  @doc("Property this lawn belongs to")
+  property_id: string;
 
-  @doc("Address line 1")
-  address_line1: string;
-
-  @doc("Address line 2")
-  address_line2?: string;
-
-  @doc("City")
-  city: string;
-
-  @doc("UK postcode")
-  postcode: string;
-
-  @doc("Latitude for routing")
-  latitude?: float64;
-
-  @doc("Longitude for routing")
-  longitude?: float64;
+  @doc("Lawn name (e.g., 'Front Garden', 'Back Garden')")
+  name: string;
 
   @doc("Lawn area in square meters")
   area_sqm: float64;
@@ -32,7 +26,10 @@ model Lawn {
   @doc("Current lawn condition")
   lawn_condition: LawnCondition;
 
-  @doc("Access notes for operators")
+  @doc("Polygon boundary coordinates")
+  boundary?: Coordinate[];
+
+  @doc("Access notes for this specific lawn")
   access_notes?: string;
 
   @doc("Whether lawn is active")
@@ -41,9 +38,18 @@ model Lawn {
   ...Timestamps;
 }
 
-@doc("Lawn with customer details")
+@doc("Lawn with property and customer details")
 model LawnWithDetails {
   ...Lawn;
+
+  @doc("Property details")
+  property?: {
+    id: string;
+    address_line1: string;
+    postcode: string;
+    latitude?: float64;
+    longitude?: float64;
+  };
 
   @doc("Customer details")
   customer?: {
@@ -56,26 +62,11 @@ model LawnWithDetails {
 
 @doc("Request to create a new lawn")
 model CreateLawnRequest {
-  @doc("Customer who owns this lawn")
-  customer_id: string;
+  @doc("Property this lawn belongs to")
+  property_id: string;
 
-  @doc("Address line 1")
-  address_line1: string;
-
-  @doc("Address line 2")
-  address_line2?: string;
-
-  @doc("City")
-  city: string;
-
-  @doc("UK postcode")
-  postcode: string;
-
-  @doc("Latitude for routing")
-  latitude?: float64;
-
-  @doc("Longitude for routing")
-  longitude?: float64;
+  @doc("Lawn name (e.g., 'Front Garden', 'Back Garden')")
+  name: string;
 
   @doc("Lawn area in square meters")
   area_sqm: float64;
@@ -83,7 +74,10 @@ model CreateLawnRequest {
   @doc("Current lawn condition (defaults to new)")
   lawn_condition?: LawnCondition;
 
-  @doc("Access notes for operators")
+  @doc("Polygon boundary coordinates")
+  boundary?: Coordinate[];
+
+  @doc("Access notes for this specific lawn")
   access_notes?: string;
 
   @doc("Whether lawn is active (defaults to true)")
@@ -92,23 +86,8 @@ model CreateLawnRequest {
 
 @doc("Request to update an existing lawn")
 model UpdateLawnRequest {
-  @doc("Address line 1")
-  address_line1?: string;
-
-  @doc("Address line 2")
-  address_line2?: string;
-
-  @doc("City")
-  city?: string;
-
-  @doc("UK postcode")
-  postcode?: string;
-
-  @doc("Latitude for routing")
-  latitude?: float64;
-
-  @doc("Longitude for routing")
-  longitude?: float64;
+  @doc("Lawn name")
+  name?: string;
 
   @doc("Lawn area in square meters")
   area_sqm?: float64;
@@ -116,7 +95,10 @@ model UpdateLawnRequest {
   @doc("Current lawn condition")
   lawn_condition?: LawnCondition;
 
-  @doc("Access notes for operators")
+  @doc("Polygon boundary coordinates")
+  boundary?: Coordinate[];
+
+  @doc("Access notes for this specific lawn")
   access_notes?: string;
 
   @doc("Whether lawn is active")

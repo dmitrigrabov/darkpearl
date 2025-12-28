@@ -9,8 +9,8 @@ interface Lawns {
   @doc("List all lawns with optional filters")
   @get
   list(
+    @query property_id?: string,
     @query customer_id?: string,
-    @query postcode?: string,
     @query is_active?: boolean,
     @query limit?: int32 = 100,
     @query offset?: int32 = 0,
