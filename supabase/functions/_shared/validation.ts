@@ -1,5 +1,5 @@
 import * as z from 'zod'
-import type { Context, MiddlewareHandler } from 'hono'
+import { createMiddleware } from 'hono/factory'
 
 export interface ValidationError {
   path: string
@@ -13,13 +13,17 @@ export interface ValidationErrorResponse {
 
 /**
  * Hono middleware factory for Zod schema validation of JSON request bodies.
- * Validates the request body against the provided schema and stores the
- * validated data in the context for retrieval via getValidatedBody().
+ * Uses createMiddleware for proper type inference - validated body is accessible
+ * via c.var.body with full type safety.
  *
  * Returns 400 with structured errors if validation fails.
  */
-export function zodValidator<T extends z.ZodSchema>(schema: T): MiddlewareHandler {
-  return async (c, next) => {
+export const zodValidator = <T extends z.ZodSchema>(schema: T) =>
+  createMiddleware<{
+    Variables: {
+      body: z.output<T>
+    }
+  }>(async (c, next) => {
     let data: unknown
     try {
       data = await c.req.json()
@@ -42,18 +46,9 @@ export function zodValidator<T extends z.ZodSchema>(schema: T): MiddlewareHandle
       return c.json({ error: 'Validation failed', errors } satisfies ValidationErrorResponse, 400)
     }
 
-    c.set('validatedBody', result.data)
+    c.set('body', result.data)
     await next()
-  }
-}
-
-/**
- * Retrieves the validated request body from the Hono context.
- * Must be used after zodValidator middleware.
- */
-export function getValidatedBody<T>(c: Context): T {
-  return c.get('validatedBody') as T
-}
+  })
 
 /**
  * Formats a ZodError into the standard validation error response format.

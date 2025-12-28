@@ -2,24 +2,18 @@ import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { ZodError } from 'zod'
 import { tasks } from '@trigger.dev/sdk/v3'
-import type { SupabaseClient } from '@supabase/supabase-js'
-import type { Database } from '../_shared/database.types.ts'
 import type { OrderStatus } from '../_shared/types.ts'
-import { CreateOrderSchema, SagaPayloadSchema, type CreateOrderInput } from '../_shared/schemas.ts'
-import { supabaseWithServiceMiddleware } from '../_shared/middleware.ts'
-import { zodValidator, getValidatedBody, formatZodError } from '../_shared/validation.ts'
+import { createOrderSchema, sagaPayloadSchema } from '../_shared/schemas.ts'
+import {
+  supabaseWithServiceMiddleware,
+  type SupabaseWithServiceEnv
+} from '../_shared/middleware.ts'
+import { zodValidator, formatZodError } from '../_shared/validation.ts'
 import * as orderService from '../_shared/services/order-service.ts'
 import * as sagaService from '../_shared/services/saga-service.ts'
 import * as warehouseService from '../_shared/services/warehouse-service.ts'
 
-type Env = {
-  Variables: {
-    supabase: SupabaseClient<Database>
-    serviceClient: SupabaseClient<Database>
-  }
-}
-
-const app = new Hono<Env>()
+const app = new Hono<SupabaseWithServiceEnv>()
 
 app.use('/orders/*', cors())
 app.use('/orders/*', supabaseWithServiceMiddleware)
@@ -33,7 +27,7 @@ app.onError((err, c) => {
 })
 
 app.get('/orders', async c => {
-  const client = c.get('supabase')
+  const client = c.var.supabase
   const status = c.req.query('status') as OrderStatus | undefined
   const customerId = c.req.query('customer_id')
   const limit = parseInt(c.req.query('limit') || '100')
@@ -50,11 +44,10 @@ app.get('/orders', async c => {
 })
 
 app.get('/orders/:id', async c => {
-  const client = c.get('supabase')
-  const serviceClient = c.get('serviceClient')
+  const { supabase, serviceClient } = c.var
   const id = c.req.param('id')
 
-  const order = await orderService.getOrder(client, id)
+  const order = await orderService.getOrder(supabase, id)
   if (!order) {
     return c.json({ error: 'Order not found' }, 404)
   }
@@ -65,9 +58,9 @@ app.get('/orders/:id', async c => {
   return c.json({ ...order, saga: saga || null })
 })
 
-app.post('/orders', zodValidator(CreateOrderSchema), async c => {
-  const client = c.get('supabase')
-  const body = getValidatedBody<CreateOrderInput>(c)
+app.post('/orders', zodValidator(createOrderSchema), async c => {
+  const client = c.var.supabase
+  const body = c.var.body
 
   // Validate warehouse exists
   const warehouseExists = await warehouseService.warehouseExists(client, body.warehouse_id)
@@ -121,12 +114,11 @@ app.post('/orders', zodValidator(CreateOrderSchema), async c => {
 })
 
 app.delete('/orders/:id', async c => {
-  const client = c.get('supabase')
-  const serviceClient = c.get('serviceClient')
+  const { supabase, serviceClient } = c.var
   const id = c.req.param('id')
 
   // Get current order status
-  const status = await orderService.getOrderStatus(client, id)
+  const status = await orderService.getOrderStatus(supabase, id)
   if (!status) {
     return c.json({ error: 'Order not found' }, 404)
   }
@@ -137,7 +129,7 @@ app.delete('/orders/:id', async c => {
   }
 
   // Update order status
-  await orderService.updateOrderStatus(client, id, 'cancelled')
+  await orderService.updateOrderStatus(supabase, id, 'cancelled')
 
   // Get the saga and trigger compensation if needed (needs service role)
   const saga = await sagaService.getSagaByCorrelationId(serviceClient, id)
@@ -145,7 +137,7 @@ app.delete('/orders/:id', async c => {
   if (saga && saga.status !== 'completed' && saga.status !== 'failed') {
     try {
       // Validate and parse saga payload
-      const payloadResult = SagaPayloadSchema.safeParse(saga.payload)
+      const payloadResult = sagaPayloadSchema.safeParse(saga.payload)
       if (!payloadResult.success) {
         console.error('Invalid saga payload:', payloadResult.error)
       } else {

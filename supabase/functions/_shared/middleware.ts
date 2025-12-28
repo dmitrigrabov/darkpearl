@@ -3,13 +3,13 @@ import { createSupabaseClient, createServiceClient } from './supabase-client.ts'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from './database.types.ts'
 
-type SupabaseEnv = {
+export type SupabaseEnv = {
   Variables: {
     supabase: SupabaseClient<Database>
   }
 }
 
-type SupabaseWithServiceEnv = {
+export type SupabaseWithServiceEnv = {
   Variables: {
     supabase: SupabaseClient<Database>
     serviceClient: SupabaseClient<Database>

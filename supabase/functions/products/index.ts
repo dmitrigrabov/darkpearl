@@ -1,26 +1,13 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { ZodError } from 'zod'
-import type { SupabaseClient } from '@supabase/supabase-js'
-import type { Database } from '../_shared/database.types.ts'
-import {
-  CreateProductSchema,
-  updateProductSchema,
-  type CreateProductInput,
-  type UpdateProductInput
-} from '../_shared/schemas.ts'
-import { supabaseMiddleware } from '../_shared/middleware.ts'
-import { zodValidator, getValidatedBody, formatZodError } from '../_shared/validation.ts'
+import { createProductSchema, updateProductSchema } from '../_shared/schemas.ts'
+import { supabaseMiddleware, type SupabaseEnv } from '../_shared/middleware.ts'
+import { zodValidator, formatZodError } from '../_shared/validation.ts'
 import * as productService from '../_shared/services/product-service.ts'
 import { match, P } from 'ts-pattern'
 
-type Env = {
-  Variables: {
-    supabase: SupabaseClient<Database>
-  }
-}
-
-const app = new Hono<Env>()
+const app = new Hono<SupabaseEnv>()
 
 app.use('/*', cors())
 app.use('/*', supabaseMiddleware)
@@ -34,13 +21,15 @@ app.onError((err, c) => {
 })
 
 app.get('/products', async c => {
-  const client = c.get('supabase')
+  const { supabase } = c.var
+
   const isActive = c.req.query('is_active')
   const search = c.req.query('search')
+
   const limit = parseInt(c.req.query('limit') || '100')
   const offset = parseInt(c.req.query('offset') || '0')
 
-  const result = await productService.listProducts(client, {
+  const result = await productService.listProducts(supabase, {
     isActive: isActive !== undefined ? isActive === 'true' : undefined,
     search,
     limit,
@@ -51,10 +40,10 @@ app.get('/products', async c => {
 })
 
 app.get('/products/:id', async c => {
-  const client = c.get('supabase')
+  const { supabase } = c.var
   const id = c.req.param('id')
 
-  const result = await productService.getProduct(client, id)
+  const result = await productService.getProduct(supabase, id)
 
   return match(result)
     .with({ data: P.nonNullable }, () => c.json(result.data))
@@ -64,11 +53,10 @@ app.get('/products/:id', async c => {
     })
 })
 
-app.post('/products', zodValidator(CreateProductSchema), async c => {
-  const client = c.get('supabase')
-  const body = getValidatedBody<CreateProductInput>(c)
+app.post('/products', zodValidator(createProductSchema), async c => {
+  const { supabase, body } = c.var
 
-  const result = await productService.createProduct(client, body)
+  const result = await productService.createProduct(supabase, body)
 
   return match(result)
     .with({ data: P.nonNullable }, () => c.json(result.data, 201))
@@ -81,11 +69,10 @@ app.post('/products', zodValidator(CreateProductSchema), async c => {
 })
 
 app.put('/products/:id', zodValidator(updateProductSchema), async c => {
-  const client = c.get('supabase')
+  const { supabase, body } = c.var
   const id = c.req.param('id')
-  const body = getValidatedBody<UpdateProductInput>(c)
 
-  const result = await productService.updateProduct(client, id, body)
+  const result = await productService.updateProduct(supabase, id, body)
 
   return match(result)
     .with({ data: P.nonNullable }, () => c.json(result.data))
@@ -99,10 +86,10 @@ app.put('/products/:id', zodValidator(updateProductSchema), async c => {
 })
 
 app.delete('/products/:id', async c => {
-  const client = c.get('supabase')
+  const { supabase } = c.var
   const id = c.req.param('id')
 
-  const result = await productService.deleteProduct(client, id)
+  const result = await productService.deleteProduct(supabase, id)
 
   return match(result)
     .with({ data: P.nonNullable }, () => c.json({ message: 'Product deleted' }))

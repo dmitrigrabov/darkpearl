@@ -1,28 +1,15 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { ZodError } from 'zod'
-import type { SupabaseClient } from '@supabase/supabase-js'
-import type { Database } from '../_shared/database.types.ts'
-import {
-  CreateInventorySchema,
-  UpdateInventorySchema,
-  type CreateInventoryInput,
-  type UpdateInventoryInput
-} from '../_shared/schemas.ts'
-import { supabaseMiddleware } from '../_shared/middleware.ts'
-import { zodValidator, getValidatedBody, formatZodError } from '../_shared/validation.ts'
+import { createInventorySchema, updateInventorySchema } from '../_shared/schemas.ts'
+import { supabaseMiddleware, type SupabaseEnv } from '../_shared/middleware.ts'
+import { zodValidator, formatZodError } from '../_shared/validation.ts'
 import * as inventoryService from '../_shared/services/inventory-service.ts'
 import * as productService from '../_shared/services/product-service.ts'
 import * as warehouseService from '../_shared/services/warehouse-service.ts'
 import { match, P } from 'ts-pattern'
 
-type Env = {
-  Variables: {
-    supabase: SupabaseClient<Database>
-  }
-}
-
-const app = new Hono<Env>()
+const app = new Hono<SupabaseEnv>()
 
 app.use('/inventory/*', cors())
 app.use('/inventory/*', supabaseMiddleware)
@@ -36,7 +23,7 @@ app.onError((err, c) => {
 })
 
 app.get('/inventory', async c => {
-  const client = c.get('supabase')
+  const client = c.var.supabase
   const productId = c.req.query('product_id')
   const warehouseId = c.req.query('warehouse_id')
   const lowStock = c.req.query('low_stock')
@@ -55,10 +42,10 @@ app.get('/inventory', async c => {
 })
 
 app.get('/inventory/:id', async c => {
-  const client = c.get('supabase')
+  const { supabase } = c.var
   const id = c.req.param('id')
 
-  const result = await inventoryService.getInventory(client, id)
+  const result = await inventoryService.getInventory(supabase, id)
 
   return match(result)
     .with({ data: P.nonNullable }, () => c.json(result.data))
@@ -68,21 +55,20 @@ app.get('/inventory/:id', async c => {
     })
 })
 
-app.post('/inventory', zodValidator(CreateInventorySchema), async c => {
-  const client = c.get('supabase')
-  const body = getValidatedBody<CreateInventoryInput>(c)
+app.post('/inventory', zodValidator(createInventorySchema), async c => {
+  const { supabase, body } = c.var
 
-  const productExists = await productService.productExists(client, body.product_id)
+  const productExists = await productService.productExists(supabase, body.product_id)
   if (!productExists) {
     return c.json({ error: 'Product not found' }, 404)
   }
 
-  const warehouseExists = await warehouseService.warehouseExists(client, body.warehouse_id)
+  const warehouseExists = await warehouseService.warehouseExists(supabase, body.warehouse_id)
   if (!warehouseExists) {
     return c.json({ error: 'Warehouse not found' }, 404)
   }
 
-  const result = await inventoryService.createInventory(client, body)
+  const result = await inventoryService.createInventory(supabase, body)
 
   return match(result)
     .with({ data: P.nonNullable }, () => c.json(result.data, 201))
@@ -94,12 +80,11 @@ app.post('/inventory', zodValidator(CreateInventorySchema), async c => {
     })
 })
 
-app.put('/inventory/:id', zodValidator(UpdateInventorySchema), async c => {
-  const client = c.get('supabase')
+app.put('/inventory/:id', zodValidator(updateInventorySchema), async c => {
+  const { supabase, body } = c.var
   const id = c.req.param('id')
-  const body = getValidatedBody<UpdateInventoryInput>(c)
 
-  const result = await inventoryService.updateInventory(client, id, body)
+  const result = await inventoryService.updateInventory(supabase, id, body)
 
   return match(result)
     .with({ data: P.nonNullable }, () => c.json(result.data))
@@ -110,10 +95,10 @@ app.put('/inventory/:id', zodValidator(UpdateInventorySchema), async c => {
 })
 
 app.delete('/inventory/:id', async c => {
-  const client = c.get('supabase')
+  const { supabase } = c.var
   const id = c.req.param('id')
 
-  const result = await inventoryService.deleteInventory(client, id)
+  const result = await inventoryService.deleteInventory(supabase, id)
 
   return match(result)
     .with({ data: P.nonNullable }, () => c.json({ message: 'Inventory deleted' }))

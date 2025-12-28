@@ -4,6 +4,7 @@
     "npm:@supabase/supabase-js@2": "2.89.0",
     "npm:@trigger.dev/sdk@3": "3.3.17_zod@4.2.1",
     "npm:hono@4": "4.11.3",
+    "npm:ts-pattern@5": "5.9.0",
     "npm:zod@4": "4.2.1"
   },
   "npm": {
@@ -765,6 +766,9 @@
         "ansi-escapes",
         "supports-hyperlinks"
       ]
+    },
+    "ts-pattern@5.9.0": {
+      "integrity": "sha512-6s5V71mX8qBUmlgbrfL33xDUwO0fq48rxAu2LBE11WBeGdpCPOsXksQbZJHvHwhrd3QjUusd3mAOM5Gg0mFBLg=="
     },
     "tsafe@1.8.12": {
       "integrity": "sha512-nFRqW0ttu/2o6XTXsHiVZWJBCOaxhVqZLg7dgs3coZNsCMPXPfwz+zPHAQA+70fNnVJLAPg1EgGIqK9Q84tvAw=="
