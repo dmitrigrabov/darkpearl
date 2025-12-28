@@ -21,6 +21,14 @@ import type {
   MovementType,
   OrderStatus,
 } from '@/types/api.types';
+import type {
+  RouteStatus,
+  JobStatus,
+  RouteWithRelations,
+  RouteDetailWithStops,
+  JobWithRelations,
+  Operator,
+} from '@/types/schedule.types';
 
 const FUNCTIONS_URL = import.meta.env.VITE_SUPABASE_URL + '/functions/v1';
 const ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -179,4 +187,69 @@ export const userProfilesApi = {
       method: 'PUT',
       body: JSON.stringify({ role }),
     }),
+};
+
+// Routes API
+export const routesApi = {
+  list: (
+    params?: PaginationParams & {
+      route_date?: string;
+      date_from?: string;
+      date_to?: string;
+      status?: RouteStatus;
+      operator_id?: string;
+      depot_id?: string;
+    }
+  ) => {
+    const searchParams = new URLSearchParams();
+    if (params?.limit) searchParams.set('limit', String(params.limit));
+    if (params?.offset) searchParams.set('offset', String(params.offset));
+    if (params?.route_date) searchParams.set('route_date', params.route_date);
+    if (params?.date_from) searchParams.set('date_from', params.date_from);
+    if (params?.date_to) searchParams.set('date_to', params.date_to);
+    if (params?.status) searchParams.set('status', params.status);
+    if (params?.operator_id) searchParams.set('operator_id', params.operator_id);
+    if (params?.depot_id) searchParams.set('depot_id', params.depot_id);
+    return fetchWithAuth<PaginatedResponse<RouteWithRelations>>(`/routes?${searchParams}`);
+  },
+  get: (id: string) => fetchWithAuth<RouteDetailWithStops>(`/routes/${id}`),
+};
+
+// Jobs API
+export const jobsApi = {
+  list: (
+    params?: PaginationParams & {
+      scheduled_date?: string;
+      date_from?: string;
+      date_to?: string;
+      status?: JobStatus;
+      operator_id?: string;
+      lawn_id?: string;
+      customer_id?: string;
+    }
+  ) => {
+    const searchParams = new URLSearchParams();
+    if (params?.limit) searchParams.set('limit', String(params.limit));
+    if (params?.offset) searchParams.set('offset', String(params.offset));
+    if (params?.scheduled_date) searchParams.set('scheduled_date', params.scheduled_date);
+    if (params?.date_from) searchParams.set('date_from', params.date_from);
+    if (params?.date_to) searchParams.set('date_to', params.date_to);
+    if (params?.status) searchParams.set('status', params.status);
+    if (params?.operator_id) searchParams.set('operator_id', params.operator_id);
+    if (params?.lawn_id) searchParams.set('lawn_id', params.lawn_id);
+    if (params?.customer_id) searchParams.set('customer_id', params.customer_id);
+    return fetchWithAuth<PaginatedResponse<JobWithRelations>>(`/jobs?${searchParams}`);
+  },
+  get: (id: string) => fetchWithAuth<JobWithRelations>(`/jobs/${id}`),
+};
+
+// Operators API (for dropdowns)
+export const operatorsApi = {
+  list: (params?: PaginationParams & { is_active?: boolean }) => {
+    const searchParams = new URLSearchParams();
+    if (params?.limit) searchParams.set('limit', String(params.limit));
+    if (params?.offset) searchParams.set('offset', String(params.offset));
+    if (params?.is_active !== undefined) searchParams.set('is_active', String(params.is_active));
+    return fetchWithAuth<PaginatedResponse<Operator>>(`/operators?${searchParams}`);
+  },
 };

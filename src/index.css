@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -155,4 +156,26 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Leaflet map styles */
+.leaflet-container {
+  height: 100%;
+  width: 100%;
+  min-height: 500px;
+  border-radius: var(--radius);
+}
+
+/* Custom marker styles for route progress */
+.stop-marker-completed .leaflet-marker-icon {
+  filter: hue-rotate(120deg);
+}
+
+.stop-marker-current .leaflet-marker-icon {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.1); opacity: 0.8; }
 }

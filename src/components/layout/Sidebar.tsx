@@ -7,6 +7,8 @@ import {
   ArrowRightLeft,
   ShoppingCart,
   Users,
+  CalendarDays,
+  Map,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/providers/AuthProvider';
@@ -19,6 +21,11 @@ const navItems = [
   { to: '/inventory', icon: Boxes, label: 'Inventory' },
   { to: '/stock-movements', icon: ArrowRightLeft, label: 'Movements' },
   { to: '/orders', icon: ShoppingCart, label: 'Orders' },
+];
+
+const scheduleNavItems = [
+  { to: '/schedule/calendar', icon: CalendarDays, label: 'Calendar' },
+  { to: '/schedule/map', icon: Map, label: 'Routes Map' },
 ];
 
 const adminNavItems = [{ to: '/users', icon: Users, label: 'Users' }];
@@ -39,6 +46,27 @@ export function Sidebar() {
       </div>
       <nav className="mt-2 flex-1">
         {navItems.map((item) => (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            className={({ isActive }) =>
+              cn(
+                'flex items-center gap-3 px-6 py-3 hover:bg-primary-foreground/10 transition-colors',
+                isActive && 'bg-primary-foreground/20 border-l-4 border-primary-foreground'
+              )
+            }
+          >
+            <item.icon className="h-5 w-5" />
+            {item.label}
+          </NavLink>
+        ))}
+
+        <div className="px-6 py-2 mt-4">
+          <div className="text-xs uppercase text-primary-foreground/50 font-semibold">
+            Schedule
+          </div>
+        </div>
+        {scheduleNavItems.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
