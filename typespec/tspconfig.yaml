@@ -1,5 +1,5 @@
 emit:
-  - "@typespec/openapi3"
+  - '@typespec/openapi3'
 options:
-  "@typespec/openapi3":
-    output-file: "../docs/openapi.yaml"
+  '@typespec/openapi3':
+    output-file: '{cwd}/typespec/openapi.yaml'

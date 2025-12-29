@@ -1,0 +1,16 @@
+⚠️  [0m[36mdeno bundle[0m is experimental and subject to changes
+[0m[32mBundled[0m 557 modules in 249ms
+  [0m[36mbundle.js[0m [0m[38;5;245m430.06KB[0m
+
+⚠️  [0m[36mdeno bundle[0m is experimental and subject to changes
+[0m[32mBundled[0m 557 modules in 185ms
+  [0m[36mbundle.js[0m [0m[38;5;245m430.36KB[0m
+
+⚠️  [0m[36mdeno bundle[0m is experimental and subject to changes
+[0m[32mBundled[0m 557 modules in 151ms
+  [0m[36mbundle.js[0m [0m[38;5;245m430.37KB[0m
+
+⚠️  [0m[36mdeno bundle[0m is experimental and subject to changes
+[0m[32mBundled[0m 557 modules in 157ms
+  [0m[36mbundle.js[0m [0m[38;5;245m430.37KB[0m
+

@@ -17,11 +17,15 @@ model InventoryLevel {
   @doc("Quantity reserved for orders")
   quantity_reserved: int32;
 
+  @summary("Reorder point")
+  @minValue(0)
   @doc("Stock level that triggers reorder")
-  reorder_point: int32;
+  reorder_point: int32 = 10;
 
+  @summary("Reorder quantity")
+  @minValue(0)
   @doc("Quantity to order when reorder point is reached")
-  reorder_quantity: int32;
+  reorder_quantity: int32 = 50;
 
   ...Timestamps;
 }
@@ -54,11 +58,13 @@ model CreateInventoryRequest {
   @doc("Initial quantity available (defaults to 0)")
   quantity_available?: int32;
 
-  @doc("Reorder point (defaults to 10)")
-  reorder_point?: int32;
+  @summary("Reorder point")
+  @minValue(0)
+  reorder_point?: int32 = 10;
 
-  @doc("Reorder quantity (defaults to 50)")
-  reorder_quantity?: int32;
+  @summary("Reorder quantity")
+  @minValue(0)
+  reorder_quantity?: int32 = 50;
 }
 
 @doc("Request to update inventory record")
@@ -70,10 +76,12 @@ model UpdateInventoryRequest {
   quantity_reserved?: int32;
 
   @doc("Reorder point")
-  reorder_point?: int32;
+  @minValue(0)
+  reorder_point?: int32 = 10;
 
   @doc("Reorder quantity")
-  reorder_quantity?: int32;
+  @minValue(0)
+  reorder_quantity?: int32 = 50;
 }
 
 @doc("Paginated list of inventory records")

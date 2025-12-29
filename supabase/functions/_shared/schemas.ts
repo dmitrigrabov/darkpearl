@@ -328,14 +328,14 @@ export const updateTreatmentSchema = z.object({
 
 // Treatment product schemas (sub-resource)
 export const addTreatmentProductSchema = z.object({
-  product_id: z.string().uuid('Product ID must be a valid UUID'),
+  product_id: z.uuid('Product ID must be a valid UUID'),
   quantity_per_100sqm: z.number().positive('Quantity must be positive'),
   quantity_multiplier_poor: z.number().positive().optional()
 })
 
 // Treatment plan schemas
 export const createTreatmentPlanSchema = z.object({
-  lawn_id: z.string().uuid('Lawn ID must be a valid UUID'),
+  lawn_id: z.uuid('Lawn ID must be a valid UUID'),
   year: z.number().int().min(2020).max(2100),
   status: treatmentPlanStatusSchema.optional(),
   total_estimated_price: z.number().nonnegative().optional(),
@@ -350,17 +350,23 @@ export const updateTreatmentPlanSchema = z.object({
 
 // Treatment plan item schemas (sub-resource)
 export const addTreatmentPlanItemSchema = z.object({
-  treatment_id: z.string().uuid('Treatment ID must be a valid UUID'),
+  treatment_id: z.uuid('Treatment ID must be a valid UUID'),
   window_start: z.string().datetime().optional(),
   window_end: z.string().datetime().optional(),
-  scheduled_week: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Scheduled week must be a date (YYYY-MM-DD)').optional(),
+  scheduled_week: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Scheduled week must be a date (YYYY-MM-DD)')
+    .optional(),
   price_snapshot: z.number().nonnegative('Price snapshot is required')
 })
 
 export const updateTreatmentPlanItemSchema = z.object({
   window_start: z.string().datetime().optional(),
   window_end: z.string().datetime().optional(),
-  scheduled_week: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Scheduled week must be a date (YYYY-MM-DD)').optional(),
+  scheduled_week: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Scheduled week must be a date (YYYY-MM-DD)')
+    .optional(),
   is_completed: z.boolean().optional(),
   price_snapshot: z.number().nonnegative().optional()
 })
@@ -426,7 +432,10 @@ export const createRouteSchema = z.object({
 export const updateRouteSchema = z.object({
   operator_id: z.string().uuid('Operator ID must be a valid UUID').optional(),
   vehicle_id: z.string().uuid('Vehicle ID must be a valid UUID').optional(),
-  route_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD').optional(),
+  route_date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD')
+    .optional(),
   status: routeStatusSchema.optional(),
   estimated_duration_minutes: z.number().int().nonnegative().optional(),
   estimated_distance_miles: z.number().nonnegative().optional(),
@@ -471,7 +480,10 @@ export const updateJobSchema = z.object({
   performed_by: z.string().uuid('Operator ID must be a valid UUID').optional(),
   route_stop_id: z.string().uuid('Route stop ID must be a valid UUID').optional(),
   treatment_plan_item_id: z.string().uuid('Treatment plan item ID must be a valid UUID').optional(),
-  scheduled_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD').optional(),
+  scheduled_date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD')
+    .optional(),
   lawn_area_sqm: z.number().positive().optional(),
   status: jobStatusSchema.optional(),
   lawn_condition_at_job: lawnConditionSchema.optional(),
@@ -500,8 +512,14 @@ export const addJobConsumptionSchema = z.object({
 // Invoice schemas
 export const createInvoiceSchema = z.object({
   customer_id: z.string().uuid('Customer ID must be a valid UUID'),
-  issue_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD').optional(),
-  due_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD').optional(),
+  issue_date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD')
+    .optional(),
+  due_date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD')
+    .optional(),
   payment_terms_days: z.number().int().nonnegative().optional(),
   vat_rate: z.number().nonnegative().optional(),
   status: invoiceStatusSchema.optional(),
@@ -509,8 +527,14 @@ export const createInvoiceSchema = z.object({
 })
 
 export const updateInvoiceSchema = z.object({
-  issue_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD').optional(),
-  due_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD').optional(),
+  issue_date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD')
+    .optional(),
+  due_date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD')
+    .optional(),
   payment_terms_days: z.number().int().nonnegative().optional(),
   vat_rate: z.number().nonnegative().optional(),
   status: invoiceStatusSchema.optional(),
@@ -536,7 +560,10 @@ export const createPaymentSchema = z.object({
   customer_id: z.string().uuid('Customer ID must be a valid UUID'),
   invoice_id: z.string().uuid('Invoice ID must be a valid UUID'),
   amount: z.number().positive('Amount must be positive'),
-  payment_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD').optional(),
+  payment_date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD')
+    .optional(),
   payment_method: paymentMethodSchema,
   payment_reference: z.string().optional(),
   notes: z.string().optional()
@@ -544,7 +571,10 @@ export const createPaymentSchema = z.object({
 
 export const updatePaymentSchema = z.object({
   amount: z.number().positive('Amount must be positive').optional(),
-  payment_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD').optional(),
+  payment_date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD')
+    .optional(),
   payment_method: paymentMethodSchema.optional(),
   payment_reference: z.string().optional(),
   notes: z.string().optional(),
