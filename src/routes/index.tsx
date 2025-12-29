@@ -14,6 +14,7 @@ import { OrderDetailPage } from '@/pages/orders/OrderDetailPage';
 import { UserManagementPage } from '@/pages/users/UserManagementPage';
 import { ScheduleCalendarPage } from '@/pages/schedule/ScheduleCalendarPage';
 import { RoutesMapPage } from '@/pages/schedule/RoutesMapPage';
+import { LawnDetectionPage } from '@/pages/lawn-detection/LawnDetectionPage';
 
 export const router = createBrowserRouter([
   {
@@ -70,6 +71,10 @@ export const router = createBrowserRouter([
           {
             path: '/schedule/map',
             element: <RoutesMapPage />,
+          },
+          {
+            path: '/lawn-detection',
+            element: <LawnDetectionPage />,
           },
           // Admin-only routes
           {

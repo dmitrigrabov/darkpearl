@@ -253,3 +253,14 @@ export const operatorsApi = {
     return fetchWithAuth<PaginatedResponse<Operator>>(`/operators?${searchParams}`);
   },
 };
+
+// Lawn Detection API
+import type { LawnDetectionRequest, LawnDetectionResponse } from '@/types/api.types';
+
+export const lawnDetectionApi = {
+  detect: (params: LawnDetectionRequest) =>
+    fetchWithAuth<LawnDetectionResponse>('/lawn-detection/detect', {
+      method: 'POST',
+      body: JSON.stringify(params),
+    }),
+};

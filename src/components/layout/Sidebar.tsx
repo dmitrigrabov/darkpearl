@@ -9,6 +9,7 @@ import {
   Users,
   CalendarDays,
   Map,
+  ScanSearch,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/providers/AuthProvider';
@@ -26,6 +27,7 @@ const navItems = [
 const scheduleNavItems = [
   { to: '/schedule/calendar', icon: CalendarDays, label: 'Calendar' },
   { to: '/schedule/map', icon: Map, label: 'Routes Map' },
+  { to: '/lawn-detection', icon: ScanSearch, label: 'Lawn Detection' },
 ];
 
 const adminNavItems = [{ to: '/users', icon: Users, label: 'Users' }];

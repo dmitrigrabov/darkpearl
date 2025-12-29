@@ -42,4 +42,12 @@ interface Lawns {
   delete(@path id: string): {
     message: string;
   } | Models.ErrorResponse;
+
+  @doc("Analyze satellite image for lawn boundaries using AI")
+  @post
+  @route("detect")
+  detect(@body request: Models.LawnDetectionRequest): {
+    @statusCode statusCode: 200;
+    @body body: Models.LawnDetectionResponse;
+  } | Models.ErrorResponse;
 }

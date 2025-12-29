@@ -125,3 +125,31 @@ export interface PaginatedResponse<T> {
   limit: number;
   offset: number;
 }
+
+// ============================================
+// LAWN DETECTION TYPES
+// ============================================
+
+export type Coordinate = {
+  latitude: number
+  longitude: number
+}
+
+export type LawnDetectionRequest = {
+  latitude: number
+  longitude: number
+  zoom?: number
+  width?: number
+  height?: number
+}
+
+export type DetectedLawn = {
+  name: string
+  boundary: Coordinate[]
+  area_sqm: number
+  confidence: number
+}
+
+export type LawnDetectionResponse = {
+  lawns: DetectedLawn[]
+}
