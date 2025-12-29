@@ -127,7 +127,7 @@ export interface PaginatedResponse<T> {
 }
 
 // ============================================
-// LAWN DETECTION TYPES
+// LAWN MAPPING TYPES (for manual polygon drawing)
 // ============================================
 
 export type Coordinate = {
@@ -135,21 +135,9 @@ export type Coordinate = {
   longitude: number
 }
 
-export type LawnDetectionRequest = {
-  latitude: number
-  longitude: number
-  zoom?: number
-  width?: number
-  height?: number
-}
-
 export type DetectedLawn = {
   name: string
   boundary: Coordinate[]
   area_sqm: number
   confidence: number
-}
-
-export type LawnDetectionResponse = {
-  lawns: DetectedLawn[]
 }

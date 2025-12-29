@@ -984,28 +984,6 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/Models.CreateLawnRequest'
-  /lawns/detect:
-    post:
-      operationId: Lawns_detect
-      description: Analyze satellite image for lawn boundaries using AI
-      parameters: []
-      responses:
-        '200':
-          description: The request has succeeded.
-          content:
-            application/json:
-              schema:
-                anyOf:
-                  - $ref: '#/components/schemas/Models.LawnDetectionResponse'
-                  - $ref: '#/components/schemas/Models.ErrorResponse'
-      tags:
-        - Lawns
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Models.LawnDetectionRequest'
   /lawns/{id}:
     get:
       operationId: Lawns_get
@@ -3715,31 +3693,6 @@ components:
           format: int32
           description: Offset from start
       description: Paginated list of customers
-    Models.DetectedLawn:
-      type: object
-      required:
-        - name
-        - boundary
-        - area_sqm
-        - confidence
-      properties:
-        name:
-          type: string
-          description: Suggested lawn name (e.g., 'Front Garden', 'Back Garden')
-        boundary:
-          type: array
-          items:
-            $ref: '#/components/schemas/Models.Coordinate'
-          description: Polygon boundary coordinates
-        area_sqm:
-          type: number
-          format: double
-          description: Estimated area in square meters
-        confidence:
-          type: number
-          format: double
-          description: AI confidence score (0-1)
-      description: Detected lawn from AI analysis
     Models.ErrorResponse:
       type: object
       required:
@@ -4609,47 +4562,6 @@ components:
         - poor
         - new
       description: Lawn condition assessment
-    Models.LawnDetectionRequest:
-      type: object
-      required:
-        - latitude
-        - longitude
-      properties:
-        latitude:
-          type: number
-          format: double
-          description: Center latitude of the map view
-        longitude:
-          type: number
-          format: double
-          description: Center longitude of the map view
-        zoom:
-          type: integer
-          format: int32
-          description: Map zoom level (15-21, higher = more detail)
-          default: 19
-        width:
-          type: integer
-          format: int32
-          description: Image width in pixels (max 640)
-          default: 640
-        height:
-          type: integer
-          format: int32
-          description: Image height in pixels (max 640)
-          default: 640
-      description: Request for lawn detection analysis from satellite imagery
-    Models.LawnDetectionResponse:
-      type: object
-      required:
-        - lawns
-      properties:
-        lawns:
-          type: array
-          items:
-            $ref: '#/components/schemas/Models.DetectedLawn'
-          description: Detected lawn areas with boundaries
-      description: Response from lawn detection AI analysis
     Models.LawnListResponse:
       type: object
       required:

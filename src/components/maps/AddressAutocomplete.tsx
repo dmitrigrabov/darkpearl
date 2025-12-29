@@ -1,4 +1,5 @@
 import { useRef, useEffect, useState } from 'react'
+import { useJsApiLoader } from '@react-google-maps/api'
 import { Input } from '@/components/ui/input'
 
 type AddressAutocompleteProps = {
@@ -7,6 +8,9 @@ type AddressAutocompleteProps = {
   defaultValue?: string
   className?: string
 }
+
+const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''
+const libraries: ('places')[] = ['places']
 
 export function AddressAutocomplete({
   onPlaceSelect,
@@ -18,16 +22,17 @@ export function AddressAutocomplete({
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null)
   const [inputValue, setInputValue] = useState(defaultValue)
 
+  // Use the same loader as GoogleMap component - it will reuse the loaded script
+  const { isLoaded } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
+    libraries,
+  })
+
   useEffect(() => {
-    if (!inputRef.current) return
+    if (!inputRef.current || !isLoaded) return
 
-    // Check if Google Maps Places library is loaded
-    if (!google?.maps?.places?.Autocomplete) {
-      console.warn('Google Maps Places library not loaded')
-      return
-    }
-
-    // Initialize autocomplete
+    // Initialize autocomplete only after API is loaded
     autocompleteRef.current = new google.maps.places.Autocomplete(inputRef.current, {
       types: ['address'],
       fields: ['formatted_address', 'geometry', 'name', 'address_components'],
@@ -47,7 +52,7 @@ export function AddressAutocomplete({
         google.maps.event.removeListener(listener)
       }
     }
-  }, [onPlaceSelect])
+  }, [isLoaded, onPlaceSelect])
 
   return (
     <Input
@@ -56,6 +61,7 @@ export function AddressAutocomplete({
       onChange={e => setInputValue(e.target.value)}
       placeholder={placeholder}
       className={className}
+      disabled={!isLoaded}
     />
   )
 }

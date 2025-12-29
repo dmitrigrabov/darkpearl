@@ -630,29 +630,3 @@ export type UpdateInvoiceItemInput = z.infer<typeof updateInvoiceItemSchema>
 export type CreatePaymentInput = z.infer<typeof createPaymentSchema>
 export type UpdatePaymentInput = z.infer<typeof updatePaymentSchema>
 
-// ============================================
-// LAWN DETECTION SCHEMAS (AI Analysis)
-// ============================================
-
-export const lawnDetectionRequestSchema = z.object({
-  latitude: z.number().min(-90, 'Latitude must be >= -90').max(90, 'Latitude must be <= 90'),
-  longitude: z.number().min(-180, 'Longitude must be >= -180').max(180, 'Longitude must be <= 180'),
-  zoom: z.number().min(15, 'Zoom must be >= 15').max(21, 'Zoom must be <= 21').default(19),
-  width: z.number().min(100, 'Width must be >= 100').max(640, 'Width must be <= 640').default(640),
-  height: z.number().min(100, 'Height must be >= 100').max(640, 'Height must be <= 640').default(640),
-})
-
-export const detectedLawnSchema = z.object({
-  name: z.string(),
-  boundary: z.array(coordinateSchema),
-  area_sqm: z.number(),
-  confidence: z.number().min(0).max(1),
-})
-
-export const lawnDetectionResponseSchema = z.object({
-  lawns: z.array(detectedLawnSchema),
-})
-
-export type LawnDetectionRequestInput = z.infer<typeof lawnDetectionRequestSchema>
-export type DetectedLawn = z.infer<typeof detectedLawnSchema>
-export type LawnDetectionResponse = z.infer<typeof lawnDetectionResponseSchema>

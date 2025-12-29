@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useState, useRef } from 'react'
 import { GoogleMap as GoogleMapComponent, useJsApiLoader } from '@react-google-maps/api'
 
 type GoogleMapProps = {
@@ -31,6 +31,9 @@ export function GoogleMap({
   children,
 }: GoogleMapProps) {
   const [map, setMap] = useState<google.maps.Map | null>(null)
+  // Track the last reported values to prevent feedback loops
+  const lastCenterRef = useRef<{ lat: number; lng: number } | null>(null)
+  const lastZoomRef = useRef<number | null>(null)
 
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script',
@@ -50,26 +53,37 @@ export function GoogleMap({
     setMap(null)
   }, [])
 
-  const handleCenterChanged = useCallback(() => {
-    if (map) {
-      const center = map.getCenter()
-      if (center) {
-        onCenterChange?.({
-          lat: center.lat(),
-          lng: center.lng(),
-        })
-      }
-    }
-  }, [map, onCenterChange])
+  // Use onIdle instead of onCenterChanged/onZoomChanged to avoid feedback loops
+  // onIdle fires after the map stops moving (user finished dragging/zooming)
+  const handleIdle = useCallback(() => {
+    if (!map) return
 
-  const handleZoomChanged = useCallback(() => {
-    if (map) {
-      const newZoom = map.getZoom()
-      if (newZoom !== undefined) {
-        onZoomChange?.(newZoom)
+    const newCenter = map.getCenter()
+    const newZoom = map.getZoom()
+
+    if (newCenter && onCenterChange) {
+      const lat = newCenter.lat()
+      const lng = newCenter.lng()
+
+      // Only notify if center actually changed (compare with tolerance for floating point)
+      const lastCenter = lastCenterRef.current
+      if (
+        !lastCenter ||
+        Math.abs(lastCenter.lat - lat) > 0.000001 ||
+        Math.abs(lastCenter.lng - lng) > 0.000001
+      ) {
+        lastCenterRef.current = { lat, lng }
+        onCenterChange({ lat, lng })
       }
     }
-  }, [map, onZoomChange])
+
+    if (newZoom !== undefined && onZoomChange) {
+      if (lastZoomRef.current !== newZoom) {
+        lastZoomRef.current = newZoom
+        onZoomChange(newZoom)
+      }
+    }
+  }, [map, onCenterChange, onZoomChange])
 
   if (loadError) {
     return (
@@ -103,8 +117,7 @@ export function GoogleMap({
       zoom={zoom}
       onLoad={handleLoad}
       onUnmount={handleUnmount}
-      onCenterChanged={handleCenterChanged}
-      onZoomChanged={handleZoomChanged}
+      onIdle={handleIdle}
       options={{
         mapTypeId: 'satellite',
         mapTypeControl: true,

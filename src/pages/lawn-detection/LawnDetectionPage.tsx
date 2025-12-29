@@ -2,17 +2,39 @@ import { useState, useCallback } from 'react'
 import { GoogleMap } from '@/components/maps/GoogleMap'
 import { LawnPolygonEditor, LawnListPanel } from '@/components/maps/LawnPolygonEditor'
 import { AddressAutocomplete } from '@/components/maps/AddressAutocomplete'
-import { useLawnDetection } from '@/hooks/use-lawn-detection'
-import type { DetectedLawn } from '@/types/api.types'
+import type { DetectedLawn, Coordinate } from '@/types/api.types'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
-import { Loader2, ScanSearch, Save, Trash2, MapPin, AlertCircle } from 'lucide-react'
+import { Save, Trash2, MapPin, Plus } from 'lucide-react'
 
 // Default center (London, UK)
 const DEFAULT_CENTER = { lat: 51.5074, lng: -0.1278 }
 const DEFAULT_ZOOM = 18
+
+// Create a default lawn polygon centered on the current map view
+function createDefaultLawn(
+  center: google.maps.LatLngLiteral,
+  index: number
+): DetectedLawn {
+  // Create a small square polygon around the center point
+  const offset = 0.0002 // ~20 meters
+  const boundary: Coordinate[] = [
+    { latitude: center.lat + offset, longitude: center.lng - offset },
+    { latitude: center.lat + offset, longitude: center.lng + offset },
+    { latitude: center.lat - offset, longitude: center.lng + offset },
+    { latitude: center.lat - offset, longitude: center.lng - offset },
+    { latitude: center.lat + offset, longitude: center.lng - offset }, // Close polygon
+  ]
+
+  return {
+    name: `Lawn ${index + 1}`,
+    boundary,
+    area_sqm: 400, // Approximate for default size
+    confidence: 1.0, // Manual = full confidence
+  }
+}
 
 export function LawnDetectionPage() {
   // Map state
@@ -23,12 +45,9 @@ export function LawnDetectionPage() {
   // Address state
   const [selectedAddress, setSelectedAddress] = useState<string>('')
 
-  // Lawn detection state
-  const [detectedLawns, setDetectedLawns] = useState<DetectedLawn[]>([])
+  // Lawn state
+  const [lawns, setLawns] = useState<DetectedLawn[]>([])
   const [selectedLawnIndex, setSelectedLawnIndex] = useState<number | null>(null)
-
-  // Detection mutation
-  const { mutate: detectLawns, isPending: isDetecting, error: detectionError } = useLawnDetection()
 
   // Handle address selection from autocomplete
   const handlePlaceSelect = useCallback(
@@ -46,64 +65,51 @@ export function LawnDetectionPage() {
           map.setZoom(19)
         }
 
-        // Clear previous detections
-        setDetectedLawns([])
+        // Clear previous lawns when changing location
+        setLawns([])
         setSelectedLawnIndex(null)
       }
     },
     [map]
   )
 
-  // Handle lawn detection
-  const handleDetectLawns = useCallback(() => {
-    // Get current map center
+  // Handle adding a new lawn polygon
+  const handleAddLawn = useCallback(() => {
     const center = map?.getCenter()
-    const zoom = map?.getZoom()
+    if (!center) return
 
-    if (!center || !zoom) {
-      return
-    }
-
-    detectLawns(
-      {
-        latitude: center.lat(),
-        longitude: center.lng(),
-        zoom: zoom,
-        width: 640,
-        height: 640,
-      },
-      {
-        onSuccess: data => {
-          setDetectedLawns(data.lawns)
-          setSelectedLawnIndex(null)
-        },
-      }
+    const newLawn = createDefaultLawn(
+      { lat: center.lat(), lng: center.lng() },
+      lawns.length
     )
-  }, [map, detectLawns])
+
+    setLawns(prev => [...prev, newLawn])
+    setSelectedLawnIndex(lawns.length) // Select the new lawn
+  }, [map, lawns.length])
 
   // Handle saving lawns (placeholder - would integrate with lawns API)
   const handleSaveLawns = useCallback(() => {
     // TODO: Integrate with lawns API to persist
-    console.log('Saving lawns:', detectedLawns)
-    alert(`${detectedLawns.length} lawn(s) would be saved. API integration pending.`)
-  }, [detectedLawns])
+    console.log('Saving lawns:', lawns)
+    alert(`${lawns.length} lawn(s) would be saved. API integration pending.`)
+  }, [lawns])
 
   // Handle clearing all lawns
   const handleClearLawns = useCallback(() => {
-    setDetectedLawns([])
+    setLawns([])
     setSelectedLawnIndex(null)
   }, [])
 
   // Calculate total area
-  const totalArea = detectedLawns.reduce((sum, lawn) => sum + lawn.area_sqm, 0)
+  const totalArea = lawns.reduce((sum, lawn) => sum + lawn.area_sqm, 0)
 
   return (
     <div className="space-y-4 h-full">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Lawn Detection</h1>
+          <h1 className="text-2xl font-bold">Lawn Mapping</h1>
           <p className="text-muted-foreground text-sm">
-            Detect and map lawn boundaries using AI-powered satellite image analysis
+            Draw and edit lawn boundaries using satellite view
           </p>
         </div>
       </div>
@@ -153,58 +159,38 @@ export function LawnDetectionPage() {
             </CardContent>
           </Card>
 
-          {/* Detection Controls */}
+          {/* Manual Drawing Controls */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm flex items-center gap-2">
-                <ScanSearch className="h-4 w-4" />
-                AI Detection
+                <Plus className="h-4 w-4" />
+                Draw Lawns
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <p className="text-xs text-muted-foreground">
-                Position the map over the property, then click detect to analyze lawn boundaries.
+                Position the map over the lawn area, then click "Add Lawn" to create a polygon. Drag vertices to adjust the boundary.
               </p>
               <Button
-                onClick={handleDetectLawns}
-                disabled={isDetecting}
+                onClick={handleAddLawn}
                 className="w-full"
               >
-                {isDetecting ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Analyzing...
-                  </>
-                ) : (
-                  <>
-                    <ScanSearch className="h-4 w-4 mr-2" />
-                    Detect Lawns
-                  </>
-                )}
+                <Plus className="h-4 w-4 mr-2" />
+                Add Lawn
               </Button>
-              {detectionError && (
-                <div className="flex items-start gap-2 p-2 rounded-md bg-destructive/10 text-destructive text-xs">
-                  <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
-                  <span>
-                    {detectionError instanceof Error
-                      ? detectionError.message
-                      : 'Detection failed. Please try again.'}
-                  </span>
-                </div>
-              )}
             </CardContent>
           </Card>
 
-          {/* Detected Lawns List */}
+          {/* Lawns List */}
           <LawnListPanel
-            lawns={detectedLawns}
-            onLawnsChange={setDetectedLawns}
+            lawns={lawns}
+            onLawnsChange={setLawns}
             selectedLawnIndex={selectedLawnIndex}
             onSelectLawn={setSelectedLawnIndex}
           />
 
           {/* Action Buttons */}
-          {detectedLawns.length > 0 && (
+          {lawns.length > 0 && (
             <Card>
               <CardContent className="pt-4 space-y-2">
                 <div className="text-sm font-medium flex justify-between">
@@ -248,8 +234,8 @@ export function LawnDetectionPage() {
             >
               {/* Lawn polygons overlay */}
               <LawnPolygonEditor
-                lawns={detectedLawns}
-                onLawnsChange={setDetectedLawns}
+                lawns={lawns}
+                onLawnsChange={setLawns}
                 selectedLawnIndex={selectedLawnIndex}
                 onSelectLawn={setSelectedLawnIndex}
               />
