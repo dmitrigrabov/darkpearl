@@ -239,7 +239,128 @@ INSERT INTO customers (id, customer_number, first_name, last_name, email, phone,
   ('c0500007-0007-4007-a007-000700070007', 'GM-10022', 'Sandra', 'Beaumont', 's.beaumont@hotmail.co.uk', '0121 355 2345', '07901 234567', '73 Streetly Lane', NULL, 'Sutton Coldfield', 'B74 2EX', true, 'phone', true, 'Has leatherjacket problem - needs annual treatment.'),
   ('c0500008-0008-4008-a008-000800080008', 'GM-10023', 'Philip', 'Cartwright', 'p.cartwright@protonmail.com', '01827 778901', NULL, '6 Church Walk', NULL, 'Atherstone', 'CV9 1DH', true, 'email', true, 'Large lawn with mature trees - partial shade.'),
   ('c0500009-0009-4009-a009-000900090009', 'GM-10024', 'Janet', 'Woodward', 'janet.w@gmail.com', '01785 889012', NULL, '112 Eccleshall Road', NULL, 'Stafford', 'ST16 1PD', true, 'email', false, NULL),
-  ('c0500010-0010-4010-a010-001000100010', 'GM-10025', 'Martin', 'Spencer', 'mspencer@outlook.com', '01926 112345', '07912 345678', '34 Warwick Road', NULL, 'Kenilworth', 'CV8 1HE', true, 'email', true, 'Moss problem in north-facing garden.');
+  ('c0500010-0010-4010-a010-001000100010', 'GM-10025', 'Martin', 'Spencer', 'mspencer@outlook.com', '01926 112345', '07912 345678', '34 Warwick Road', NULL, 'Kenilworth', 'CV8 1HE', true, 'email', true, 'Moss problem in north-facing garden.'),
+  -- Additional customers 26-125 (100 more)
+  -- Solihull Area
+  ('c0500026-0026-4026-a026-002600260026', 'GM-10026', 'Victoria', 'Henderson', 'v.henderson@gmail.com', '0121 705 1234', NULL, '15 Warwick Road', NULL, 'Solihull', 'B91 3DA', true, 'email', true, NULL),
+  ('c0500027-0027-4027-a027-002700270027', 'GM-10027', 'Christopher', 'Bailey', 'c.bailey@outlook.com', '0121 711 2345', '07845 123456', '48 Streetsbrook Road', NULL, 'Solihull', 'B91 1QT', true, 'email', true, 'Works from home - flexible.'),
+  ('c0500028-0028-4028-a028-002800280028', 'GM-10028', 'Emma', 'Richardson', 'emma.r@btinternet.com', '0121 733 3456', NULL, '22 Lode Lane', NULL, 'Solihull', 'B91 2AB', true, 'phone', false, NULL),
+  ('c0500029-0029-4029-a029-002900290029', 'GM-10029', 'Jonathan', 'Foster', 'j.foster@yahoo.co.uk', '0121 744 4567', NULL, '7 Hampton Lane', NULL, 'Solihull', 'B91 2PT', true, 'email', true, 'Golf club member - keen on lawn quality.'),
+  ('c0500030-0030-4030-a030-003000300030', 'GM-10030', 'Rachel', 'Hughes', 'rhughes@icloud.com', '0121 722 5678', '07856 234567', '31 Blossomfield Road', NULL, 'Solihull', 'B91 1LG', true, 'email', true, NULL),
+  -- Coventry Area
+  ('c0500031-0031-4031-a031-003100310031', 'GM-10031', 'Mark', 'Williams', 'mark.w@gmail.com', '024 7659 1234', NULL, '56 Kenilworth Road', NULL, 'Coventry', 'CV4 7AL', true, 'email', true, NULL),
+  ('c0500032-0032-4032-a032-003200320032', 'GM-10032', 'Laura', 'Brown', 'l.brown@hotmail.co.uk', '024 7650 2345', NULL, '12 Beechwood Avenue', NULL, 'Coventry', 'CV5 6DQ', true, 'phone', true, 'Children play on lawn.'),
+  ('c0500033-0033-4033-a033-003300330033', 'GM-10033', 'Simon', 'Davies', 's.davies@protonmail.com', '024 7641 3456', '07867 345678', '89 Tile Hill Lane', NULL, 'Coventry', 'CV4 9DE', true, 'email', false, NULL),
+  ('c0500034-0034-4034-a034-003400340034', 'GM-10034', 'Catherine', 'Wilson', 'c.wilson@outlook.com', '024 7633 4567', NULL, '23 Westwood Heath Road', NULL, 'Coventry', 'CV4 8GP', true, 'email', true, 'University lecturer - prefers term time.'),
+  ('c0500035-0035-4035-a035-003500350035', 'GM-10035', 'Paul', 'Taylor', 'p.taylor@gmail.com', '024 7667 5678', NULL, '67 Allesley Old Road', NULL, 'Coventry', 'CV5 8BP', true, 'email', true, NULL),
+  -- Wolverhampton Area
+  ('c0500036-0036-4036-a036-003600360036', 'GM-10036', 'Amanda', 'Evans', 'a.evans@btinternet.com', '01902 423456', NULL, '14 Penn Road', NULL, 'Wolverhampton', 'WV3 0DU', true, 'email', true, NULL),
+  ('c0500037-0037-4037-a037-003700370037', 'GM-10037', 'Stuart', 'Thomas', 'stuartthomas@yahoo.co.uk', '01902 445678', '07878 456789', '29 Tettenhall Road', NULL, 'Wolverhampton', 'WV3 9NH', true, 'phone', false, 'Large Victorian property.'),
+  ('c0500038-0038-4038-a038-003800380038', 'GM-10038', 'Diane', 'Roberts', 'd.roberts@icloud.com', '01902 556789', NULL, '8 Compton Road', NULL, 'Wolverhampton', 'WV3 9PH', true, 'email', true, NULL),
+  ('c0500039-0039-4039-a039-003900390039', 'GM-10039', 'Kevin', 'Johnson', 'k.johnson@outlook.com', '01902 667890', NULL, '45 Finchfield Road', NULL, 'Wolverhampton', 'WV3 8AY', true, 'email', true, 'Dog owner - needs notice.'),
+  ('c0500040-0040-4040-a040-004000400040', 'GM-10040', 'Sarah', 'Martin', 's.martin@gmail.com', '01902 778901', '07889 567890', '62 Castlecroft Road', NULL, 'Wolverhampton', 'WV3 8BZ', true, 'email', true, NULL),
+  -- Walsall Area
+  ('c0500041-0041-4041-a041-004100410041', 'GM-10041', 'Andrew', 'Clark', 'a.clark@hotmail.co.uk', '01922 623456', NULL, '17 Sutton Road', NULL, 'Walsall', 'WS1 2PQ', true, 'email', true, NULL),
+  ('c0500042-0042-4042-a042-004200420042', 'GM-10042', 'Michelle', 'Lewis', 'm.lewis@gmail.com', '01922 645678', NULL, '34 Broadway North', NULL, 'Walsall', 'WS1 2DJ', true, 'email', false, 'Retired - usually at home.'),
+  ('c0500043-0043-4043-a043-004300430043', 'GM-10043', 'Gary', 'Walker', 'g.walker@btinternet.com', '01922 667890', '07890 678901', '51 Lichfield Road', NULL, 'Walsall', 'WS4 2DJ', true, 'phone', true, NULL),
+  ('c0500044-0044-4044-a044-004400440044', 'GM-10044', 'Julie', 'Hall', 'j.hall@yahoo.co.uk', '01922 789012', NULL, '28 Mellish Road', NULL, 'Walsall', 'WS4 2DG', true, 'email', true, 'Teacher - summer appointments best.'),
+  ('c0500045-0045-4045-a045-004500450045', 'GM-10045', 'Steven', 'Young', 's.young@outlook.com', '01922 890123', NULL, '9 Aldridge Road', NULL, 'Walsall', 'WS4 2ET', true, 'email', true, NULL),
+  -- Dudley Area
+  ('c0500046-0046-4046-a046-004600460046', 'GM-10046', 'Karen', 'King', 'k.king@icloud.com', '01384 254567', NULL, '21 Stourbridge Road', NULL, 'Dudley', 'DY1 2ER', true, 'email', true, NULL),
+  ('c0500047-0047-4047-a047-004700470047', 'GM-10047', 'Brian', 'Wright', 'b.wright@gmail.com', '01384 276789', '07901 789012', '43 Birmingham Road', NULL, 'Dudley', 'DY1 4SJ', true, 'email', true, 'Historic house - traditional garden.'),
+  ('c0500048-0048-4048-a048-004800480048', 'GM-10048', 'Tracey', 'Green', 't.green@hotmail.co.uk', '01384 298901', NULL, '16 High Street', NULL, 'Dudley', 'DY3 1TU', true, 'phone', false, NULL),
+  ('c0500049-0049-4049-a049-004900490049', 'GM-10049', 'Neil', 'Baker', 'n.baker@btinternet.com', '01384 310123', NULL, '58 Himley Road', NULL, 'Dudley', 'DY3 4LB', true, 'email', true, NULL),
+  ('c0500050-0050-4050-a050-005000500050', 'GM-10050', 'Claire', 'Adams', 'c.adams@outlook.com', '01384 332345', '07912 890123', '75 Priory Road', NULL, 'Dudley', 'DY1 4EH', true, 'email', true, 'Wants organic treatments only.'),
+  -- Rugby Area
+  ('c0500051-0051-4051-a051-005100510051', 'GM-10051', 'Darren', 'Nelson', 'd.nelson@gmail.com', '01788 543456', NULL, '12 Murray Road', NULL, 'Rugby', 'CV21 3JY', true, 'email', true, NULL),
+  ('c0500052-0052-4052-a052-005200520052', 'GM-10052', 'Nicola', 'Hill', 'n.hill@yahoo.co.uk', '01788 565678', NULL, '27 Hillmorton Road', NULL, 'Rugby', 'CV22 5AA', true, 'email', true, 'Key under mat for side gate.'),
+  ('c0500053-0053-4053-a053-005300530053', 'GM-10053', 'Ian', 'Scott', 'i.scott@hotmail.co.uk', '01788 587890', '07923 901234', '44 Dunchurch Road', NULL, 'Rugby', 'CV22 6AU', true, 'phone', false, NULL),
+  ('c0500054-0054-4054-a054-005400540054', 'GM-10054', 'Wendy', 'Campbell', 'w.campbell@icloud.com', '01788 609012', NULL, '8 Barby Road', NULL, 'Rugby', 'CV22 5DT', true, 'email', true, NULL),
+  ('c0500055-0055-4055-a055-005500550055', 'GM-10055', 'Dean', 'Mitchell', 'dean.m@protonmail.com', '01788 621234', NULL, '63 Lawford Road', NULL, 'Rugby', 'CV21 2EA', true, 'email', true, 'Works shifts - flexible timing.'),
+  -- Tamworth Area
+  ('c0500056-0056-4056-a056-005600560056', 'GM-10056', 'Alison', 'Carter', 'a.carter@gmail.com', '01827 312345', NULL, '19 Lichfield Street', NULL, 'Tamworth', 'B79 7QF', true, 'email', true, NULL),
+  ('c0500057-0057-4057-a057-005700570057', 'GM-10057', 'Wayne', 'Phillips', 'w.phillips@btinternet.com', '01827 334567', '07934 012345', '35 Ashby Road', NULL, 'Tamworth', 'B79 8AH', true, 'email', false, NULL),
+  ('c0500058-0058-4058-a058-005800580058', 'GM-10058', 'Joanne', 'Turner', 'j.turner@outlook.com', '01827 356789', NULL, '52 Coton Lane', NULL, 'Tamworth', 'B79 8LJ', true, 'phone', true, 'New customer - first treatment March 2025.'),
+  ('c0500059-0059-4059-a059-005900590059', 'GM-10059', 'Craig', 'Parker', 'c.parker@yahoo.co.uk', '01827 378901', NULL, '71 Glascote Road', NULL, 'Tamworth', 'B77 2AA', true, 'email', true, NULL),
+  ('c0500060-0060-4060-a060-006000600060', 'GM-10060', 'Deborah', 'Collins', 'd.collins@icloud.com', '01827 390123', '07945 123456', '14 Dosthill Road', NULL, 'Tamworth', 'B77 1LH', true, 'email', true, NULL),
+  -- Stratford-upon-Avon Area
+  ('c0500061-0061-4061-a061-006100610061', 'GM-10061', 'Adrian', 'Edwards', 'a.edwards@gmail.com', '01789 267890', NULL, '8 Alcester Road', NULL, 'Stratford-upon-Avon', 'CV37 9DD', true, 'email', true, 'Tourist B&B - lawn must look perfect.'),
+  ('c0500062-0062-4062-a062-006200620062', 'GM-10062', 'Linda', 'Bell', 'l.bell@hotmail.co.uk', '01789 289012', NULL, '25 Shipston Road', NULL, 'Stratford-upon-Avon', 'CV37 7LN', true, 'email', true, NULL),
+  ('c0500063-0063-4063-a063-006300630063', 'GM-10063', 'Tony', 'Morris', 't.morris@btinternet.com', '01789 301234', '07956 234567', '42 Evesham Road', NULL, 'Stratford-upon-Avon', 'CV37 9BA', true, 'phone', false, NULL),
+  ('c0500064-0064-4064-a064-006400640064', 'GM-10064', 'Beverley', 'Watson', 'b.watson@outlook.com', '01789 323456', NULL, '67 Tiddington Road', NULL, 'Stratford-upon-Avon', 'CV37 7AY', true, 'email', true, 'Near the river - can be damp.'),
+  ('c0500065-0065-4065-a065-006500650065', 'GM-10065', 'Malcolm', 'Price', 'm.price@yahoo.co.uk', '01789 345678', NULL, '11 Warwick Road', NULL, 'Stratford-upon-Avon', 'CV37 6YW', true, 'email', true, NULL),
+  -- More Birmingham Suburbs
+  ('c0500066-0066-4066-a066-006600660066', 'GM-10066', 'Jacqueline', 'Bennett', 'j.bennett@gmail.com', '0121 427 6789', NULL, '38 Harborne Road', NULL, 'Birmingham', 'B15 3AA', true, 'email', true, NULL),
+  ('c0500067-0067-4067-a067-006700670067', 'GM-10067', 'Carl', 'Wood', 'c.wood@icloud.com', '0121 449 7890', '07967 345678', '54 Vicarage Road', NULL, 'Birmingham', 'B14 7QE', true, 'email', true, 'Edgbaston cricket ground nearby.'),
+  ('c0500068-0068-4068-a068-006800680068', 'GM-10068', 'Teresa', 'Barnes', 't.barnes@hotmail.co.uk', '0121 472 8901', NULL, '19 Bristol Road', NULL, 'Birmingham', 'B29 6BD', true, 'phone', false, NULL),
+  ('c0500069-0069-4069-a069-006900690069', 'GM-10069', 'Russell', 'Ross', 'r.ross@btinternet.com', '0121 475 9012', NULL, '76 Pershore Road', NULL, 'Birmingham', 'B30 3EJ', true, 'email', true, 'Victorian terrace - small lawn.'),
+  ('c0500070-0070-4070-a070-007000700070', 'GM-10070', 'Debra', 'Powell', 'd.powell@outlook.com', '0121 451 0123', '07978 456789', '33 Raddlebarn Road', NULL, 'Birmingham', 'B29 6HQ', true, 'email', true, NULL),
+  -- Nuneaton/Bedworth Area
+  ('c0500071-0071-4071-a071-007100710071', 'GM-10071', 'Trevor', 'Butler', 't.butler@gmail.com', '024 7638 1234', NULL, '22 Queens Road', NULL, 'Nuneaton', 'CV11 5JY', true, 'email', true, NULL),
+  ('c0500072-0072-4072-a072-007200720072', 'GM-10072', 'Pauline', 'Russell', 'p.russell@yahoo.co.uk', '024 7631 2345', NULL, '45 Tuttle Hill', NULL, 'Nuneaton', 'CV10 0NQ', true, 'email', false, 'Bungalow - easy access.'),
+  ('c0500073-0073-4073-a073-007300730073', 'GM-10073', 'Roy', 'Griffin', 'r.griffin@hotmail.co.uk', '024 7649 3456', '07989 567890', '68 Hinckley Road', NULL, 'Nuneaton', 'CV10 7AX', true, 'phone', true, NULL),
+  ('c0500074-0074-4074-a074-007400740074', 'GM-10074', 'Elaine', 'Hayes', 'e.hayes@icloud.com', '024 7631 4567', NULL, '13 Arbury Road', NULL, 'Nuneaton', 'CV10 7NE', true, 'email', true, NULL),
+  ('c0500075-0075-4075-a075-007500750075', 'GM-10075', 'Gordon', 'Reynolds', 'g.reynolds@btinternet.com', '024 7631 5678', NULL, '87 Weddington Road', NULL, 'Nuneaton', 'CV10 0AG', true, 'email', true, 'Corner plot - two lawn areas.'),
+  -- Redditch Area
+  ('c0500076-0076-4076-a076-007600760076', 'GM-10076', 'Kathleen', 'Long', 'k.long@outlook.com', '01527 523456', NULL, '16 Bromsgrove Road', NULL, 'Redditch', 'B97 4RN', true, 'email', true, NULL),
+  ('c0500077-0077-4077-a077-007700770077', 'GM-10077', 'Dennis', 'Graham', 'd.graham@gmail.com', '01527 545678', '07990 678901', '39 Evesham Street', NULL, 'Redditch', 'B97 4HU', true, 'email', false, NULL),
+  ('c0500078-0078-4078-a078-007800780078', 'GM-10078', 'Lesley', 'Fisher', 'l.fisher@yahoo.co.uk', '01527 567890', NULL, '52 Alcester Street', NULL, 'Redditch', 'B98 8AE', true, 'phone', true, 'New estate - young lawn.'),
+  ('c0500079-0079-4079-a079-007900790079', 'GM-10079', 'Colin', 'Webb', 'c.webb@hotmail.co.uk', '01527 589012', NULL, '78 Studley Road', NULL, 'Redditch', 'B98 7HB', true, 'email', true, NULL),
+  ('c0500080-0080-4080-a080-008000800080', 'GM-10080', 'Hazel', 'Simpson', 'h.simpson@icloud.com', '01527 601234', '07901 789012', '23 Plymouth Road', NULL, 'Redditch', 'B97 4PA', true, 'email', true, NULL),
+  -- Bromsgrove Area
+  ('c0500081-0081-4081-a081-008100810081', 'GM-10081', 'Kenneth', 'Murray', 'k.murray@btinternet.com', '01527 873456', NULL, '34 Worcester Road', NULL, 'Bromsgrove', 'B61 7DN', true, 'email', true, 'Market town centre - limited parking.'),
+  ('c0500082-0082-4082-a082-008200820082', 'GM-10082', 'Maureen', 'Kelly', 'm.kelly@gmail.com', '01527 895678', NULL, '57 Birmingham Road', NULL, 'Bromsgrove', 'B61 0DD', true, 'email', true, NULL),
+  ('c0500083-0083-4083-a083-008300830083', 'GM-10083', 'Norman', 'Hunt', 'n.hunt@outlook.com', '01527 817890', '07912 890123', '12 Stourbridge Road', NULL, 'Bromsgrove', 'B61 0AE', true, 'phone', false, NULL),
+  ('c0500084-0084-4084-a084-008400840084', 'GM-10084', 'Gillian', 'Holmes', 'g.holmes@yahoo.co.uk', '01527 839012', NULL, '89 Kidderminster Road', NULL, 'Bromsgrove', 'B61 9JT', true, 'email', true, 'Large rural garden.'),
+  ('c0500085-0085-4085-a085-008500850085', 'GM-10085', 'Raymond', 'Ford', 'r.ford@hotmail.co.uk', '01527 851234', NULL, '45 Finstall Road', NULL, 'Bromsgrove', 'B60 3DJ', true, 'email', true, NULL),
+  -- Halesowen Area
+  ('c0500086-0086-4086-a086-008600860086', 'GM-10086', 'Irene', 'Matthews', 'i.matthews@icloud.com', '0121 550 6789', NULL, '28 Hagley Road', NULL, 'Halesowen', 'B63 4QD', true, 'email', true, NULL),
+  ('c0500087-0087-4087-a087-008700870087', 'GM-10087', 'Derek', 'Palmer', 'd.palmer@gmail.com', '0121 559 7890', '07923 901234', '61 Stourbridge Road', NULL, 'Halesowen', 'B63 3TU', true, 'email', false, 'Keen bowler - flat lawn preferred.'),
+  ('c0500088-0088-4088-a088-008800880088', 'GM-10088', 'Judith', 'Grant', 'j.grant@btinternet.com', '0121 585 8901', NULL, '14 High Street', NULL, 'Halesowen', 'B63 3BG', true, 'phone', true, NULL),
+  ('c0500089-0089-4089-a089-008900890089', 'GM-10089', 'Frank', 'Stone', 'f.stone@outlook.com', '0121 550 9012', NULL, '77 Hagley Road', NULL, 'Halesowen', 'B63 4RD', true, 'email', true, NULL),
+  ('c0500090-0090-4090-a090-009000900090', 'GM-10090', 'Jean', 'Harvey', 'j.harvey@yahoo.co.uk', '0121 503 0123', '07934 012345', '32 Furnace Lane', NULL, 'Halesowen', 'B63 3NQ', true, 'email', true, 'Industrial heritage area.'),
+  -- Stourbridge Area
+  ('c0500091-0091-4091-a091-009100910091', 'GM-10091', 'Roger', 'Dixon', 'r.dixon@hotmail.co.uk', '01384 393456', NULL, '19 High Street', NULL, 'Stourbridge', 'DY8 1DZ', true, 'email', true, NULL),
+  ('c0500092-0092-4092-a092-009200920092', 'GM-10092', 'Audrey', 'Wallace', 'a.wallace@icloud.com', '01384 375678', NULL, '42 Hagley Road', NULL, 'Stourbridge', 'DY8 1QH', true, 'email', true, 'Glass-making heritage area.'),
+  ('c0500093-0093-4093-a093-009300930093', 'GM-10093', 'Howard', 'Gibson', 'h.gibson@gmail.com', '01384 397890', '07945 123456', '65 Worcester Street', NULL, 'Stourbridge', 'DY8 1AT', true, 'phone', false, NULL),
+  ('c0500094-0094-4094-a094-009400940094', 'GM-10094', 'Sheila', 'Harrison', 's.harrison@btinternet.com', '01384 319012', NULL, '8 Enville Street', NULL, 'Stourbridge', 'DY8 1XA', true, 'email', true, NULL),
+  ('c0500095-0095-4095-a095-009500950095', 'GM-10095', 'George', 'Mills', 'g.mills@outlook.com', '01384 331234', NULL, '91 South Road', NULL, 'Stourbridge', 'DY8 3YA', true, 'email', true, 'Near Mary Stevens Park.'),
+  -- Cannock Area
+  ('c0500096-0096-4096-a096-009600960096', 'GM-10096', 'Brenda', 'Pearce', 'b.pearce@yahoo.co.uk', '01543 573456', NULL, '24 Walsall Road', NULL, 'Cannock', 'WS11 1NP', true, 'email', true, NULL),
+  ('c0500097-0097-4097-a097-009700970097', 'GM-10097', 'Leonard', 'Austin', 'l.austin@hotmail.co.uk', '01543 595678', '07956 234567', '47 Stafford Road', NULL, 'Cannock', 'WS11 4AP', true, 'email', false, 'Near Cannock Chase - sandy soil.'),
+  ('c0500098-0098-4098-a098-009800980098', 'GM-10098', 'Sylvia', 'Stevens', 's.stevens@icloud.com', '01543 517890', NULL, '63 Hednesford Road', NULL, 'Cannock', 'WS12 4PB', true, 'phone', true, NULL),
+  ('c0500099-0099-4099-a099-009900990099', 'GM-10099', 'Victor', 'Fox', 'v.fox@gmail.com', '01543 539012', NULL, '18 High Green', NULL, 'Cannock', 'WS11 1BT', true, 'email', true, NULL),
+  ('c0500100-0100-4100-a100-010001000100', 'GM-10100', 'Rosemary', 'Cole', 'r.cole@btinternet.com', '01543 551234', '07967 345678', '82 Wolverhampton Road', NULL, 'Cannock', 'WS11 1AP', true, 'email', true, NULL),
+  -- More Sutton Coldfield/Erdington
+  ('c0500101-0101-4101-a101-010101010101', 'GM-10101', 'Stanley', 'Reed', 's.reed@outlook.com', '0121 373 6789', NULL, '11 High Street', NULL, 'Erdington', 'B23 6SY', true, 'email', true, NULL),
+  ('c0500102-0102-4102-a102-010201020102', 'GM-10102', 'Dorothy', 'Brooks', 'd.brooks@yahoo.co.uk', '0121 355 7890', NULL, '36 Boldmere Road', NULL, 'Sutton Coldfield', 'B73 5TD', true, 'email', true, 'Elderly - prefers same operator.'),
+  ('c0500103-0103-4103-a103-010301030103', 'GM-10103', 'Frederick', 'Mason', 'f.mason@hotmail.co.uk', '0121 354 8901', '07978 456789', '59 Wylde Green Road', NULL, 'Sutton Coldfield', 'B73 5PN', true, 'phone', false, NULL),
+  ('c0500104-0104-4104-a104-010401040104', 'GM-10104', 'Vera', 'Lane', 'v.lane@icloud.com', '0121 378 9012', NULL, '74 Jockey Road', NULL, 'Sutton Coldfield', 'B73 5XL', true, 'email', true, 'Near Sutton Park - wildlife friendly.'),
+  ('c0500105-0105-4105-a105-010501050105', 'GM-10105', 'Bernard', 'Cooper', 'b.cooper@gmail.com', '0121 386 0123', NULL, '27 Chester Road North', NULL, 'Sutton Coldfield', 'B73 6SP', true, 'email', true, NULL),
+  -- More Leamington/Warwick
+  ('c0500106-0106-4106-a106-010601060106', 'GM-10106', 'Olive', 'Saunders', 'o.saunders@btinternet.com', '01926 423456', NULL, '48 Parade', NULL, 'Leamington Spa', 'CV32 4DE', true, 'email', true, 'Regency property - formal garden.'),
+  ('c0500107-0107-4107-a107-010701070107', 'GM-10107', 'Arthur', 'Day', 'a.day@outlook.com', '01926 445678', '07989 567890', '15 Clarendon Avenue', NULL, 'Leamington Spa', 'CV32 4PZ', true, 'email', false, NULL),
+  ('c0500108-0108-4108-a108-010801080108', 'GM-10108', 'Joyce', 'Owen', 'j.owen@yahoo.co.uk', '01926 467890', NULL, '82 Warwick Street', NULL, 'Leamington Spa', 'CV32 5JY', true, 'phone', true, NULL),
+  ('c0500109-0109-4109-a109-010901090109', 'GM-10109', 'Harold', 'Perry', 'h.perry@hotmail.co.uk', '01926 489012', NULL, '31 Rugby Road', NULL, 'Leamington Spa', 'CV32 6PZ', true, 'email', true, 'Allotment next door - organic gardener.'),
+  ('c0500110-0110-4110-a110-011001100110', 'GM-10110', 'Marion', 'Ward', 'm.ward@icloud.com', '01926 401234', '07990 678901', '56 Tachbrook Road', NULL, 'Leamington Spa', 'CV31 3EF', true, 'email', true, NULL),
+  -- More Lichfield/Burntwood
+  ('c0500111-0111-4111-a111-011101110111', 'GM-10111', 'Ernest', 'Knight', 'e.knight@gmail.com', '01543 263456', NULL, '9 Bore Street', NULL, 'Lichfield', 'WS13 6LU', true, 'email', true, 'Cathedral close - historic area.'),
+  ('c0500112-0112-4112-a112-011201120112', 'GM-10112', 'Gladys', 'Davidson', 'g.davidson@btinternet.com', '01543 285678', NULL, '34 St John Street', NULL, 'Lichfield', 'WS13 6PB', true, 'email', true, NULL),
+  ('c0500113-0113-4113-a113-011301130113', 'GM-10113', 'Leslie', 'Burns', 'l.burns@outlook.com', '01543 307890', '07901 789012', '57 Walsall Road', NULL, 'Lichfield', 'WS13 8AF', true, 'phone', false, 'Large lawn - needs full day.'),
+  ('c0500114-0114-4114-a114-011401140114', 'GM-10114', 'Doris', 'Freeman', 'd.freeman@yahoo.co.uk', '01543 329012', NULL, '72 Birmingham Road', NULL, 'Lichfield', 'WS14 9BQ', true, 'email', true, NULL),
+  ('c0500115-0115-4115-a115-011501150115', 'GM-10115', 'Ronald', 'Wells', 'r.wells@hotmail.co.uk', '01543 341234', NULL, '15 Cannock Road', NULL, 'Burntwood', 'WS7 0BH', true, 'email', true, 'New development - good access.'),
+  -- More Stafford Area
+  ('c0500116-0116-4116-a116-011601160116', 'GM-10116', 'Edna', 'Chapman', 'e.chapman@icloud.com', '01785 253456', NULL, '28 Gaol Road', NULL, 'Stafford', 'ST16 3AQ', true, 'email', true, NULL),
+  ('c0500117-0117-4117-a117-011701170117', 'GM-10117', 'Albert', 'Andrews', 'a.andrews@gmail.com', '01785 275678', '07912 890123', '41 Newport Road', NULL, 'Stafford', 'ST16 1BB', true, 'email', false, NULL),
+  ('c0500118-0118-4118-a118-011801180118', 'GM-10118', 'Marjorie', 'Black', 'm.black@btinternet.com', '01785 297890', NULL, '64 Stone Road', NULL, 'Stafford', 'ST16 1NR', true, 'phone', true, 'Near county showground.'),
+  ('c0500119-0119-4119-a119-011901190119', 'GM-10119', 'Herbert', 'Dunn', 'h.dunn@outlook.com', '01785 319012', NULL, '87 Wolverhampton Road', NULL, 'Stafford', 'ST17 4AW', true, 'email', true, NULL),
+  ('c0500120-0120-4120-a120-012001200120', 'GM-10120', 'Hilda', 'Elliott', 'h.elliott@yahoo.co.uk', '01785 331234', '07923 901234', '19 Sandon Road', NULL, 'Stafford', 'ST16 3HA', true, 'email', true, NULL),
+  -- Final batch - Mixed areas
+  ('c0500121-0121-4121-a121-012101210121', 'GM-10121', 'Cyril', 'Morrison', 'c.morrison@hotmail.co.uk', '01952 243456', NULL, '31 Wellington Road', NULL, 'Newport', 'TF10 7HE', true, 'email', true, 'Edge of service area - extra travel.'),
+  ('c0500122-0122-4122-a122-012201220122', 'GM-10122', 'Doreen', 'Fowler', 'd.fowler@icloud.com', '01952 265678', NULL, '46 High Street', NULL, 'Newport', 'TF10 7AT', true, 'email', true, NULL),
+  ('c0500123-0123-4123-a123-012301230123', 'GM-10123', 'Clifford', 'Barker', 'c.barker@gmail.com', '01952 287890', '07934 012345', '69 Station Road', NULL, 'Newport', 'TF10 7EN', true, 'phone', false, NULL),
+  ('c0500124-0124-4124-a124-012401240124', 'GM-10124', 'Mabel', 'Cross', 'm.cross@btinternet.com', '01952 309012', NULL, '12 Stafford Street', NULL, 'Newport', 'TF10 7NU', true, 'email', true, 'Historic market town.'),
+  ('c0500125-0125-4125-a125-012501250125', 'GM-10125', 'Walter', 'Spencer', 'w.spencer@outlook.com', '01952 321234', NULL, '85 Audley Avenue', NULL, 'Newport', 'TF10 7BT', true, 'email', true, 'Last customer in catchment.');
 
 -- ============================================================================
 -- PROPERTIES (Physical locations with lawns)
@@ -279,7 +400,128 @@ INSERT INTO properties (id, customer_id, address_line1, address_line2, city, pos
   ('00105555-5555-4555-a555-555555555555', 'c0505555-5555-4555-a555-555555555555', '156 Coleshill Road', NULL, 'Curdworth', 'B76 9HG', 52.5234, -1.7456, 'Long driveway. Park near garage.', true),
   ('00107777-7777-4777-a777-777777777777', 'c0507777-7777-4777-a777-777777777777', 'The Old Rectory', 'Church Lane', 'Rugeley', 'WS15 2AH', 52.7612, -1.9345, 'Large property. Multiple lawn areas marked with stakes.', true),
   ('0010ffff-ffff-4fff-ffff-ffffffffffff', 'c050ffff-ffff-4fff-ffff-ffffffffffff', '28 High Street', NULL, 'Polesworth', 'B78 1DU', 52.6234, -1.6123, 'Narrow side access. May need to carry equipment through house.', true),
-  ('00100008-0008-4008-a008-000800080008', 'c0500008-0008-4008-a008-000800080008', '6 Church Walk', NULL, 'Atherstone', 'CV9 1DH', 52.5789, -1.5567, 'Large lawn with mature trees. Partial shade.', true);
+  ('00100008-0008-4008-a008-000800080008', 'c0500008-0008-4008-a008-000800080008', '6 Church Walk', NULL, 'Atherstone', 'CV9 1DH', 52.5789, -1.5567, 'Large lawn with mature trees. Partial shade.', true),
+  -- Additional properties for customers 26-125
+  -- Solihull Area
+  ('00100026-0026-4026-a026-002600260026', 'c0500026-0026-4026-a026-002600260026', '15 Warwick Road', NULL, 'Solihull', 'B91 3DA', 52.4111, -1.7768, NULL, true),
+  ('00100027-0027-4027-a027-002700270027', 'c0500027-0027-4027-a027-002700270027', '48 Streetsbrook Road', NULL, 'Solihull', 'B91 1QT', 52.4089, -1.7823, NULL, true),
+  ('00100028-0028-4028-a028-002800280028', 'c0500028-0028-4028-a028-002800280028', '22 Lode Lane', NULL, 'Solihull', 'B91 2AB', 52.4134, -1.7756, NULL, true),
+  ('00100029-0029-4029-a029-002900290029', 'c0500029-0029-4029-a029-002900290029', '7 Hampton Lane', NULL, 'Solihull', 'B91 2PT', 52.4167, -1.7801, NULL, true),
+  ('00100030-0030-4030-a030-003000300030', 'c0500030-0030-4030-a030-003000300030', '31 Blossomfield Road', NULL, 'Solihull', 'B91 1LG', 52.4078, -1.7834, NULL, true),
+  -- Coventry Area
+  ('00100031-0031-4031-a031-003100310031', 'c0500031-0031-4031-a031-003100310031', '56 Kenilworth Road', NULL, 'Coventry', 'CV4 7AL', 52.3856, -1.5345, NULL, true),
+  ('00100032-0032-4032-a032-003200320032', 'c0500032-0032-4032-a032-003200320032', '12 Beechwood Avenue', NULL, 'Coventry', 'CV5 6DQ', 52.4012, -1.5567, NULL, true),
+  ('00100033-0033-4033-a033-003300330033', 'c0500033-0033-4033-a033-003300330033', '89 Tile Hill Lane', NULL, 'Coventry', 'CV4 9DE', 52.3978, -1.5678, NULL, true),
+  ('00100034-0034-4034-a034-003400340034', 'c0500034-0034-4034-a034-003400340034', '23 Westwood Heath Road', NULL, 'Coventry', 'CV4 8GP', 52.3934, -1.5789, NULL, true),
+  ('00100035-0035-4035-a035-003500350035', 'c0500035-0035-4035-a035-003500350035', '67 Allesley Old Road', NULL, 'Coventry', 'CV5 8BP', 52.4045, -1.5456, NULL, true),
+  -- Wolverhampton Area
+  ('00100036-0036-4036-a036-003600360036', 'c0500036-0036-4036-a036-003600360036', '14 Penn Road', NULL, 'Wolverhampton', 'WV3 0DU', 52.5678, -2.1345, NULL, true),
+  ('00100037-0037-4037-a037-003700370037', 'c0500037-0037-4037-a037-003700370037', '29 Tettenhall Road', NULL, 'Wolverhampton', 'WV3 9NH', 52.5789, -2.1456, NULL, true),
+  ('00100038-0038-4038-a038-003800380038', 'c0500038-0038-4038-a038-003800380038', '8 Compton Road', NULL, 'Wolverhampton', 'WV3 9PH', 52.5812, -2.1512, NULL, true),
+  ('00100039-0039-4039-a039-003900390039', 'c0500039-0039-4039-a039-003900390039', '45 Finchfield Road', NULL, 'Wolverhampton', 'WV3 8AY', 52.5745, -2.1378, NULL, true),
+  ('00100040-0040-4040-a040-004000400040', 'c0500040-0040-4040-a040-004000400040', '62 Castlecroft Road', NULL, 'Wolverhampton', 'WV3 8BZ', 52.5701, -2.1423, NULL, true),
+  -- Walsall Area
+  ('00100041-0041-4041-a041-004100410041', 'c0500041-0041-4041-a041-004100410041', '17 Sutton Road', NULL, 'Walsall', 'WS1 2PQ', 52.5856, -1.9823, NULL, true),
+  ('00100042-0042-4042-a042-004200420042', 'c0500042-0042-4042-a042-004200420042', '34 Broadway North', NULL, 'Walsall', 'WS1 2DJ', 52.5878, -1.9867, NULL, true),
+  ('00100043-0043-4043-a043-004300430043', 'c0500043-0043-4043-a043-004300430043', '51 Lichfield Road', NULL, 'Walsall', 'WS4 2DJ', 52.6012, -1.9734, NULL, true),
+  ('00100044-0044-4044-a044-004400440044', 'c0500044-0044-4044-a044-004400440044', '28 Mellish Road', NULL, 'Walsall', 'WS4 2DG', 52.5989, -1.9756, NULL, true),
+  ('00100045-0045-4045-a045-004500450045', 'c0500045-0045-4045-a045-004500450045', '9 Aldridge Road', NULL, 'Walsall', 'WS4 2ET', 52.6034, -1.9678, NULL, true),
+  -- Dudley Area
+  ('00100046-0046-4046-a046-004600460046', 'c0500046-0046-4046-a046-004600460046', '21 Stourbridge Road', NULL, 'Dudley', 'DY1 2ER', 52.5123, -2.0845, NULL, true),
+  ('00100047-0047-4047-a047-004700470047', 'c0500047-0047-4047-a047-004700470047', '43 Birmingham Road', NULL, 'Dudley', 'DY1 4SJ', 52.5156, -2.0789, NULL, true),
+  ('00100048-0048-4048-a048-004800480048', 'c0500048-0048-4048-a048-004800480048', '16 High Street', NULL, 'Dudley', 'DY3 1TU', 52.5089, -2.0912, NULL, true),
+  ('00100049-0049-4049-a049-004900490049', 'c0500049-0049-4049-a049-004900490049', '58 Himley Road', NULL, 'Dudley', 'DY3 4LB', 52.5034, -2.0978, NULL, true),
+  ('00100050-0050-4050-a050-005000500050', 'c0500050-0050-4050-a050-005000500050', '75 Priory Road', NULL, 'Dudley', 'DY1 4EH', 52.5178, -2.0823, NULL, true),
+  -- Rugby Area
+  ('00100051-0051-4051-a051-005100510051', 'c0500051-0051-4051-a051-005100510051', '12 Murray Road', NULL, 'Rugby', 'CV21 3JY', 52.3712, -1.2634, NULL, true),
+  ('00100052-0052-4052-a052-005200520052', 'c0500052-0052-4052-a052-005200520052', '27 Hillmorton Road', NULL, 'Rugby', 'CV22 5AA', 52.3689, -1.2567, NULL, true),
+  ('00100053-0053-4053-a053-005300530053', 'c0500053-0053-4053-a053-005300530053', '44 Dunchurch Road', NULL, 'Rugby', 'CV22 6AU', 52.3656, -1.2689, NULL, true),
+  ('00100054-0054-4054-a054-005400540054', 'c0500054-0054-4054-a054-005400540054', '8 Barby Road', NULL, 'Rugby', 'CV22 5DT', 52.3623, -1.2712, NULL, true),
+  ('00100055-0055-4055-a055-005500550055', 'c0500055-0055-4055-a055-005500550055', '63 Lawford Road', NULL, 'Rugby', 'CV21 2EA', 52.3745, -1.2589, NULL, true),
+  -- Tamworth Area
+  ('00100056-0056-4056-a056-005600560056', 'c0500056-0056-4056-a056-005600560056', '19 Lichfield Street', NULL, 'Tamworth', 'B79 7QF', 52.6323, -1.6912, NULL, true),
+  ('00100057-0057-4057-a057-005700570057', 'c0500057-0057-4057-a057-005700570057', '35 Ashby Road', NULL, 'Tamworth', 'B79 8AH', 52.6356, -1.6856, NULL, true),
+  ('00100058-0058-4058-a058-005800580058', 'c0500058-0058-4058-a058-005800580058', '52 Coton Lane', NULL, 'Tamworth', 'B79 8LJ', 52.6389, -1.6789, NULL, true),
+  ('00100059-0059-4059-a059-005900590059', 'c0500059-0059-4059-a059-005900590059', '71 Glascote Road', NULL, 'Tamworth', 'B77 2AA', 52.6245, -1.6945, NULL, true),
+  ('00100060-0060-4060-a060-006000600060', 'c0500060-0060-4060-a060-006000600060', '14 Dosthill Road', NULL, 'Tamworth', 'B77 1LH', 52.6212, -1.6978, NULL, true),
+  -- Stratford-upon-Avon Area
+  ('00100061-0061-4061-a061-006100610061', 'c0500061-0061-4061-a061-006100610061', '8 Alcester Road', NULL, 'Stratford-upon-Avon', 'CV37 9DD', 52.1912, -1.7234, NULL, true),
+  ('00100062-0062-4062-a062-006200620062', 'c0500062-0062-4062-a062-006200620062', '25 Shipston Road', NULL, 'Stratford-upon-Avon', 'CV37 7LN', 52.1878, -1.7167, NULL, true),
+  ('00100063-0063-4063-a063-006300630063', 'c0500063-0063-4063-a063-006300630063', '42 Evesham Road', NULL, 'Stratford-upon-Avon', 'CV37 9BA', 52.1945, -1.7289, NULL, true),
+  ('00100064-0064-4064-a064-006400640064', 'c0500064-0064-4064-a064-006400640064', '67 Tiddington Road', NULL, 'Stratford-upon-Avon', 'CV37 7AY', 52.1856, -1.7112, NULL, true),
+  ('00100065-0065-4065-a065-006500650065', 'c0500065-0065-4065-a065-006500650065', '11 Warwick Road', NULL, 'Stratford-upon-Avon', 'CV37 6YW', 52.1934, -1.7189, NULL, true),
+  -- More Birmingham Suburbs
+  ('00100066-0066-4066-a066-006600660066', 'c0500066-0066-4066-a066-006600660066', '38 Harborne Road', NULL, 'Birmingham', 'B15 3AA', 52.4678, -1.9234, NULL, true),
+  ('00100067-0067-4067-a067-006700670067', 'c0500067-0067-4067-a067-006700670067', '54 Vicarage Road', NULL, 'Birmingham', 'B14 7QE', 52.4512, -1.9367, NULL, true),
+  ('00100068-0068-4068-a068-006800680068', 'c0500068-0068-4068-a068-006800680068', '19 Bristol Road', NULL, 'Birmingham', 'B29 6BD', 52.4489, -1.9423, NULL, true),
+  ('00100069-0069-4069-a069-006900690069', 'c0500069-0069-4069-a069-006900690069', '76 Pershore Road', NULL, 'Birmingham', 'B30 3EJ', 52.4423, -1.9489, NULL, true),
+  ('00100070-0070-4070-a070-007000700070', 'c0500070-0070-4070-a070-007000700070', '33 Raddlebarn Road', NULL, 'Birmingham', 'B29 6HQ', 52.4456, -1.9456, NULL, true),
+  -- Nuneaton Area
+  ('00100071-0071-4071-a071-007100710071', 'c0500071-0071-4071-a071-007100710071', '22 Queens Road', NULL, 'Nuneaton', 'CV11 5JY', 52.5234, -1.4712, NULL, true),
+  ('00100072-0072-4072-a072-007200720072', 'c0500072-0072-4072-a072-007200720072', '45 Tuttle Hill', NULL, 'Nuneaton', 'CV10 0NQ', 52.5289, -1.4678, NULL, true),
+  ('00100073-0073-4073-a073-007300730073', 'c0500073-0073-4073-a073-007300730073', '68 Hinckley Road', NULL, 'Nuneaton', 'CV10 7AX', 52.5312, -1.4623, NULL, true),
+  ('00100074-0074-4074-a074-007400740074', 'c0500074-0074-4074-a074-007400740074', '13 Arbury Road', NULL, 'Nuneaton', 'CV10 7NE', 52.5356, -1.4589, NULL, true),
+  ('00100075-0075-4075-a075-007500750075', 'c0500075-0075-4075-a075-007500750075', '87 Weddington Road', NULL, 'Nuneaton', 'CV10 0AG', 52.5378, -1.4534, NULL, true),
+  -- Redditch Area
+  ('00100076-0076-4076-a076-007600760076', 'c0500076-0076-4076-a076-007600760076', '16 Bromsgrove Road', NULL, 'Redditch', 'B97 4RN', 52.3089, -1.9456, NULL, true),
+  ('00100077-0077-4077-a077-007700770077', 'c0500077-0077-4077-a077-007700770077', '39 Evesham Street', NULL, 'Redditch', 'B97 4HU', 52.3056, -1.9489, NULL, true),
+  ('00100078-0078-4078-a078-007800780078', 'c0500078-0078-4078-a078-007800780078', '52 Alcester Street', NULL, 'Redditch', 'B98 8AE', 52.3023, -1.9523, NULL, true),
+  ('00100079-0079-4079-a079-007900790079', 'c0500079-0079-4079-a079-007900790079', '78 Studley Road', NULL, 'Redditch', 'B98 7HB', 52.2989, -1.9556, NULL, true),
+  ('00100080-0080-4080-a080-008000800080', 'c0500080-0080-4080-a080-008000800080', '23 Plymouth Road', NULL, 'Redditch', 'B97 4PA', 52.3112, -1.9423, NULL, true),
+  -- Bromsgrove Area
+  ('00100081-0081-4081-a081-008100810081', 'c0500081-0081-4081-a081-008100810081', '34 Worcester Road', NULL, 'Bromsgrove', 'B61 7DN', 52.3345, -2.0567, NULL, true),
+  ('00100082-0082-4082-a082-008200820082', 'c0500082-0082-4082-a082-008200820082', '57 Birmingham Road', NULL, 'Bromsgrove', 'B61 0DD', 52.3378, -2.0512, NULL, true),
+  ('00100083-0083-4083-a083-008300830083', 'c0500083-0083-4083-a083-008300830083', '12 Stourbridge Road', NULL, 'Bromsgrove', 'B61 0AE', 52.3312, -2.0623, NULL, true),
+  ('00100084-0084-4084-a084-008400840084', 'c0500084-0084-4084-a084-008400840084', '89 Kidderminster Road', NULL, 'Bromsgrove', 'B61 9JT', 52.3289, -2.0678, NULL, true),
+  ('00100085-0085-4085-a085-008500850085', 'c0500085-0085-4085-a085-008500850085', '45 Finstall Road', NULL, 'Bromsgrove', 'B60 3DJ', 52.3256, -2.0534, NULL, true),
+  -- Halesowen Area
+  ('00100086-0086-4086-a086-008600860086', 'c0500086-0086-4086-a086-008600860086', '28 Hagley Road', NULL, 'Halesowen', 'B63 4QD', 52.4512, -2.0512, NULL, true),
+  ('00100087-0087-4087-a087-008700870087', 'c0500087-0087-4087-a087-008700870087', '61 Stourbridge Road', NULL, 'Halesowen', 'B63 3TU', 52.4478, -2.0567, NULL, true),
+  ('00100088-0088-4088-a088-008800880088', 'c0500088-0088-4088-a088-008800880088', '14 High Street', NULL, 'Halesowen', 'B63 3BG', 52.4534, -2.0489, NULL, true),
+  ('00100089-0089-4089-a089-008900890089', 'c0500089-0089-4089-a089-008900890089', '77 Hagley Road', NULL, 'Halesowen', 'B63 4RD', 52.4489, -2.0534, NULL, true),
+  ('00100090-0090-4090-a090-009000900090', 'c0500090-0090-4090-a090-009000900090', '32 Furnace Lane', NULL, 'Halesowen', 'B63 3NQ', 52.4556, -2.0456, NULL, true),
+  -- Stourbridge Area
+  ('00100091-0091-4091-a091-009100910091', 'c0500091-0091-4091-a091-009100910091', '19 High Street', NULL, 'Stourbridge', 'DY8 1DZ', 52.4578, -2.1423, NULL, true),
+  ('00100092-0092-4092-a092-009200920092', 'c0500092-0092-4092-a092-009200920092', '42 Hagley Road', NULL, 'Stourbridge', 'DY8 1QH', 52.4612, -2.1378, NULL, true),
+  ('00100093-0093-4093-a093-009300930093', 'c0500093-0093-4093-a093-009300930093', '65 Worcester Street', NULL, 'Stourbridge', 'DY8 1AT', 52.4545, -2.1456, NULL, true),
+  ('00100094-0094-4094-a094-009400940094', 'c0500094-0094-4094-a094-009400940094', '8 Enville Street', NULL, 'Stourbridge', 'DY8 1XA', 52.4589, -2.1489, NULL, true),
+  ('00100095-0095-4095-a095-009500950095', 'c0500095-0095-4095-a095-009500950095', '91 South Road', NULL, 'Stourbridge', 'DY8 3YA', 52.4523, -2.1512, NULL, true),
+  -- Cannock Area
+  ('00100096-0096-4096-a096-009600960096', 'c0500096-0096-4096-a096-009600960096', '24 Walsall Road', NULL, 'Cannock', 'WS11 1NP', 52.6912, -2.0234, NULL, true),
+  ('00100097-0097-4097-a097-009700970097', 'c0500097-0097-4097-a097-009700970097', '47 Stafford Road', NULL, 'Cannock', 'WS11 4AP', 52.6945, -2.0189, NULL, true),
+  ('00100098-0098-4098-a098-009800980098', 'c0500098-0098-4098-a098-009800980098', '63 Hednesford Road', NULL, 'Cannock', 'WS12 4PB', 52.6978, -2.0134, NULL, true),
+  ('00100099-0099-4099-a099-009900990099', 'c0500099-0099-4099-a099-009900990099', '18 High Green', NULL, 'Cannock', 'WS11 1BT', 52.6889, -2.0278, NULL, true),
+  ('00100100-0100-4100-a100-010001000100', 'c0500100-0100-4100-a100-010001000100', '82 Wolverhampton Road', NULL, 'Cannock', 'WS11 1AP', 52.6856, -2.0312, NULL, true),
+  -- More Sutton Coldfield/Erdington
+  ('00100101-0101-4101-a101-010101010101', 'c0500101-0101-4101-a101-010101010101', '11 High Street', NULL, 'Erdington', 'B23 6SY', 52.5234, -1.8389, NULL, true),
+  ('00100102-0102-4102-a102-010201020102', 'c0500102-0102-4102-a102-010201020102', '36 Boldmere Road', NULL, 'Sutton Coldfield', 'B73 5TD', 52.5312, -1.8312, NULL, true),
+  ('00100103-0103-4103-a103-010301030103', 'c0500103-0103-4103-a103-010301030103', '59 Wylde Green Road', NULL, 'Sutton Coldfield', 'B73 5PN', 52.5345, -1.8278, NULL, true),
+  ('00100104-0104-4104-a104-010401040104', 'c0500104-0104-4104-a104-010401040104', '74 Jockey Road', NULL, 'Sutton Coldfield', 'B73 5XL', 52.5378, -1.8245, NULL, true),
+  ('00100105-0105-4105-a105-010501050105', 'c0500105-0105-4105-a105-010501050105', '27 Chester Road North', NULL, 'Sutton Coldfield', 'B73 6SP', 52.5412, -1.8212, NULL, true),
+  -- More Leamington/Warwick
+  ('00100106-0106-4106-a106-010601060106', 'c0500106-0106-4106-a106-010601060106', '48 Parade', NULL, 'Leamington Spa', 'CV32 4DE', 52.2912, -1.5356, NULL, true),
+  ('00100107-0107-4107-a107-010701070107', 'c0500107-0107-4107-a107-010701070107', '15 Clarendon Avenue', NULL, 'Leamington Spa', 'CV32 4PZ', 52.2889, -1.5389, NULL, true),
+  ('00100108-0108-4108-a108-010801080108', 'c0500108-0108-4108-a108-010801080108', '82 Warwick Street', NULL, 'Leamington Spa', 'CV32 5JY', 52.2856, -1.5423, NULL, true),
+  ('00100109-0109-4109-a109-010901090109', 'c0500109-0109-4109-a109-010901090109', '31 Rugby Road', NULL, 'Leamington Spa', 'CV32 6PZ', 52.2823, -1.5456, NULL, true),
+  ('00100110-0110-4110-a110-011001100110', 'c0500110-0110-4110-a110-011001100110', '56 Tachbrook Road', NULL, 'Leamington Spa', 'CV31 3EF', 52.2789, -1.5489, NULL, true),
+  -- More Lichfield/Burntwood
+  ('00100111-0111-4111-a111-011101110111', 'c0500111-0111-4111-a111-011101110111', '9 Bore Street', NULL, 'Lichfield', 'WS13 6LU', 52.6834, -1.8289, NULL, true),
+  ('00100112-0112-4112-a112-011201120112', 'c0500112-0112-4112-a112-011201120112', '34 St John Street', NULL, 'Lichfield', 'WS13 6PB', 52.6867, -1.8256, NULL, true),
+  ('00100113-0113-4113-a113-011301130113', 'c0500113-0113-4113-a113-011301130113', '57 Walsall Road', NULL, 'Lichfield', 'WS13 8AF', 52.6789, -1.8312, NULL, true),
+  ('00100114-0114-4114-a114-011401140114', 'c0500114-0114-4114-a114-011401140114', '72 Birmingham Road', NULL, 'Lichfield', 'WS14 9BQ', 52.6756, -1.8345, NULL, true),
+  ('00100115-0115-4115-a115-011501150115', 'c0500115-0115-4115-a115-011501150115', '15 Cannock Road', NULL, 'Burntwood', 'WS7 0BH', 52.6823, -1.9123, NULL, true),
+  -- More Stafford Area
+  ('00100116-0116-4116-a116-011601160116', 'c0500116-0116-4116-a116-011601160116', '28 Gaol Road', NULL, 'Stafford', 'ST16 3AQ', 52.8089, -2.1189, NULL, true),
+  ('00100117-0117-4117-a117-011701170117', 'c0500117-0117-4117-a117-011701170117', '41 Newport Road', NULL, 'Stafford', 'ST16 1BB', 52.8112, -2.1156, NULL, true),
+  ('00100118-0118-4118-a118-011801180118', 'c0500118-0118-4118-a118-011801180118', '64 Stone Road', NULL, 'Stafford', 'ST16 1NR', 52.8145, -2.1123, NULL, true),
+  ('00100119-0119-4119-a119-011901190119', 'c0500119-0119-4119-a119-011901190119', '87 Wolverhampton Road', NULL, 'Stafford', 'ST17 4AW', 52.8023, -2.1245, NULL, true),
+  ('00100120-0120-4120-a120-012001200120', 'c0500120-0120-4120-a120-012001200120', '19 Sandon Road', NULL, 'Stafford', 'ST16 3HA', 52.8178, -2.1089, NULL, true),
+  -- Newport Area
+  ('00100121-0121-4121-a121-012101210121', 'c0500121-0121-4121-a121-012101210121', '31 Wellington Road', NULL, 'Newport', 'TF10 7HE', 52.7689, -2.3789, NULL, true),
+  ('00100122-0122-4122-a122-012201220122', 'c0500122-0122-4122-a122-012201220122', '46 High Street', NULL, 'Newport', 'TF10 7AT', 52.7712, -2.3756, NULL, true),
+  ('00100123-0123-4123-a123-012301230123', 'c0500123-0123-4123-a123-012301230123', '69 Station Road', NULL, 'Newport', 'TF10 7EN', 52.7745, -2.3723, NULL, true),
+  ('00100124-0124-4124-a124-012401240124', 'c0500124-0124-4124-a124-012401240124', '12 Stafford Street', NULL, 'Newport', 'TF10 7NU', 52.7656, -2.3812, NULL, true),
+  ('00100125-0125-4125-a125-012501250125', 'c0500125-0125-4125-a125-012501250125', '85 Audley Avenue', NULL, 'Newport', 'TF10 7BT', 52.7623, -2.3845, NULL, true);
 
 -- ============================================================================
 -- LAWNS
@@ -324,7 +566,128 @@ INSERT INTO lawns (id, property_id, name, area_sqm, lawn_condition, access_notes
   ('1a007777-7777-4777-a777-777777777778', '00107777-7777-4777-a777-777777777777', 'Rear Lawn', 310.00, 'good', 'Croquet lawn - very particular customer', true),
   ('1a007777-7777-4777-a777-777777777779', '00107777-7777-4777-a777-777777777777', 'Side Garden', 85.00, 'fair', 'Shaded by hedge', true),
   ('1a00ffff-ffff-4fff-ffff-ffffffffffff', '0010ffff-ffff-4fff-ffff-ffffffffffff', 'Back Garden', 145.00, 'fair', 'Access via house only', true),
-  ('1a000008-0008-4008-a008-000800080008', '00100008-0008-4008-a008-000800080008', 'Main Lawn', 275.00, 'good', 'Partial shade from mature oaks', true);
+  ('1a000008-0008-4008-a008-000800080008', '00100008-0008-4008-a008-000800080008', 'Main Lawn', 275.00, 'good', 'Partial shade from mature oaks', true),
+  -- Additional lawns for customers 26-125
+  -- Solihull Area (typical suburban gardens 80-200 sqm)
+  ('1a000026-0026-4026-a026-002600260026', '00100026-0026-4026-a026-002600260026', 'Rear Garden', 165.00, 'good', NULL, true),
+  ('1a000027-0027-4027-a027-002700270027', '00100027-0027-4027-a027-002700270027', 'Main Lawn', 142.00, 'good', NULL, true),
+  ('1a000028-0028-4028-a028-002800280028', '00100028-0028-4028-a028-002800280028', 'Back Garden', 98.00, 'fair', 'Some shade', true),
+  ('1a000029-0029-4029-a029-002900290029', '00100029-0029-4029-a029-002900290029', 'Rear Lawn', 195.00, 'excellent', 'Golf club member - pristine lawn', true),
+  ('1a000030-0030-4030-a030-003000300030', '00100030-0030-4030-a030-003000300030', 'Garden Lawn', 178.00, 'good', NULL, true),
+  -- Coventry Area
+  ('1a000031-0031-4031-a031-003100310031', '00100031-0031-4031-a031-003100310031', 'Main Lawn', 125.00, 'good', NULL, true),
+  ('1a000032-0032-4032-a032-003200320032', '00100032-0032-4032-a032-003200320032', 'Back Garden', 110.00, 'good', 'Children play area', true),
+  ('1a000033-0033-4033-a033-003300330033', '00100033-0033-4033-a033-003300330033', 'Rear Lawn', 145.00, 'fair', NULL, true),
+  ('1a000034-0034-4034-a034-003400340034', '00100034-0034-4034-a034-003400340034', 'Garden Lawn', 168.00, 'good', NULL, true),
+  ('1a000035-0035-4035-a035-003500350035', '00100035-0035-4035-a035-003500350035', 'Main Lawn', 135.00, 'good', NULL, true),
+  -- Wolverhampton Area (mix of sizes)
+  ('1a000036-0036-4036-a036-003600360036', '00100036-0036-4036-a036-003600360036', 'Rear Garden', 155.00, 'good', NULL, true),
+  ('1a000037-0037-4037-a037-003700370037', '00100037-0037-4037-a037-003700370037', 'Victorian Garden', 285.00, 'good', 'Large period property', true),
+  ('1a000038-0038-4038-a038-003800380038', '00100038-0038-4038-a038-003800380038', 'Back Lawn', 120.00, 'fair', NULL, true),
+  ('1a000039-0039-4039-a039-003900390039', '00100039-0039-4039-a039-003900390039', 'Main Lawn', 175.00, 'good', 'Dog area separate', true),
+  ('1a000040-0040-4040-a040-004000400040', '00100040-0040-4040-a040-004000400040', 'Garden Lawn', 198.00, 'good', NULL, true),
+  -- Walsall Area
+  ('1a000041-0041-4041-a041-004100410041', '00100041-0041-4041-a041-004100410041', 'Rear Garden', 88.00, 'good', NULL, true),
+  ('1a000042-0042-4042-a042-004200420042', '00100042-0042-4042-a042-004200420042', 'Main Lawn', 125.00, 'excellent', 'Retired gardener', true),
+  ('1a000043-0043-4043-a043-004300430043', '00100043-0043-4043-a043-004300430043', 'Back Garden', 165.00, 'good', NULL, true),
+  ('1a000044-0044-4044-a044-004400440044', '00100044-0044-4044-a044-004400440044', 'Garden Lawn', 145.00, 'good', NULL, true),
+  ('1a000045-0045-4045-a045-004500450045', '00100045-0045-4045-a045-004500450045', 'Rear Lawn', 112.00, 'fair', NULL, true),
+  -- Dudley Area
+  ('1a000046-0046-4046-a046-004600460046', '00100046-0046-4046-a046-004600460046', 'Main Lawn', 135.00, 'good', NULL, true),
+  ('1a000047-0047-4047-a047-004700470047', '00100047-0047-4047-a047-004700470047', 'Traditional Garden', 225.00, 'good', 'Historic property', true),
+  ('1a000048-0048-4048-a048-004800480048', '00100048-0048-4048-a048-004800480048', 'Back Garden', 78.00, 'fair', 'Small town garden', true),
+  ('1a000049-0049-4049-a049-004900490049', '00100049-0049-4049-a049-004900490049', 'Rear Lawn', 168.00, 'good', NULL, true),
+  ('1a000050-0050-4050-a050-005000500050', '00100050-0050-4050-a050-005000500050', 'Garden Lawn', 155.00, 'good', 'Organic only', true),
+  -- Rugby Area
+  ('1a000051-0051-4051-a051-005100510051', '00100051-0051-4051-a051-005100510051', 'Back Garden', 145.00, 'good', NULL, true),
+  ('1a000052-0052-4052-a052-005200520052', '00100052-0052-4052-a052-005200520052', 'Main Lawn', 178.00, 'good', NULL, true),
+  ('1a000053-0053-4053-a053-005300530053', '00100053-0053-4053-a053-005300530053', 'Rear Lawn', 132.00, 'fair', NULL, true),
+  ('1a000054-0054-4054-a054-005400540054', '00100054-0054-4054-a054-005400540054', 'Garden Lawn', 115.00, 'good', NULL, true),
+  ('1a000055-0055-4055-a055-005500550055', '00100055-0055-4055-a055-005500550055', 'Back Garden', 188.00, 'good', NULL, true),
+  -- Tamworth Area
+  ('1a000056-0056-4056-a056-005600560056', '00100056-0056-4056-a056-005600560056', 'Main Lawn', 125.00, 'good', NULL, true),
+  ('1a000057-0057-4057-a057-005700570057', '00100057-0057-4057-a057-005700570057', 'Rear Garden', 158.00, 'fair', NULL, true),
+  ('1a000058-0058-4058-a058-005800580058', '00100058-0058-4058-a058-005800580058', 'Back Lawn', 142.00, 'new', 'First year of treatment', true),
+  ('1a000059-0059-4059-a059-005900590059', '00100059-0059-4059-a059-005900590059', 'Garden Lawn', 165.00, 'good', NULL, true),
+  ('1a000060-0060-4060-a060-006000600060', '00100060-0060-4060-a060-006000600060', 'Rear Lawn', 135.00, 'good', NULL, true),
+  -- Stratford-upon-Avon Area (typically larger gardens)
+  ('1a000061-0061-4061-a061-006100610061', '00100061-0061-4061-a061-006100610061', 'B&B Garden', 245.00, 'excellent', 'Must look perfect for guests', true),
+  ('1a000062-0062-4062-a062-006200620062', '00100062-0062-4062-a062-006200620062', 'Main Lawn', 185.00, 'good', NULL, true),
+  ('1a000063-0063-4063-a063-006300630063', '00100063-0063-4063-a063-006300630063', 'Rear Garden', 212.00, 'good', NULL, true),
+  ('1a000064-0064-4064-a064-006400640064', '00100064-0064-4064-a064-006400640064', 'Riverside Garden', 198.00, 'fair', 'Can be damp', true),
+  ('1a000065-0065-4065-a065-006500650065', '00100065-0065-4065-a065-006500650065', 'Back Lawn', 175.00, 'good', NULL, true),
+  -- More Birmingham Suburbs
+  ('1a000066-0066-4066-a066-006600660066', '00100066-0066-4066-a066-006600660066', 'Main Lawn', 145.00, 'good', NULL, true),
+  ('1a000067-0067-4067-a067-006700670067', '00100067-0067-4067-a067-006700670067', 'Rear Garden', 168.00, 'good', NULL, true),
+  ('1a000068-0068-4068-a068-006800680068', '00100068-0068-4068-a068-006800680068', 'Back Garden', 95.00, 'fair', NULL, true),
+  ('1a000069-0069-4069-a069-006900690069', '00100069-0069-4069-a069-006900690069', 'Small Lawn', 55.00, 'good', 'Victorian terrace', true),
+  ('1a000070-0070-4070-a070-007000700070', '00100070-0070-4070-a070-007000700070', 'Garden Lawn', 132.00, 'good', NULL, true),
+  -- Nuneaton Area
+  ('1a000071-0071-4071-a071-007100710071', '00100071-0071-4071-a071-007100710071', 'Main Lawn', 145.00, 'good', NULL, true),
+  ('1a000072-0072-4072-a072-007200720072', '00100072-0072-4072-a072-007200720072', 'Bungalow Garden', 165.00, 'good', 'Easy access', true),
+  ('1a000073-0073-4073-a073-007300730073', '00100073-0073-4073-a073-007300730073', 'Rear Lawn', 178.00, 'fair', NULL, true),
+  ('1a000074-0074-4074-a074-007400740074', '00100074-0074-4074-a074-007400740074', 'Back Garden', 125.00, 'good', NULL, true),
+  ('1a000075-0075-4075-a075-007500750075', '00100075-0075-4075-a075-007500750075', 'Corner Plot', 195.00, 'good', 'Two lawn areas', true),
+  -- Redditch Area
+  ('1a000076-0076-4076-a076-007600760076', '00100076-0076-4076-a076-007600760076', 'Main Lawn', 142.00, 'good', NULL, true),
+  ('1a000077-0077-4077-a077-007700770077', '00100077-0077-4077-a077-007700770077', 'Rear Garden', 155.00, 'fair', NULL, true),
+  ('1a000078-0078-4078-a078-007800780078', '00100078-0078-4078-a078-007800780078', 'New Estate Lawn', 88.00, 'new', 'Young lawn', true),
+  ('1a000079-0079-4079-a079-007900790079', '00100079-0079-4079-a079-007900790079', 'Back Lawn', 165.00, 'good', NULL, true),
+  ('1a000080-0080-4080-a080-008000800080', '00100080-0080-4080-a080-008000800080', 'Garden Lawn', 135.00, 'good', NULL, true),
+  -- Bromsgrove Area
+  ('1a000081-0081-4081-a081-008100810081', '00100081-0081-4081-a081-008100810081', 'Town Garden', 95.00, 'good', 'Limited parking', true),
+  ('1a000082-0082-4082-a082-008200820082', '00100082-0082-4082-a082-008200820082', 'Main Lawn', 175.00, 'good', NULL, true),
+  ('1a000083-0083-4083-a083-008300830083', '00100083-0083-4083-a083-008300830083', 'Rear Garden', 145.00, 'fair', NULL, true),
+  ('1a000084-0084-4084-a084-008400840084', '00100084-0084-4084-a084-008400840084', 'Rural Garden', 325.00, 'good', 'Large country garden', true),
+  ('1a000085-0085-4085-a085-008500850085', '00100085-0085-4085-a085-008500850085', 'Back Lawn', 165.00, 'good', NULL, true),
+  -- Halesowen Area
+  ('1a000086-0086-4086-a086-008600860086', '00100086-0086-4086-a086-008600860086', 'Main Lawn', 132.00, 'good', NULL, true),
+  ('1a000087-0087-4087-a087-008700870087', '00100087-0087-4087-a087-008700870087', 'Bowls Quality', 185.00, 'excellent', 'Flat lawn preferred', true),
+  ('1a000088-0088-4088-a088-008800880088', '00100088-0088-4088-a088-008800880088', 'Back Garden', 112.00, 'good', NULL, true),
+  ('1a000089-0089-4089-a089-008900890089', '00100089-0089-4089-a089-008900890089', 'Rear Lawn', 155.00, 'fair', NULL, true),
+  ('1a000090-0090-4090-a090-009000900090', '00100090-0090-4090-a090-009000900090', 'Garden Lawn', 145.00, 'good', NULL, true),
+  -- Stourbridge Area
+  ('1a000091-0091-4091-a091-009100910091', '00100091-0091-4091-a091-009100910091', 'Main Lawn', 168.00, 'good', NULL, true),
+  ('1a000092-0092-4092-a092-009200920092', '00100092-0092-4092-a092-009200920092', 'Rear Garden', 178.00, 'good', NULL, true),
+  ('1a000093-0093-4093-a093-009300930093', '00100093-0093-4093-a093-009300930093', 'Back Lawn', 135.00, 'fair', NULL, true),
+  ('1a000094-0094-4094-a094-009400940094', '00100094-0094-4094-a094-009400940094', 'Garden Lawn', 125.00, 'good', NULL, true),
+  ('1a000095-0095-4095-a095-009500950095', '00100095-0095-4095-a095-009500950095', 'Park Adjacent', 212.00, 'good', 'Near Mary Stevens Park', true),
+  -- Cannock Area (sandy soil typical)
+  ('1a000096-0096-4096-a096-009600960096', '00100096-0096-4096-a096-009600960096', 'Main Lawn', 155.00, 'fair', 'Sandy soil', true),
+  ('1a000097-0097-4097-a097-009700970097', '00100097-0097-4097-a097-009700970097', 'Rear Garden', 185.00, 'fair', 'Near Chase - sandy', true),
+  ('1a000098-0098-4098-a098-009800980098', '00100098-0098-4098-a098-009800980098', 'Back Lawn', 142.00, 'good', NULL, true),
+  ('1a000099-0099-4099-a099-009900990099', '00100099-0099-4099-a099-009900990099', 'Garden Lawn', 125.00, 'good', NULL, true),
+  ('1a000100-0100-4100-a100-010001000100', '00100100-0100-4100-a100-010001000100', 'Main Lawn', 168.00, 'good', NULL, true),
+  -- More Sutton Coldfield/Erdington
+  ('1a000101-0101-4101-a101-010101010101', '00100101-0101-4101-a101-010101010101', 'Rear Garden', 112.00, 'good', NULL, true),
+  ('1a000102-0102-4102-a102-010201020102', '00100102-0102-4102-a102-010201020102', 'Main Lawn', 145.00, 'good', 'Elderly customer', true),
+  ('1a000103-0103-4103-a103-010301030103', '00100103-0103-4103-a103-010301030103', 'Back Garden', 178.00, 'fair', NULL, true),
+  ('1a000104-0104-4104-a104-010401040104', '00100104-0104-4104-a104-010401040104', 'Park Edge', 195.00, 'good', 'Wildlife friendly', true),
+  ('1a000105-0105-4105-a105-010501050105', '00100105-0105-4105-a105-010501050105', 'Rear Lawn', 165.00, 'good', NULL, true),
+  -- More Leamington/Warwick (Regency properties often larger)
+  ('1a000106-0106-4106-a106-010601060106', '00100106-0106-4106-a106-010601060106', 'Formal Garden', 265.00, 'excellent', 'Regency property', true),
+  ('1a000107-0107-4107-a107-010701070107', '00100107-0107-4107-a107-010701070107', 'Main Lawn', 185.00, 'good', NULL, true),
+  ('1a000108-0108-4108-a108-010801080108', '00100108-0108-4108-a108-010801080108', 'Rear Garden', 155.00, 'fair', NULL, true),
+  ('1a000109-0109-4109-a109-010901090109', '00100109-0109-4109-a109-010901090109', 'Allotment Adjacent', 142.00, 'good', 'Organic gardener', true),
+  ('1a000110-0110-4110-a110-011001100110', '00100110-0110-4110-a110-011001100110', 'Back Lawn', 175.00, 'good', NULL, true),
+  -- More Lichfield/Burntwood
+  ('1a000111-0111-4111-a111-011101110111', '00100111-0111-4111-a111-011101110111', 'Cathedral Close', 135.00, 'excellent', 'Historic area', true),
+  ('1a000112-0112-4112-a112-011201120112', '00100112-0112-4112-a112-011201120112', 'Main Lawn', 145.00, 'good', NULL, true),
+  ('1a000113-0113-4113-a113-011301130113', '00100113-0113-4113-a113-011301130113', 'Large Garden', 298.00, 'good', 'Full day job', true),
+  ('1a000114-0114-4114-a114-011401140114', '00100114-0114-4114-a114-011401140114', 'Rear Lawn', 165.00, 'fair', NULL, true),
+  ('1a000115-0115-4115-a115-011501150115', '00100115-0115-4115-a115-011501150115', 'New Build', 112.00, 'new', 'Good access', true),
+  -- More Stafford Area
+  ('1a000116-0116-4116-a116-011601160116', '00100116-0116-4116-a116-011601160116', 'Town Garden', 98.00, 'good', NULL, true),
+  ('1a000117-0117-4117-a117-011701170117', '00100117-0117-4117-a117-011701170117', 'Main Lawn', 155.00, 'fair', NULL, true),
+  ('1a000118-0118-4118-a118-011801180118', '00100118-0118-4118-a118-011801180118', 'Showground Area', 185.00, 'good', NULL, true),
+  ('1a000119-0119-4119-a119-011901190119', '00100119-0119-4119-a119-011901190119', 'Rear Garden', 168.00, 'good', NULL, true),
+  ('1a000120-0120-4120-a120-012001200120', '00100120-0120-4120-a120-012001200120', 'Back Lawn', 142.00, 'good', NULL, true),
+  -- Newport Area (edge of service area)
+  ('1a000121-0121-4121-a121-012101210121', '00100121-0121-4121-a121-012101210121', 'Main Lawn', 175.00, 'good', 'Extra travel', true),
+  ('1a000122-0122-4122-a122-012201220122', '00100122-0122-4122-a122-012201220122', 'Rear Garden', 145.00, 'good', NULL, true),
+  ('1a000123-0123-4123-a123-012301230123', '00100123-0123-4123-a123-012301230123', 'Back Lawn', 165.00, 'fair', NULL, true),
+  ('1a000124-0124-4124-a124-012401240124', '00100124-0124-4124-a124-012401240124', 'Town Garden', 125.00, 'good', 'Historic town', true),
+  ('1a000125-0125-4125-a125-012501250125', '00100125-0125-4125-a125-012501250125', 'Edge of Catchment', 155.00, 'good', 'Last in area', true);
 
 -- ============================================================================
 -- TREATMENT PLANS (Annual subscription plans)
