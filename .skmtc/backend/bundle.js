@@ -13190,6 +13190,11 @@ var method2 = union([
 var methods2 = array(method2);
 
 // deno:https://jsr.io/@skmtc/core/0.0.974/dsl/GeneratorKeys.ts
+var toOperationGeneratorKey2 = ({ generatorId, ...rest }) => {
+  const { path, method: method3 } = "operation" in rest ? rest.operation : rest;
+  const nakedKey = `${generatorId}|${path}|${method3}`;
+  return nakedKey;
+};
 var toModelGeneratorKey2 = ({ generatorId, refName }) => {
   const nakedKey = `${generatorId}|${refName}`;
   return nakedKey;
@@ -13971,6 +13976,346 @@ var toModelEntry = ({ id, transform, toPreviewModule, toMappingModule, toEnrichm
   };
 };
 
+// deno:https://jsr.io/@skmtc/core/0.0.974/dsl/operation/OperationBase.ts
+var OperationBase2 = class extends ContentBase2 {
+  /** Content settings including export path and enrichment configuration */
+  settings;
+  /** The OpenAPI operation being processed */
+  operation;
+  /** Generator key identifying this generator type */
+  generatorKey;
+  /**
+   * Creates a new OperationBase instance.
+   *
+   * @param args - Operation generator configuration
+   * @param args.context - The generation context providing pipeline access
+   * @param args.settings - Content settings with export path and enrichments
+   * @param args.generatorKey - Unique identifier for this generator type
+   * @param args.operation - The OpenAPI operation being processed
+   *
+   * @example
+   * ```typescript
+   * const operation = new OperationBase({
+   *   context: generateContext,
+   *   settings: {
+   *     exportPath: './src/api.ts',
+   *     enrichment: customEnrichments
+   *   },
+   *   generatorKey: 'api-client',
+   *   operation: oasOperation
+   * });
+   * ```
+   */
+  constructor({ context, generatorKey, settings, operation }) {
+    super({
+      context
+    });
+    this.generatorKey = generatorKey;
+    this.operation = operation;
+    this.settings = settings;
+  }
+  /**
+   * Inserts a related operation with forced generation.
+   *
+   * This method adds a related operation to the current generation context, ensuring
+   * it will be generated regardless of whether it already exists. This is useful for
+   * operations that depend on other operations or need to generate helper operations.
+   *
+   * @template V - Type of generated value returned by the insertable
+   * @template EnrichmentType - Type of enrichment data for the insertable
+   * @param insertable - The operation generator to insert
+   * @param operation - The OpenAPI operation to process
+   * @param options - Insertion options
+   * @param options.noExport - Whether to skip exporting the inserted operation
+   * @returns Inserted operation reference with generated value
+   *
+   * @example Inserting helper operations
+   * ```typescript
+   * class CrudApiClient extends OperationBase {
+   *   toDefinition(): Definition {
+   *     // Insert a related validation operation
+   *     const validator = this.insertOperation(
+   *       new ValidationOperation({ ... }),
+   *       this.operation,
+   *       { noExport: true }
+   *     );
+   *
+   *     return new Definition({
+   *       name: this.operation.operationId,
+   *       content: `async ${this.operation.operationId}(data: any) {
+   *         ${validator.value}(data);
+   *         return this.request('${this.operation.method}', '${this.operation.path}', data);
+   *       }`
+   *     });
+   *   }
+   * }
+   * ```
+   */
+  insertOperation(insertable, operation, options = {}) {
+    return this.context.insertOperation(insertable, operation, {
+      destinationPath: this.settings.exportPath,
+      noExport: options.noExport
+    });
+  }
+  /**
+   * Inserts a related model with forced generation.
+   *
+   * This method adds a model to the current generation context, typically used
+   * for request/response models or other types related to the operation. The model
+   * will be generated and can be referenced in the operation code.
+   *
+   * @template V - Type of generated value returned by the insertable
+   * @template EnrichmentType - Type of enrichment data for the insertable
+   * @param insertable - The model generator to insert
+   * @param refName - Reference name for the inserted model
+   * @param options - Insertion options
+   * @param options.noExport - Whether to skip exporting the inserted model
+   * @returns Inserted model reference with generated value
+   *
+   * @example Inserting request/response models
+   * ```typescript
+   * class ApiOperation extends OperationBase {
+   *   toDefinition(): Definition {
+   *     // Insert request model
+   *     const requestModel = this.insertModel(
+   *       new RequestModel({ ... }),
+   *       'CreateUserRequest'
+   *     );
+   *
+   *     // Insert response model
+   *     const responseModel = this.insertModel(
+   *       new ResponseModel({ ... }),
+   *       'CreateUserResponse'
+   *     );
+   *
+   *     return new Definition({
+   *       name: this.operation.operationId,
+   *       content: `async ${this.operation.operationId}(data: ${requestModel.value}): Promise<${responseModel.value}> {
+   *         return this.request('${this.operation.method}', '${this.operation.path}', data);
+   *       }`
+   *     });
+   *   }
+   * }
+   * ```
+   */
+  insertModel(insertable, refName, options = {}) {
+    return this.context.insertModel(insertable, refName, {
+      destinationPath: this.settings.exportPath,
+      noExport: options.noExport
+    });
+  }
+  /**
+   * Inserts a related model with automatic schema normalization and reference resolution.
+   *
+   * This method intelligently handles schema references from operation request/response
+   * bodies, automatically resolving schema references to appropriate model names.
+   * This is particularly useful for operations with complex request/response schemas.
+   *
+   * @template V - Type of generated value returned by the insertable
+   * @template Schema - Type of OpenAPI schema (schema object, reference, or void)
+   * @template EnrichmentType - Type of enrichment data for the insertable
+   * @param insertable - The model generator to insert
+   * @param args - Schema normalization arguments
+   * @param args.schema - The OpenAPI schema to normalize (from request/response)
+   * @param args.fallbackName - Name to use if schema is not a reference
+   * @param options - Insertion options
+   * @param options.noExport - Whether to skip exporting the inserted model
+   * @returns Inserted model reference with normalized name and generated value
+   *
+   * @example Handling operation request/response schemas
+   * ```typescript
+   * class RestApiOperation extends OperationBase {
+   *   toDefinition(): Definition {
+   *     const operation = this.operation;
+   *
+   *     // Handle request body schema
+   *     let requestType = 'void';
+   *     const requestSchema = operation.requestBody?.content?.['application/json']?.schema;
+   *     if (requestSchema) {
+   *       const requestModel = this.insertNormalizedModel(
+   *         new TypeScriptInterface({ ... }),
+   *         {
+   *           schema: requestSchema,
+   *           fallbackName: `${operation.operationId}Request`
+   *         }
+   *       );
+   *       requestType = requestModel.value;
+   *     }
+   *
+   *     // Handle response schema
+   *     const responseSchema = operation.responses?.['200']?.content?.['application/json']?.schema;
+   *     const responseModel = this.insertNormalizedModel(
+   *       new TypeScriptInterface({ ... }),
+   *       {
+   *         schema: responseSchema,
+   *         fallbackName: `${operation.operationId}Response`
+   *       }
+   *     );
+   *
+   *     return new Definition({
+   *       name: operation.operationId,
+   *       content: `async ${operation.operationId}(data: ${requestType}): Promise<${responseModel.value}>`
+   *     });
+   *   }
+   * }
+   * ```
+   */
+  insertNormalizedModel(insertable, { schema, fallbackName }, options = {}) {
+    return this.context.insertNormalisedModel(insertable, {
+      schema,
+      fallbackName,
+      destinationPath: this.settings.exportPath
+    }, options);
+  }
+  /**
+   * Defines and registers a new definition in the generation context.
+   *
+   * This is an experimental method that allows creating and registering
+   * definitions directly without going through the standard insertion flow.
+   * Use with caution as the API may change in future versions.
+   *
+   * @experimental This method's API may change in future versions
+   * @template V - Type of generated value
+   * @param args - Definition arguments
+   * @param args.identifier - Unique identifier for the definition
+   * @param args.value - The generated value to associate with the definition
+   * @param args.noExport - Whether to skip exporting the definition
+   * @returns The created and registered definition
+   *
+   * @example Creating inline definitions
+   * ```typescript
+   * class InlineHelperOperation extends OperationBase {
+   *   toDefinition(): Definition {
+   *     // Create an inline helper function
+   *     const helper = this.defineAndRegister({
+   *       identifier: 'validateRequest',
+   *       value: 'function validateRequest(data: any) { ... }',
+   *       noExport: true
+   *     });
+   *
+   *     return new Definition({
+   *       name: this.operation.operationId,
+   *       content: `async ${this.operation.operationId}(data: any) {
+   *         ${helper.value}(data);
+   *         return this.request('${this.operation.method}', '${this.operation.path}', data);
+   *       }`
+   *     });
+   *   }
+   * }
+   * ```
+   */
+  defineAndRegister({ identifier, value, noExport }) {
+    return this.context.defineAndRegister({
+      identifier,
+      value,
+      destinationPath: this.settings.exportPath,
+      noExport
+    });
+  }
+  /**
+   * Registers a file-level artifact with the generation context.
+   *
+   * This method allows the operation generator to register additional content
+   * (like imports, exports, or file-level definitions) that should be included
+   * in the generated file. The registration is automatically scoped to this
+   * operation's export path.
+   *
+   * @param args - Registration arguments
+   * @param args.content - The content to register (import, export, etc.)
+   * @param args.phase - When to register the content ('pre' or 'post')
+   *
+   * @example Registering API client imports
+   * ```typescript
+   * class HttpOperation extends OperationBase {
+   *   toDefinition(): Definition {
+   *     // Register imports needed for HTTP operations
+   *     this.register({
+   *       content: "import { ApiClient } from './client';",
+   *       phase: 'pre'
+   *     });
+   *
+   *     this.register({
+   *       content: "import { RequestOptions } from './types';",
+   *       phase: 'pre'
+   *     });
+   *
+   *     return new Definition({ ... });
+   *   }
+   * }
+   * ```
+   *
+   * @example Registering utility exports
+   * ```typescript
+   * class ApiOperationGroup extends OperationBase {
+   *   toDefinition(): Definition {
+   *     // Register a utility export after all operations
+   *     this.register({
+   *       content: "export const API_VERSION = '1.0';",
+   *       phase: 'post'
+   *     });
+   *
+   *     return new Definition({ ... });
+   *   }
+   * }
+   * ```
+   */
+  register(args) {
+    this.context.register({
+      ...args,
+      destinationPath: this.settings.exportPath
+    });
+  }
+};
+
+// deno:https://jsr.io/@skmtc/core/0.0.974/dsl/operation/toOperationBase.ts
+var toOperationBase = (config) => {
+  return class extends OperationBase2 {
+    static id = config.id;
+    static type = "operation";
+    static toIdentifier = config.toIdentifier.bind(config);
+    static toExportPath = config.toExportPath.bind(config);
+    static toEnrichments = ({ operation, context }) => {
+      const operationEnrichments3 = get_default(context.settings, `enrichments.${config.id}.${operation.path}.${operation.method}`);
+      const enrichmentSchema = config.toEnrichmentSchema?.() ?? optional(unknown());
+      return parse(enrichmentSchema, operationEnrichments3);
+    };
+    constructor(args) {
+      super({
+        ...args,
+        generatorKey: toOperationGeneratorKey2({
+          generatorId: config.id,
+          operation: args.operation
+        })
+      });
+    }
+  };
+};
+
+// deno:https://jsr.io/@skmtc/core/0.0.974/dsl/operation/toOperationEntry.ts
+var toOperationEntry = ({ id, transform, toEnrichmentSchema, isSupported, toPreviewModule, toMappingModule, toEnrichmentRequest }) => {
+  return {
+    id,
+    type: "operation",
+    transform,
+    toEnrichmentSchema,
+    isSupported: ({ context, operation }) => {
+      if (!isSupported) {
+        return true;
+      }
+      const operationEnrichments3 = get_default(context.settings, `enrichments.${id}.${operation.path}.${operation.method}`);
+      const enrichmentSchema = toEnrichmentSchema?.() ?? undefined_();
+      return isSupported({
+        context,
+        operation,
+        enrichments: parse(enrichmentSchema, operationEnrichments3)
+      });
+    },
+    toPreviewModule,
+    toMappingModule,
+    toEnrichmentRequest
+  };
+};
+
 // deno:https://jsr.io/@skmtc/core/0.0.974/helpers/strings.ts
 var capitalize2 = (str) => {
   return str.charAt(0).toUpperCase() + str.slice(1);
@@ -14097,6 +14442,341 @@ var oasRefData2 = union([
 
 // deno:https://jsr.io/@skmtc/core/0.0.974/helpers/sanitizePropertyName.ts
 var import_helper_validator_identifier_7_274 = __toESM(require_lib());
+
+// deno:https://jsr.io/@skmtc/core/0.0.974/typescript/List.ts
+var List2 = class _List {
+  /** The array of values in this list */
+  values;
+  /** The separator string used between items */
+  separator;
+  /** The bookend style for wrapping the list */
+  bookends;
+  /** Whether to skip rendering when the list is empty */
+  skipEmpty;
+  /**
+   * Creates a new List instance.
+   *
+   * @param values - Array of values (undefined values are automatically filtered out)
+   * @param options - Configuration options
+   * @param options.separator - String to use between items (default: ', ')
+   * @param options.bookends - Style of bookends to wrap the list (default: 'none')
+   * @param options.skipEmpty - Whether to return empty string for empty lists (default: false)
+   *
+   * @example
+   * ```typescript
+   * // Basic list with default comma separator
+   * const basic = new List(['a', 'b', 'c']);
+   *
+   * // Custom separator and bookends
+   * const custom = new List(['x', 'y', 'z'], {
+   *   separator: ' | ',
+   *   bookends: '[]',
+   *   skipEmpty: true
+   * });
+   * ```
+   */
+  constructor(values, { separator, bookends, skipEmpty } = {}) {
+    this.values = values.filter((value) => value !== void 0);
+    this.separator = separator ?? ", ";
+    this.bookends = bookends ?? "none";
+    this.skipEmpty = skipEmpty ?? false;
+  }
+  /**
+   * Converts the list to its string representation.
+   *
+   * Joins all values with the configured separator and wraps with bookends.
+   * Returns empty string if skipEmpty is enabled and list is empty.
+   *
+   * @returns Formatted string representation of the list
+   */
+  toString() {
+    if (this.skipEmpty && this.values.length === 0) {
+      return "";
+    }
+    const joined = this.values.map((value) => value.toString()).join(this.separator);
+    switch (this.bookends) {
+      case "[]":
+        return `[${joined}]`;
+      case "{}":
+        return `{${joined}}`;
+      case "()":
+        return `(${joined})`;
+      case "none":
+        return joined;
+      default: {
+        const _exhaustive = this.bookends;
+        throw new Error(`Unhandled bookends type: ${_exhaustive}`);
+      }
+    }
+  }
+  /**
+   * Create an empty List that will render as an empty string ''
+   * @returns List
+   */
+  static toEmpty = () => {
+    return new _List([], {
+      bookends: "none"
+    });
+  };
+  /**
+   * Create a List with a single value that will render as `value`
+   * @param value
+   * @returns List
+   */
+  static toSingle = (value) => {
+    return new _List([
+      value
+    ], {
+      bookends: "none"
+    });
+  };
+  /**
+   * If condition is true, return a List with a single value that will render as `value`.
+   * Otherwise, return an empty List that will render as an empty string ''.
+   *
+   * Useful for conditional rendering. For example, rendering a function arg object when
+   * it has at least one property.
+   * @param value
+   * @param condition
+   * @returns List
+   */
+  static toConditional = (value, condition) => {
+    const out = new _List([
+      condition ? value : void 0
+    ], {
+      bookends: "none"
+    });
+    return out;
+  };
+  /**
+   * Create a record with Stringable values. KeyValue pairs will be joined with `: ` as separator
+   * and the resulting List will be wrapped with `{}`
+   * @param record
+   * @returns `record` with `Stringable` values
+   */
+  static toRecord = (record2) => {
+    const entries = Object.entries(record2).map(([key, value]) => {
+      return _List.toKeyValue(key, value);
+    });
+    return _List.toObject(entries);
+  };
+  /**
+   * Create a record with `undefined` or empty array or List values filtered out.
+   * @param record
+   * @returns `record` with `undefined` values filtered out
+   */
+  static toFilteredRecord = (record2) => {
+    const entries = Object.entries(record2).map(([key, value]) => {
+      return _List.toFilteredKeyValue(key, value);
+    });
+    return _List.toObject(entries);
+  };
+  /**
+   * Join `key` and `value` using `: ` as separator
+   * @param key
+   * @param value
+   * @returns `key` and `value` joined with `: ` as separator
+   */
+  static toKeyValue = (key, value) => {
+    return new _List([
+      key,
+      value
+    ], {
+      separator: ": "
+    });
+  };
+  /**
+   * Join `key` and `value` using `.` as separator
+   * @param key
+   * @param value
+   * @returns `key` and `value` joined with `.` as separator
+   */
+  static toObjectKey = (key, value) => {
+    return new _List([
+      key,
+      value
+    ], {
+      separator: "."
+    });
+  };
+  /**
+   * Join `values` using `, ` as separator and wrap in `{` and `}`
+   * @param values
+   * @returns `values` joined with `, ` as separator and wrapped in `{` and `}`
+   */
+  static toObject = (values, { skipEmpty } = {}) => {
+    return new _List(values, {
+      bookends: "{}",
+      skipEmpty
+    });
+  };
+  /**
+   * Join `values` using `, ` as separator and wrap in `[` and `]`
+   * @param values
+   * @returns `values` joined with `, ` as separator and wrapped in `{` and `}`
+   */
+  static toArray = (values) => {
+    return new _List(values, {
+      bookends: "[]"
+    });
+  };
+  /**
+   * Join `values` using `, ` as separator and wrap in `(` and `)`
+   * @param values
+   * @returns `values` joined with `, ` as separator and wrapped in `(` and `)`
+   */
+  static toParams = (values) => {
+    return new _List(values, {
+      bookends: "()"
+    });
+  };
+  /**
+   * Join `values` using `\n` as separator without a wrapper
+   * @param values
+   * @returns `values` joined with `\n` as separator without a wrapper
+   */
+  static toLines = (values) => {
+    return new _List(values, {
+      separator: "\n"
+    });
+  };
+  /**
+   * Create a KeyList using the keys of @param record
+   * @afdafg
+   * @param record
+   * @returns KeyList
+   */
+  static fromKeys = (record2) => {
+    return new KeyList2(Object.keys(record2 ?? {}));
+  };
+  /**
+   * Create a EntryList using the entries of @param record
+   * @afdafg
+   * @param record
+   * @returns EntryList
+   */
+  static fromEntries = (record2) => {
+    return new EntryList2(Object.entries(record2 ?? {}));
+  };
+  /**
+   * Create a keyValue pair if `value` is not undefined and is not an empty array or List.
+   * Return `undefined` otherwise.
+   *
+   * Useful for filtering out `undefined values from a record.
+   * @param key
+   * @param value
+   * @returns `key` and `value` joined with `: ` as separator if `value` is not undefined and is not an empty array or List. `undefined` otherwise.
+   */
+  static toFilteredKeyValue = (key, value) => {
+    const out = _List.hasValue(value) ? _List.toKeyValue(key, value) : void 0;
+    return out;
+  };
+  /**
+   * Check if `value` is not undefined and is not an empty array or List.
+   * @param value
+   * @returns `true` if `value` is not undefined and is not an empty array or List. `false` otherwise.
+   */
+  static hasValue = (value) => {
+    if (value === void 0) {
+      return false;
+    }
+    if (Array.isArray(value)) {
+      return value.length > 0;
+    }
+    if (value instanceof _List) {
+      return _List.hasValue(value.values);
+    }
+    return true;
+  };
+};
+var KeyList2 = class {
+  /** Array of string keys */
+  keys;
+  /**
+   * Creates a new KeyList instance.
+   *
+   * @param keys - Array of string keys to work with
+   */
+  constructor(keys) {
+    this.keys = keys;
+  }
+  /**
+   * Transforms keys into an object using a mapping function.
+   *
+   * @param mapFn - Function to transform each key into a value
+   * @param options - Options for handling empty values
+   * @returns Object with keys mapped to transformed values
+   */
+  toObject(mapFn, { skipEmpty } = {}) {
+    return List2.toObject(this.keys.map((key, index) => mapFn(key, index)), {
+      skipEmpty
+    });
+  }
+  /**
+   * Creates a plain object with keys as both keys and values.
+   *
+   * @returns Object where each key maps to itself
+   */
+  toObjectPlain() {
+    return List2.toObject(this.keys);
+  }
+  /**
+   * Transforms keys into a List using a mapping function.
+   *
+   * @param mapFn - Function to transform each key into a value
+   * @returns List containing the transformed values
+   */
+  toLines(mapFn) {
+    return List2.toLines(this.keys.map((key, index) => mapFn(key, index)));
+  }
+  /**
+   * Creates a List with keys as the values.
+   *
+   * @returns List containing the original keys
+   */
+  toLinesPlain() {
+    return List2.toLines(this.keys);
+  }
+};
+var EntryList2 = class {
+  /** Array of key-value pair entries */
+  entries;
+  /**
+   * Creates a new EntryList instance.
+   *
+   * @param entries - Array of key-value pair entries to work with
+   */
+  constructor(entries) {
+    this.entries = entries;
+  }
+  /**
+   * Transforms entries into an object using a mapping function.
+   *
+   * @param mapFn - Function to transform each entry into a value
+   * @returns Object with transformed values
+   */
+  toObject(mapFn) {
+    return List2.toObject(this.entries.map((entry, index) => mapFn(entry, index)));
+  }
+  /**
+   * Transforms entries into a List using a mapping function.
+   *
+   * @param mapFn - Function to transform each entry into a value
+   * @returns List containing the transformed values
+   */
+  toLines(mapFn) {
+    return List2.toLines(this.entries.map((key, index) => mapFn(key, index)));
+  }
+  /**
+   * Transforms entries into an array using a mapping function.
+   *
+   * @param mapFn - Function to transform each entry into a value
+   * @returns Array containing the transformed values
+   */
+  toArray(mapFn) {
+    return List2.toArray(this.entries.map((entry, index) => mapFn(entry, index)));
+  }
+};
 
 // deno:https://jsr.io/@skmtc/core/0.0.974/oas/tag/tag-types.ts
 var oasTagData2 = object({
@@ -14345,6 +15025,11 @@ var import_helper_validator_identifier_7_275 = __toESM(require_lib());
 var import_helper_validator_identifier_7_276 = __toESM(require_lib());
 var handleKey = (key) => {
   return (0, import_helper_validator_identifier_7_276.isIdentifierName)(key) ? key : `'${key}'`;
+};
+
+// deno:https://jsr.io/@skmtc/core/0.0.974/typescript/toPathParams.ts
+var toPathParams = (path) => {
+  return `${path.replaceAll(/{([^}]*)}/g, ":$1")}`;
 };
 
 // gen-zod/src/withOptional.ts
@@ -15894,10 +16579,302 @@ var toTsValue = ({ schema, destinationPath, required, context, rootRef }) => {
   })).exhaustive();
 };
 
+// gen-supabase-hono/src/toFirstSegment.ts
+var toFirstSegment = ({ path }) => path.split("/").find(Boolean);
+
+// gen-supabase-hono/deno.json
+var deno_default3 = {
+  name: "@skmtc/gen-supabase-hono",
+  version: "0.0.48",
+  imports: {
+    "@skmtc/gen-zod": "jsr:@skmtc/gen-zod@^0.0.48",
+    "@skmtc/gen-typescript": "jsr:@skmtc/gen-typescript@^0.0.48"
+  },
+  exports: "./mod.ts",
+  tasks: {
+    test: "deno test --allow-env --allow-sys --allow-read || true",
+    "test:coverage": "deno test --allow-env --allow-sys --allow-read --coverage=coverage || true",
+    "coverage:report": "deno coverage coverage --lcov --output=coverage.lcov 2>/dev/null || echo 'No coverage data'",
+    "coverage:html": "deno coverage coverage --html || true",
+    "coverage:check": "deno coverage coverage --detailed || true",
+    publish: "deno publish --allow-slow-types --allow-dirty --token=$JSR_AUTH_TOKEN"
+  }
+};
+
+// gen-supabase-hono/src/base.ts
+var SupabaseHonoBase = toOperationBase({
+  id: deno_default3.name,
+  toIdentifier() {
+    return Identifier2.createVariable("app");
+  },
+  toExportPath(operation) {
+    const firstSegment = toFirstSegment(operation);
+    return join3("@", `${firstSegment}`, `api.generated.ts`);
+  }
+});
+
+// gen-supabase-hono/src/RequestBody.ts
+var RequestBody = class extends ContentBase2 {
+  zodRequestBodyName;
+  constructor({ context, serviceName, destinationPath, requestBodySchema }) {
+    super({
+      context
+    });
+    if (!requestBodySchema) {
+      this.zodRequestBodyName = null;
+      return;
+    }
+    const insertedRequestBody = context.insertNormalisedModel(ZodInsertable, {
+      schema: requestBodySchema,
+      fallbackName: decapitalize(`${serviceName}RequestBody`),
+      destinationPath
+    });
+    this.zodRequestBodyName = insertedRequestBody.identifier.name;
+  }
+  toString() {
+    if (this.zodRequestBodyName === null) {
+      return "";
+    }
+    return `  const requestBody = await c.req.json()
+  const body = ${this.zodRequestBodyName}.parse(requestBody)
+`;
+  }
+};
+
+// gen-supabase-hono/src/Response.ts
+var Response = class extends ContentBase2 {
+  serviceName;
+  serviceArgs;
+  constructor({ context, serviceName, serviceArgs }) {
+    super({
+      context
+    });
+    this.serviceName = serviceName;
+    this.serviceArgs = serviceArgs;
+  }
+  toString() {
+    return `const res = await ${this.serviceName}(${this.serviceArgs})()
+
+    if(!res){
+      return c.body(null, 404)
+    }
+
+    return c.json(res)
+`;
+  }
+};
+
+// gen-supabase-hono/src/ResponseVoid.ts
+var ResponseVoid = class extends ContentBase2 {
+  serviceName;
+  serviceArgs;
+  constructor({ context, serviceName, serviceArgs }) {
+    super({
+      context
+    });
+    this.serviceName = serviceName;
+    this.serviceArgs = serviceArgs;
+  }
+  toString() {
+    return `    await ${this.serviceName}(${this.serviceArgs})()
+      
+    return c.body(null, 204)`;
+  }
+};
+
+// gen-supabase-hono/src/SupabaseRoute.ts
+var SupabaseRoute = class extends ContentBase2 {
+  operation;
+  pathParams;
+  queryParams;
+  requestBody;
+  response;
+  withBearerAuth;
+  constructor({ context, operation, destinationPath }) {
+    super({
+      context
+    });
+    this.operation = operation;
+    const pathName = camelCase2(operation.path, {
+      upperFirst: true
+    });
+    const serviceName = decapitalize(`${operation.method}${pathName}Api`);
+    const responseSchema = operation.toSuccessResponse()?.resolve().toSchema();
+    const pathParams = operation.toParams([
+      "path"
+    ]).map(({ name }) => name);
+    const queryParams = operation.toParams([
+      "query"
+    ]).map(({ name }) => name);
+    this.pathParams = List2.toObject(pathParams);
+    this.queryParams = List2.toObject(queryParams);
+    const combinedParams = List2.toObject(pathParams.concat(queryParams));
+    const requestBodySchema = operation.toRequestBody(({ schema }) => schema);
+    this.requestBody = new RequestBody({
+      context,
+      serviceName,
+      destinationPath,
+      requestBodySchema
+    });
+    const args = [
+      `supabase: c.get('supabase')`
+    ];
+    this.withBearerAuth = operation.security?.flatMap((sec) => sec.toSecurityScheme())?.some((sc) => sc.type === "http" && sc.scheme.toLowerCase() === "bearer") ?? false;
+    if (this.withBearerAuth) {
+      args.push(`claims: c.get('claims')`);
+    }
+    if (requestBodySchema) {
+      args.push(`body`);
+    }
+    if (combinedParams.values.length > 0) {
+      args.push(`params: ${combinedParams}`);
+    }
+    const serviceArgs = List2.toObject(args);
+    const hasResponse = Boolean(responseSchema);
+    this.response = hasResponse ? new Response({
+      context,
+      serviceName,
+      serviceArgs,
+      destinationPath
+    }) : new ResponseVoid({
+      context,
+      serviceName,
+      serviceArgs
+    });
+    const firstSegment = toFirstSegment(operation);
+    context.register({
+      imports: {
+        [`@/${firstSegment}/services.ts`]: [
+          serviceName
+        ],
+        "@/_shared/middleware.ts": [
+          "withSupabase"
+        ]
+      },
+      destinationPath
+    });
+    if (this.withBearerAuth) {
+      context.register({
+        imports: {
+          "@/_shared/middleware.ts": [
+            "withClaims"
+          ]
+        },
+        destinationPath
+      });
+    }
+  }
+  toString() {
+    const { method: method3, path } = this.operation;
+    return `app.${method3}('${toPathParams(path)}', withSupabase, ${this.withBearerAuth ? "withClaims," : ""} async c => {
+  console.log('${method3} ${toPathParams(path)}')
+
+  ${this.pathParams.values.length > 0 ? `const ${this.pathParams} = c.req.param()` : ""}
+  ${this.queryParams.values.length > 0 ? `const ${this.queryParams} = c.req.query()` : ""}
+
+  ${this.requestBody}
+
+  ${this.response}
+})`;
+  }
+};
+
+// gen-supabase-hono/src/SupabaseHono.ts
+var SupabaseHono = class extends SupabaseHonoBase {
+  methods;
+  routes;
+  constructor({ context, operation, settings }) {
+    super({
+      context,
+      operation,
+      settings
+    });
+    this.methods = List2.toArray([]);
+    this.routes = List2.toLines([]);
+    this.register({
+      imports: {
+        hono: [
+          "Hono"
+        ],
+        "hono/cors": [
+          "cors"
+        ],
+        "@hono/sentry": [
+          "sentry"
+        ]
+      }
+    });
+  }
+  append(operation) {
+    const method3 = `'${operation.method.toUpperCase()}'`;
+    if (!this.methods.values.includes(method3)) {
+      this.methods.values.push(method3);
+    }
+    this.routes.values.push(new SupabaseRoute({
+      context: this.context,
+      operation,
+      destinationPath: this.settings.exportPath
+    }));
+  }
+  toString() {
+    return `new Hono()
+
+app.use(
+  '*',
+  sentry({
+    dsn: Deno.env.get('SENTRY_DSN_SUPABASE'),
+    tracesSampleRate: 1.0
+  })
+)
+
+app.onError((error, c) => {
+  console.log('ERROR', error)
+  
+  c.get('sentry').captureException(error)
+
+  return c.json({ message: 'Internal server error' }, 500)
+})
+
+app.use(
+  '*',
+  cors({
+    origin: '*',
+    allowMethods: ${this.methods},
+    maxAge: 600,
+    allowHeaders: [
+      'authorization',
+      'x-client-info',
+      'apikey',
+      'sentry-trace',
+      'baggage',
+      'content-type'
+    ]
+  })
+)
+
+${this.routes}
+`;
+  }
+};
+
+// gen-supabase-hono/src/mod.ts
+var supabaseHonoEntry = toOperationEntry({
+  id: deno_default3.name,
+  transform: ({ context, operation }) => {
+    const app = context.findDefinition({
+      name: "app",
+      exportPath: SupabaseHono.toExportPath(operation)
+    }) ?? context.insertOperation(SupabaseHono, operation).definition;
+    invariant(app?.value instanceof SupabaseHono, "app must be an instance of SupabaseHono");
+    app.value.append(operation);
+  }
+});
+
 // worker.ts
 var worker_default = mod_default(() => Object.fromEntries([
   zodEntry,
-  typescriptEntry
+  typescriptEntry,
+  supabaseHonoEntry
 ].map((g2) => [
   g2.id,
   g2

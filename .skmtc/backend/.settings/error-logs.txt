@@ -14,3 +14,7 @@
 [0m[32mBundled[0m 557 modules in 157ms
   [0m[36mbundle.js[0m [0m[38;5;245m430.37KB[0m
 
+⚠️  [0m[36mdeno bundle[0m is experimental and subject to changes
+[0m[32mBundled[0m 567 modules in 279ms
+  [0m[36mbundle.js[0m [0m[38;5;245m459.54KB[0m
+

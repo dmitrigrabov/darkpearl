@@ -12,6 +12,6 @@ export const TypescriptBase = toModelBase({
   },
 
   toExportPath(): string {
-    return join('@', 'models.generated.ts')
+    return join('@', '_shared', 'models.generated.ts')
   }
 })

@@ -36,7 +36,4 @@ build/
 # Deno
 .deno/
 
-# Claude
-.claude/
-
 .trigger/

@@ -4,15 +4,95 @@
       "destinationPath": "@/models.generated.ts",
       "lines": 458,
       "characters": 69181
+    },
+    "supabase/functions/_shared/customers/api.generated.ts": {
+      "destinationPath": "@/customers/api.generated.ts",
+      "lines": 133,
+      "characters": 2665
+    },
+    "supabase/functions/_shared/inventory/api.generated.ts": {
+      "destinationPath": "@/inventory/api.generated.ts",
+      "lines": 133,
+      "characters": 2685
+    },
+    "supabase/functions/_shared/invoices/api.generated.ts": {
+      "destinationPath": "@/invoices/api.generated.ts",
+      "lines": 222,
+      "characters": 4742
+    },
+    "supabase/functions/_shared/jobs/api.generated.ts": {
+      "destinationPath": "@/jobs/api.generated.ts",
+      "lines": 227,
+      "characters": 4802
+    },
+    "supabase/functions/_shared/lawns/api.generated.ts": {
+      "destinationPath": "@/lawns/api.generated.ts",
+      "lines": 133,
+      "characters": 2581
+    },
+    "supabase/functions/_shared/operators/api.generated.ts": {
+      "destinationPath": "@/operators/api.generated.ts",
+      "lines": 133,
+      "characters": 2649
+    },
+    "supabase/functions/_shared/orders/api.generated.ts": {
+      "destinationPath": "@/orders/api.generated.ts",
+      "lines": 114,
+      "characters": 2135
+    },
+    "supabase/functions/_shared/payments/api.generated.ts": {
+      "destinationPath": "@/payments/api.generated.ts",
+      "lines": 150,
+      "characters": 3074
+    },
+    "supabase/functions/_shared/products/api.generated.ts": {
+      "destinationPath": "@/products/api.generated.ts",
+      "lines": 133,
+      "characters": 2620
+    },
+    "supabase/functions/_shared/properties/api.generated.ts": {
+      "destinationPath": "@/properties/api.generated.ts",
+      "lines": 133,
+      "characters": 2696
+    },
+    "supabase/functions/_shared/routes/api.generated.ts": {
+      "destinationPath": "@/routes/api.generated.ts",
+      "lines": 222,
+      "characters": 4672
+    },
+    "supabase/functions/_shared/stock-movements/api.generated.ts": {
+      "destinationPath": "@/stock-movements/api.generated.ts",
+      "lines": 97,
+      "characters": 2040
+    },
+    "supabase/functions/_shared/treatment-plans/api.generated.ts": {
+      "destinationPath": "@/treatment-plans/api.generated.ts",
+      "lines": 188,
+      "characters": 4299
+    },
+    "supabase/functions/_shared/treatments/api.generated.ts": {
+      "destinationPath": "@/treatments/api.generated.ts",
+      "lines": 169,
+      "characters": 3602
+    },
+    "supabase/functions/_shared/vehicles/api.generated.ts": {
+      "destinationPath": "@/vehicles/api.generated.ts",
+      "lines": 133,
+      "characters": 2624
+    },
+    "supabase/functions/_shared/warehouses/api.generated.ts": {
+      "destinationPath": "@/warehouses/api.generated.ts",
+      "lines": 133,
+      "characters": 2654
     }
   },
   "previews": {},
   "mappings": {},
-  "traceId": "trace-1767035512276",
-  "spanId": "span-1767035512276",
+  "traceId": "trace-1767123664299",
+  "spanId": "span-1767123664299",
   "results": {
-    "trace-1767035512276": {
-      "span-1767035512276": {
+    "trace-1767123664299": {
+      "span-1767123664299": {
         "generate": {
           "@skmtc/gen-zod": {
             "Models.Coordinate": "success",
@@ -245,15 +325,131 @@
             "Models.VehicleWithDetails": "success",
             "Models.Warehouse": "success",
             "Models.WarehouseListResponse": "success"
+          },
+          "@skmtc/gen-supabase-hono": {
+            "/customers%3Aget": "success",
+            "/customers%3Apost": "success",
+            "/customers/{id}%3Aget": "success",
+            "/customers/{id}%3Aput": "success",
+            "/customers/{id}%3Adelete": "success",
+            "/inventory%3Aget": "success",
+            "/inventory%3Apost": "success",
+            "/inventory/{id}%3Aget": "success",
+            "/inventory/{id}%3Aput": "success",
+            "/inventory/{id}%3Adelete": "success",
+            "/invoices%3Aget": "success",
+            "/invoices%3Apost": "success",
+            "/invoices/{id}%3Aget": "success",
+            "/invoices/{id}%3Aput": "success",
+            "/invoices/{id}%3Adelete": "success",
+            "/invoices/{id}/items%3Apost": "success",
+            "/invoices/{id}/items/{itemId}%3Aput": "success",
+            "/invoices/{id}/items/{itemId}%3Adelete": "success",
+            "/invoices/{id}/mark-paid%3Apost": "success",
+            "/invoices/{id}/send%3Apost": "success",
+            "/jobs%3Aget": "success",
+            "/jobs%3Apost": "success",
+            "/jobs/{id}%3Aget": "success",
+            "/jobs/{id}%3Aput": "success",
+            "/jobs/{id}%3Adelete": "success",
+            "/jobs/{id}/complete%3Apost": "success",
+            "/jobs/{id}/consumptions%3Apost": "success",
+            "/jobs/{id}/skip%3Apost": "success",
+            "/jobs/{id}/start%3Apost": "success",
+            "/jobs/{id}/treatments%3Apost": "success",
+            "/lawns%3Aget": "success",
+            "/lawns%3Apost": "success",
+            "/lawns/{id}%3Aget": "success",
+            "/lawns/{id}%3Aput": "success",
+            "/lawns/{id}%3Adelete": "success",
+            "/operators%3Aget": "success",
+            "/operators%3Apost": "success",
+            "/operators/{id}%3Aget": "success",
+            "/operators/{id}%3Aput": "success",
+            "/operators/{id}%3Adelete": "success",
+            "/orders%3Aget": "success",
+            "/orders%3Apost": "success",
+            "/orders/{id}%3Aget": "success",
+            "/orders/{id}%3Adelete": "success",
+            "/payments%3Aget": "success",
+            "/payments%3Apost": "success",
+            "/payments/{id}%3Aget": "success",
+            "/payments/{id}%3Aput": "success",
+            "/payments/{id}%3Adelete": "success",
+            "/payments/{id}/confirm%3Apost": "success",
+            "/products%3Aget": "success",
+            "/products%3Apost": "success",
+            "/products/{id}%3Aget": "success",
+            "/products/{id}%3Aput": "success",
+            "/products/{id}%3Adelete": "success",
+            "/properties%3Aget": "success",
+            "/properties%3Apost": "success",
+            "/properties/{id}%3Aget": "success",
+            "/properties/{id}%3Aput": "success",
+            "/properties/{id}%3Adelete": "success",
+            "/routes%3Aget": "success",
+            "/routes%3Apost": "success",
+            "/routes/{id}%3Aget": "success",
+            "/routes/{id}%3Aput": "success",
+            "/routes/{id}%3Adelete": "success",
+            "/routes/{id}/complete%3Apost": "success",
+            "/routes/{id}/start%3Apost": "success",
+            "/routes/{id}/stops%3Apost": "success",
+            "/routes/{id}/stops/{stopId}%3Aput": "success",
+            "/routes/{id}/stops/{stopId}%3Adelete": "success",
+            "/stock-movements%3Aget": "success",
+            "/stock-movements%3Apost": "success",
+            "/stock-movements/{id}%3Aget": "success",
+            "/treatment-plans%3Aget": "success",
+            "/treatment-plans%3Apost": "success",
+            "/treatment-plans/{id}%3Aget": "success",
+            "/treatment-plans/{id}%3Aput": "success",
+            "/treatment-plans/{id}%3Adelete": "success",
+            "/treatment-plans/{id}/items%3Apost": "success",
+            "/treatment-plans/{id}/items/{itemId}%3Aput": "success",
+            "/treatment-plans/{id}/items/{itemId}%3Adelete": "success",
+            "/treatments%3Aget": "success",
+            "/treatments%3Apost": "success",
+            "/treatments/{id}%3Aget": "success",
+            "/treatments/{id}%3Aput": "success",
+            "/treatments/{id}%3Adelete": "success",
+            "/treatments/{id}/products%3Apost": "success",
+            "/treatments/{id}/products/{productId}%3Adelete": "success",
+            "/vehicles%3Aget": "success",
+            "/vehicles%3Apost": "success",
+            "/vehicles/{id}%3Aget": "success",
+            "/vehicles/{id}%3Aput": "success",
+            "/vehicles/{id}%3Adelete": "success",
+            "/warehouses%3Aget": "success",
+            "/warehouses%3Apost": "success",
+            "/warehouses/{id}%3Aget": "success",
+            "/warehouses/{id}%3Aput": "success",
+            "/warehouses/{id}%3Adelete": "success"
           }
         },
         "render": {
-          "@/models.generated.ts": "success"
+          "@/models.generated.ts": "success",
+          "@/customers/api.generated.ts": "success",
+          "@/inventory/api.generated.ts": "success",
+          "@/invoices/api.generated.ts": "success",
+          "@/jobs/api.generated.ts": "success",
+          "@/lawns/api.generated.ts": "success",
+          "@/operators/api.generated.ts": "success",
+          "@/orders/api.generated.ts": "success",
+          "@/payments/api.generated.ts": "success",
+          "@/products/api.generated.ts": "success",
+          "@/properties/api.generated.ts": "success",
+          "@/routes/api.generated.ts": "success",
+          "@/stock-movements/api.generated.ts": "success",
+          "@/treatment-plans/api.generated.ts": "success",
+          "@/treatments/api.generated.ts": "success",
+          "@/vehicles/api.generated.ts": "success",
+          "@/warehouses/api.generated.ts": "success"
         }
       }
     }
   },
-  "deploymentId": "1767035512312",
-  "startAt": 1767035512276,
-  "endAt": 1767035512312
+  "deploymentId": "1767123664342",
+  "startAt": 1767123664299,
+  "endAt": 1767123664342
 }

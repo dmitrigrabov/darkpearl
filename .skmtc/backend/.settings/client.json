@@ -1,5 +1,5 @@
 {
   "settings": {
-    "basePath": "supabase/functions/_shared"
+    "basePath": "supabase/functions"
   }
 }
