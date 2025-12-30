@@ -1,0 +1,43 @@
+{
+  "project": "darkpearl",
+  "version": "1.0.0",
+  "created": null,
+  "requirements_hash": null,
+  "steps": {
+    "typespec": {
+      "status": "pending",
+      "timestamp": null,
+      "files": []
+    },
+    "supabase-schema": {
+      "status": "pending",
+      "timestamp": null,
+      "files": []
+    },
+    "openapi": {
+      "status": "pending",
+      "timestamp": null,
+      "files": []
+    },
+    "migrations": {
+      "status": "pending",
+      "timestamp": null,
+      "files": []
+    },
+    "skmtc-backend": {
+      "status": "pending",
+      "timestamp": null,
+      "files": []
+    },
+    "skmtc-frontend": {
+      "status": "pending",
+      "timestamp": null,
+      "files": []
+    },
+    "services": {
+      "status": "pending",
+      "timestamp": null,
+      "files": []
+    }
+  }
+}
